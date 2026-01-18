@@ -41,5 +41,5 @@ class PhysicsEngine:
             tm_diff, self.roborio.getVInVoltage(), self.robot.drivetrain.modules
         )
         states = [m.get_current_state() for m in self.robot.drivetrain.modules]
-        speeds = self.swerve._kinem.toChassisSpeeds(states)
+        speeds = self.robot.drivetrain.kinematics.toChassisSpeeds(states)
         self.physics_controller.drive(speeds, tm_diff)

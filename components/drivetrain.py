@@ -11,6 +11,13 @@ from phoenix6.hardware.pigeon2 import Pigeon2
 from wpimath.units import rotationsToRadians
 from wpimath.geometry import Rotation2d
 
+from wpimath.kinematics import (
+    SwerveDrive2Kinematics,
+    SwerveDrive3Kinematics,
+    SwerveDrive4Kinematics,
+    SwerveDrive6Kinematics,
+)
+
 from magicbot import tunable
 
 from generated.tuner_constants import TunerSwerveDrivetrain, TunerConstants
@@ -58,6 +65,17 @@ class Drivetrain:
     @property
     def pigeon2(self) -> Pigeon2:
         return self._phoenix_swerve.pigeon2
+
+    @property
+    def kinematics(
+        self,
+    ) -> (
+        SwerveDrive2Kinematics
+        | SwerveDrive3Kinematics
+        | SwerveDrive4Kinematics
+        | SwerveDrive6Kinematics
+    ):
+        return self._phoenix_swerve.kinematics
 
     def get_state(self) -> SwerveDrivetrain.SwerveDriveState:
         return self._phoenix_swerve.get_state()
