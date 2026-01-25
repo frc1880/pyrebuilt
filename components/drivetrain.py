@@ -102,8 +102,8 @@ class Drivetrain:
         request.velocity_y = vy
         request.rotational_rate = vz
         # 10% deadband
-        request.deadband = self.max_speed * 0.1
-        request.rotational_deadband = self.max_angular_rate * 0.1
+        request.deadband = self.max_speed * 0.02
+        request.rotational_deadband = self.max_angular_rate * 0.02
 
         self.set_control(request)
 
