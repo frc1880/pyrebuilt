@@ -17,6 +17,11 @@ warn_unused_ignores = true
 warn_unreachable = true
 strict_equality = true
 
+[[tool.mypy.overrides]]
+# Ignore all errors in modules within the 'generated' package
+module = "generated.*"
+ignore_errors = true
+
 [tool.poe.tasks]
 deploy = "robotpy deploy"
 download = "robotpy sync --no-install"

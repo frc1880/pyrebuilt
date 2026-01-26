@@ -1,21 +1,13 @@
+from typing import Any
+
 import wpilib
 from magicbot import tunable
 from phoenix6.hardware.pigeon2 import Pigeon2
 from phoenix6.swerve import requests
-from phoenix6.swerve.swerve_drivetrain import (
-    DriveMotorT,
-    EncoderT,
-    SteerMotorT,
-    SwerveDrivetrain,
-)
+from phoenix6.swerve.swerve_drivetrain import SwerveDrivetrain
 from phoenix6.swerve.swerve_module import SwerveModule
 from wpimath.geometry import Rotation2d
-from wpimath.kinematics import (
-    SwerveDrive2Kinematics,
-    SwerveDrive3Kinematics,
-    SwerveDrive4Kinematics,
-    SwerveDrive6Kinematics,
-)
+from wpimath.kinematics import SwerveDrive4Kinematics
 from wpimath.units import rotationsToRadians
 
 from generated.tuner_constants import TunerConstants, TunerSwerveDrivetrain
@@ -51,7 +43,7 @@ class Drivetrain:
             SwerveModule.DriveRequestType.OPEN_LOOP_VOLTAGE
         )
 
-        self._request = requests.Idle()
+        self._request: requests.SwerveRequest = requests.Idle()
 
     def setup(self) -> None:
         self.max_speed = TunerConstants.speed_at_12_volts
@@ -64,7 +56,7 @@ class Drivetrain:
         )
 
     @property
-    def modules(self) -> list[SwerveModule[DriveMotorT, SteerMotorT, EncoderT]]:
+    def modules(self) -> list[SwerveModule[Any, Any, Any]]:
         return self._phoenix_swerve.modules
 
     @property
@@ -74,12 +66,8 @@ class Drivetrain:
     @property
     def kinematics(
         self,
-    ) -> (
-        SwerveDrive2Kinematics
-        | SwerveDrive3Kinematics
-        | SwerveDrive4Kinematics
-        | SwerveDrive6Kinematics
-    ):
+    ) -> SwerveDrive4Kinematics:
+        assert isinstance(self._phoenix_swerve.kinematics, SwerveDrive4Kinematics)
         return self._phoenix_swerve.kinematics
 
     def get_state(self) -> SwerveDrivetrain.SwerveDriveState:

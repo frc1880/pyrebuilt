@@ -38,6 +38,8 @@ class PhysicsEngine:
         self.swerve.update(
             tm_diff, self.roborio.getVInVoltage(), self.robot.drivetrain.modules
         )
-        states = [m.get_current_state() for m in self.robot.drivetrain.modules]
+        states = tuple([m.get_current_state() for m in self.robot.drivetrain.modules])
+        # Confirm that we have 4 states in a tuple so type checking by mypy works
+        assert len(states) == 4
         speeds = self.robot.drivetrain.kinematics.toChassisSpeeds(states)
         self.physics_controller.drive(speeds, tm_diff)
