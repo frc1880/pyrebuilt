@@ -2,11 +2,13 @@ import magicbot
 import wpilib
 
 from components.drivetrain import Drivetrain
+from components.intake import Intake
 
 
 class MyRobot(magicbot.MagicRobot):
     # Components
     drivetrain: Drivetrain
+    intake: Intake
 
     def createObjects(self) -> None:
         self.gamepad = wpilib.XboxController(0)
@@ -34,4 +36,5 @@ class MyRobot(magicbot.MagicRobot):
         pass
 
     def testPeriodic(self) -> None:
-        pass
+        if self.gamepad.getAButton():
+            self.intake.intake()

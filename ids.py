@@ -5,7 +5,7 @@ import enum
 class TalonId(enum.IntEnum):
     """CAN ID for CTRE Talon motor controllers (e.g. Talon FX, Talon SRX)."""
 
-    pass
+    INTAKE_MOTOR = 22
 
 
 @enum.unique
