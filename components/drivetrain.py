@@ -1,13 +1,8 @@
-from typing import Any
-
 import wpilib
 from magicbot import tunable
-from phoenix6.hardware.pigeon2 import Pigeon2
 from phoenix6.swerve import requests
-from phoenix6.swerve.swerve_drivetrain import SwerveDrivetrain
 from phoenix6.swerve.swerve_module import SwerveModule
 from wpimath.geometry import Rotation2d
-from wpimath.kinematics import SwerveDrive4Kinematics
 from wpimath.units import rotationsToRadians
 
 from generated.tuner_constants import TunerConstants, TunerSwerveDrivetrain
@@ -49,29 +44,21 @@ class Drivetrain:
         self.max_speed = TunerConstants.speed_at_12_volts
         # speed_at_12_volts desired top speed
         self.field_obj = self.field.getObject("odometry")
+        # pass through required methods from phoenix swerve object
+        self.kinematics = self._phoenix_swerve.kinematics
+        self.modules = self._phoenix_swerve.modules
+        self.pigeon2 = self._phoenix_swerve.pigeon2
+        self.get_state = self._phoenix_swerve.get_state
+        self.add_vision_measurement = self._phoenix_swerve.add_vision_measurement
+        self.set_state_std_devs = self._phoenix_swerve.set_state_std_devs
+        self.set_vision_measurement_std_devs = (
+            self._phoenix_swerve.set_vision_measurement_std_devs
+        )
 
     def on_enable(self) -> None:
         self._phoenix_swerve.set_operator_perspective_forward(
             Rotation2d.fromDegrees(0) if game.is_blue() else Rotation2d.fromDegrees(180)
         )
-
-    @property
-    def modules(self) -> list[SwerveModule[Any, Any, Any]]:
-        return self._phoenix_swerve.modules
-
-    @property
-    def pigeon2(self) -> Pigeon2:
-        return self._phoenix_swerve.pigeon2
-
-    @property
-    def kinematics(
-        self,
-    ) -> SwerveDrive4Kinematics:
-        assert isinstance(self._phoenix_swerve.kinematics, SwerveDrive4Kinematics)
-        return self._phoenix_swerve.kinematics
-
-    def get_state(self) -> SwerveDrivetrain.SwerveDriveState:
-        return self._phoenix_swerve.get_state()
 
     def drive_field(self, vx: float, vy: float, vz: float) -> None:
         self._set_request_velocities(self._field_drive_request, vx, vy, vz)

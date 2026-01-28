@@ -2,6 +2,7 @@ from phoenix6.swerve.sim_swerve_drivetrain import SimSwerveDrivetrain
 from pyfrc.physics.core import PhysicsInterface
 from wpilib.simulation import RoboRioSim
 from wpimath.geometry import Translation2d
+from wpimath.kinematics import SwerveDrive4Kinematics
 
 from generated.tuner_constants import TunerConstants
 from robot import MyRobot
@@ -41,5 +42,6 @@ class PhysicsEngine:
         states = tuple([m.get_current_state() for m in self.robot.drivetrain.modules])
         # Confirm that we have 4 states in a tuple so type checking by mypy works
         assert len(states) == 4
+        assert isinstance(self.robot.drivetrain.kinematics, SwerveDrive4Kinematics)
         speeds = self.robot.drivetrain.kinematics.toChassisSpeeds(states)
         self.physics_controller.drive(speeds, tm_diff)
