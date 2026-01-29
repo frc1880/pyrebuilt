@@ -1,6 +1,13 @@
 import enum
 
 
+class CanbusId:
+    """CAN bus ID for multiple buses on the robot"""
+
+    DRIVETRAIN = "rio"
+    INTAKE = "rio"
+
+
 @enum.unique
 class TalonId(enum.IntEnum):
     """CAN ID for CTRE Talon motor controllers (e.g. Talon FX, Talon SRX)."""

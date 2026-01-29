@@ -9,7 +9,9 @@ class Intake:
 
     def __init__(self) -> None:
         self._should_intake = False
-        self._intake_motor = phoenix6.hardware.TalonFX(ids.TalonId.INTAKE_MOTOR)
+        self._intake_motor = phoenix6.hardware.TalonFX(
+            ids.TalonId.INTAKE_MOTOR, ids.CanbusId.INTAKE
+        )
 
     def intake(self) -> None:
         self._should_intake = True
