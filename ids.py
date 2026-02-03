@@ -1,12 +1,14 @@
 import enum
 
+from phoenix6 import CANBus
+
 
 class CanbusId:
     """CAN bus ID for multiple buses on the robot"""
 
-    DRIVETRAIN = "rio"
-    INTAKE = "rio"
-    SHOOTER = "rio"
+    DRIVETRAIN = CANBus("rio")
+    INTAKE = CANBus("rio")
+    SHOOTER = CANBus("rio")
 
 
 @enum.unique
