@@ -6,6 +6,7 @@ class CanbusId:
 
     DRIVETRAIN = "rio"
     INTAKE = "rio"
+    SHOOTER = "rio"
 
 
 @enum.unique
@@ -13,6 +14,7 @@ class TalonId(enum.IntEnum):
     """CAN ID for CTRE Talon motor controllers (e.g. Talon FX, Talon SRX)."""
 
     INTAKE_MOTOR = 22
+    SHOOTER_MOTOR = 6
 
 
 @enum.unique
