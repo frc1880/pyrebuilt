@@ -44,3 +44,4 @@ class MyRobot(magicbot.MagicRobot):
             self.shooter.shoot()
 
         self.shooter.execute()
+        self.intake.execute()
