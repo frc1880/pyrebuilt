@@ -2,11 +2,12 @@ import wpilib
 from magicbot import tunable
 from phoenix6.swerve import requests
 from phoenix6.swerve.swerve_module import SwerveModule
-from wpimath.geometry import Rotation2d
+from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.units import rotationsToRadians
 
 from generated.tuner_constants import TunerConstants, TunerSwerveDrivetrain
 from utilities import game
+from utilities.positions import TeamPoses
 
 
 class Drivetrain:
@@ -40,6 +41,8 @@ class Drivetrain:
 
         self._request: requests.SwerveRequest = requests.Idle()
 
+        self.on_blue_alliance = game.is_blue()
+
     def setup(self) -> None:
         self.max_speed = TunerConstants.speed_at_12_volts
         # speed_at_12_volts desired top speed
@@ -55,10 +58,31 @@ class Drivetrain:
             self._phoenix_swerve.set_vision_measurement_std_devs
         )
 
+        self.set_pose(
+            TeamPoses.BLUE_TEST_POSE if game.is_blue() else TeamPoses.RED_TEST_POSE
+        )
+
     def on_enable(self) -> None:
         self._phoenix_swerve.set_operator_perspective_forward(
             Rotation2d.fromDegrees(0) if game.is_blue() else Rotation2d.fromDegrees(180)
         )
+        self.update_alliance()
+
+    def update_alliance(self) -> None:
+        # Check whether our alliance has "changed"
+        # If so, it means we have an update from the FMS and need to re-init the odom
+        if game.is_blue() != self.on_blue_alliance:
+            self.on_blue_alliance = game.is_blue()
+            # TODO update with new game info
+            if self.on_blue_alliance:
+                self.set_pose(TeamPoses.BLUE_TEST_POSE)
+            else:
+                self.set_pose(TeamPoses.RED_TEST_POSE)
+
+    def set_pose(self, pose: Pose2d) -> None:
+        self._phoenix_swerve.reset_pose(pose)
+        self.field.setRobotPose(pose)
+        self.field_obj.setPose(pose)
 
     def drive_field(self, vx: float, vy: float, vz: float) -> None:
         self._set_request_velocities(self._field_drive_request, vx, vy, vz)
@@ -82,7 +106,7 @@ class Drivetrain:
 
         self.set_control(request)
 
-    def set_control(self, request: requests.SwerveRequest):
+    def set_control(self, request: requests.SwerveRequest) -> None:
         self._request = request
 
     def execute(self) -> None:
