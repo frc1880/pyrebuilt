@@ -82,7 +82,7 @@ class Drivetrain:
 
         self.set_control(request)
 
-    def set_control(self, request: requests.SwerveRequest):
+    def set_control(self, request: requests.SwerveRequest) -> None:
         self._request = request
 
     def execute(self) -> None:
