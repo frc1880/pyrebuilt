@@ -21,6 +21,11 @@ strict_equality = true
 # Ignore all errors in modules within the 'generated' package
 module = "generated.*"
 ignore_errors = true
+[[tool.mypy.overrides]]
+# Ignore all errors in modules within the 'sysid' package
+module = "sysid.*"
+ignore_errors = true
+
 
 [tool.poe.tasks]
 deploy = "robotpy deploy"
@@ -102,6 +107,7 @@ requires-python = ">=3.14,<3.15"
 dependencies = [
     "phoenix6~=26.1.0",
     "robotpy[apriltag]~=2026.2.1",
+    "robotpy-commands-v2~=2026.2.1",
     "robotpy-rev~=2026.0.1",
     "robotpy-wpilib-utilities~=2026.0.1",
     # "photonlibpy~=2026.1.1",
@@ -110,6 +116,7 @@ dependencies = [
 [tool.robotpy]
 requires = [
     "phoenix6~=26.1.0",
+    "robotpy-commands-v2~=2026.2.1",
     "robotpy-rev~=2026.0.1",
     "robotpy-wpilib-utilities~=2026.0.1",
     # "photonlibpy~=2026.1.1",

@@ -6,11 +6,19 @@ from wpimath.kinematics import SwerveDrive4Kinematics
 
 from generated.tuner_constants import TunerConstants
 from robot import MyRobot
+from sysid_robot import SysIdRobot
 
 
 class PhysicsEngine:
-    def __init__(self, physics_controller: PhysicsInterface, robot: MyRobot) -> None:
+    def __init__(
+        self,
+        physics_controller: PhysicsInterface,
+        robot: MyRobot | SysIdRobot,
+    ) -> None:
         self.robot = robot
+        if isinstance(self.robot, SysIdRobot):
+            return
+
         self.physics_controller = physics_controller
 
         self.roborio = RoboRioSim()
@@ -36,6 +44,9 @@ class PhysicsEngine:
         )
 
     def update_sim(self, now: float, tm_diff: float) -> None:
+        if isinstance(self.robot, SysIdRobot):
+            return
+
         self.swerve.update(
             tm_diff, self.roborio.getVInVoltage(), self.robot.drivetrain.modules
         )
