@@ -3,6 +3,7 @@ from commands2.button import CommandXboxController
 from commands2.sysid import SysIdRoutine
 from phoenix6 import SignalLogger
 
+from generated.tuner_constants import TunerConstants
 from ids import CanbusId, TalonId
 from sysid.subsystems.flywheel import FlywheelMechanism
 
@@ -10,7 +11,9 @@ from sysid.subsystems.flywheel import FlywheelMechanism
 class RobotContainer:
     def __init__(self) -> None:
         self.joystick = CommandXboxController(0)
-        self.mechanism = FlywheelMechanism(TalonId.SHOOTER_MOTOR, CanbusId.SHOOTER)
+        self.shooter = FlywheelMechanism(TalonId.SHOOTER_MOTOR, CanbusId.SHOOTER)
+
+        self.drivebase = TunerConstants.create_drivetrain()
 
         self.configureBindings()
 
@@ -24,8 +27,8 @@ class RobotContainer:
         """
 
         # Default command is duty cycle control with the left up/down stick
-        self.mechanism.setDefaultCommand(
-            self.mechanism.joystick_drive_command(self.joystick.getLeftY)
+        self.shooter.setDefaultCommand(
+            self.shooter.joystick_drive_command(self.joystick.getLeftY)
         )
 
         # Manually start logging with left bumper before running any tests,
@@ -39,16 +42,29 @@ class RobotContainer:
         # Joystick B = dynamic forward
         # Joystick X = dynamic reverse
         self.joystick.y().whileTrue(
-            self.mechanism.sys_id_quasistatic(SysIdRoutine.Direction.kForward)
+            self.shooter.sys_id_quasistatic(SysIdRoutine.Direction.kForward)
         )
         self.joystick.a().whileTrue(
-            self.mechanism.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
+            self.shooter.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
         )
         self.joystick.b().whileTrue(
-            self.mechanism.sys_id_dynamic(SysIdRoutine.Direction.kForward)
+            self.shooter.sys_id_dynamic(SysIdRoutine.Direction.kForward)
         )
         self.joystick.x().whileTrue(
-            self.mechanism.sys_id_dynamic(SysIdRoutine.Direction.kReverse)
+            self.shooter.sys_id_dynamic(SysIdRoutine.Direction.kReverse)
+        )
+
+        self.joystick.povUp().whileTrue(
+            self.drivebase.sys_id_quasistatic(SysIdRoutine.Direction.kForward)
+        )
+        self.joystick.povDown().whileTrue(
+            self.drivebase.sys_id_quasistatic(SysIdRoutine.Direction.kReverse)
+        )
+        self.joystick.povLeft().whileTrue(
+            self.drivebase.sys_id_dynamic(SysIdRoutine.Direction.kForward)
+        )
+        self.joystick.povRight().whileTrue(
+            self.drivebase.sys_id_dynamic(SysIdRoutine.Direction.kReverse)
         )
 
     def getAutonomousCommand(self) -> Command:
