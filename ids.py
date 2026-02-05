@@ -56,6 +56,7 @@ class RioSerialNumber(enum.StrEnum):
 
     TEST_BOT = "12345678"
     COMP_BOT = "87654321"
+    STUMPY_BOT = "12121212"
 
 
 @enum.unique
