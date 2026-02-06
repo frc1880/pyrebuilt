@@ -16,8 +16,21 @@ class Vision:
 
     def __init__(self, camera_name: str, transform: Transform3d) -> None:
         # Instantiate the camera/photonvision
-        pass
+        self.cam = PhotonCamera("Front Camera")
+        kRobotToCam = wpimath.geometry.Transform3d(
+            wpimath.geometry.Translation3d(0.5, 0.0, 0.5),
+            wpimath.geometry.Rotation3d.fromDegrees(0.0, -30.0, 0.0),
+        )       
+        self.camPoseEst = PhotonPoseEstimator(
+            AprilTagFieldLayout.loadField(AprilTagField.kDefaultField),
+            kRobotToCam,
+        )
+
+
 
     def execute(self) -> None:
-        # Get any observations from photonvision and add them to the drivetrain
-        pass
+            # Get any observations from photonvision and add them to the drivetrain
+        for result in self.cam.getAllUnreadResults():
+            camEstPose = self.camPoseEst.estimateCoprocMultiTagPose(result)
+            if camEstPose is None:
+                camEstPose = self.camPoseEst.estimateLowestAmbiguityPose(result)
