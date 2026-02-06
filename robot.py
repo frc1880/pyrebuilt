@@ -2,6 +2,7 @@ import magicbot
 import wpilib
 
 from components.drivetrain import Drivetrain
+from components.indexer import Indexer
 from components.intake import Intake
 from components.shooter import Shooter
 
@@ -11,6 +12,7 @@ class MyRobot(magicbot.MagicRobot):
     drivetrain: Drivetrain
     intake: Intake
     shooter: Shooter
+    indexer: Indexer
 
     def createObjects(self) -> None:
         self.gamepad = wpilib.XboxController(0)
@@ -34,6 +36,9 @@ class MyRobot(magicbot.MagicRobot):
         vz = -self.gamepad.getRightX() * self.drivetrain.max_angular_rate
         self.drivetrain.drive_field(vx, vy, vz)
 
+        if self.gamepad.getAButton():
+            self.intake.intake()
+
     def testInit(self) -> None:
         pass
 
@@ -42,6 +47,9 @@ class MyRobot(magicbot.MagicRobot):
             self.intake.intake()
         if self.gamepad.getXButton():
             self.shooter.shoot()
+        if self.gamepad.getYButton():
+            self.indexer.feed()
 
         self.shooter.execute()
         self.intake.execute()
+        self.indexer.execute()
