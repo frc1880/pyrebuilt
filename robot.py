@@ -4,14 +4,15 @@ import wpilib
 from components.drivetrain import Drivetrain
 from components.intake import Intake
 from components.shooter import Shooter
-
+from components.Vision import Vision
 
 class MyRobot(magicbot.MagicRobot):
     # Components
     drivetrain: Drivetrain
     intake: Intake
     shooter: Shooter
-
+    vision: Vision
+    
     def createObjects(self) -> None:
         self.gamepad = wpilib.XboxController(0)
 
