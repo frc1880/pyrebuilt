@@ -9,6 +9,7 @@ class CanbusId:
     DRIVETRAIN = CANBus("rio")
     INTAKE = CANBus("rio")
     SHOOTER = CANBus("rio")
+    INDEXER = CANBus("rio")
 
 
 @enum.unique
@@ -17,6 +18,8 @@ class TalonId(enum.IntEnum):
 
     INTAKE_MOTOR = 22
     SHOOTER_MOTOR = 6
+    INDEXER_ROTATION_MOTOR = 12
+    INDEXER_EXIT_MOTOR = 13
 
 
 @enum.unique
