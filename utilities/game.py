@@ -12,18 +12,18 @@ apriltag_layout = robotpy_apriltag.AprilTagFieldLayout.loadField(
 )
 
 
-def field_flip_pose2d(p: Pose2d):
+def field_flip_pose2d(p: Pose2d) -> Pose2d:
     return Pose2d(
         field_flip_translation2d(p.translation()),
         field_flip_rotation2d(p.rotation()),
     )
 
 
-def field_flip_rotation2d(r: Rotation2d):
+def field_flip_rotation2d(r: Rotation2d) -> Rotation2d:
     return Rotation2d(-r.cos(), r.sin())
 
 
-def field_flip_translation2d(t: Translation2d):
+def field_flip_translation2d(t: Translation2d) -> Translation2d:
     return Translation2d(
         apriltag_layout.getFieldLength() - t.x, apriltag_layout.getFieldWidth() - t.y
     )
