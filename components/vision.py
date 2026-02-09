@@ -16,30 +16,22 @@ class Vision:
 
     def __init__(self, camera_name: str, transform: Transform3d) -> None:
         # Instantiate the camera/photonvision
-        self.frontcam = PhotonCamera("Front Camera")
-        kRobotToCam = wpimath.geometry.Transform3d(
-            wpimath.geometry.Translation3d(0.5, 0.0, 0.5),
-            wpimath.geometry.Rotation3d.fromDegrees(0.0, -30.0, 0.0),
-        )       
-        self.camPoseEst = PhotonPoseEstimator(
-            AprilTagFieldLayout.loadField(AprilTagField.kDefaultField),
-            kRobotToCam,
-        )
-        self.turretcam= = PhotonCamera("Turret Camera")
+        self.camera = PhotonCamera(camera_name)
+
+        self.estimator = PhotonPoseEstimator(apriltag_layout, transform)
+        
 
 
     def execute(self) -> None:
             # Get any observations from photonvision and add them to the drivetrain
-        for result in self.frontcam.getAllUnreadResults():
-            camEstPose = self.camPoseEst.estimateCoprocMultiTagPose(result)
-            if camEstPose is None:
-                camEstPose = self.camPoseEst.estimateLowestAmbiguityPose(result)
-            self.drivetrain.addVisionPoseEstimate(
-                camEstPose.estimatedPose, camEstPose.timestampSeconds
-            )
+        for result in self.camera.getAllUnreadResults():
+            pose = self.estimator.estimateCoprocMultiTagPose(result)
+            if pose is None:
+                pose = self.estimator.estimateLowestAmbiguityPose(result)
+            if pose is not None:
+                self.drivetrain.add_vision_measurement(
+                    pose.estimatedPose.toPose2d(), pose.timestampSeconds
+                )
 
-        results = self.turretcam.getLatestResult()
-        if (result.hasTargets()):
-            best= result.getBestTarget()
-            # check if scoring april tag
-            # update yaw from scoring tag
+        
+          
