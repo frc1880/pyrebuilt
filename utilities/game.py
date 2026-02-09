@@ -12,6 +12,12 @@ apriltag_layout = robotpy_apriltag.AprilTagFieldLayout.loadField(
 )
 
 
+def is_hub_active() -> bool:
+    # Use the Game Data documented here to determine if we are active:
+    # https://frc-docs--3246.org.readthedocs.build/en/3246/docs/yearly-overview/2026-game-data.html#c-java-python
+    return False
+
+
 def field_flip_pose2d(p: Pose2d) -> Pose2d:
     return Pose2d(
         field_flip_translation2d(p.translation()),
