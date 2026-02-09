@@ -1,4 +1,7 @@
+import contextlib
+
 from phoenix6.swerve.sim_swerve_drivetrain import SimSwerveDrivetrain
+from photonlibpy.simulation import PhotonCameraSim, SimCameraProperties, VisionSystemSim
 from pyfrc.physics.core import PhysicsInterface
 from wpilib.simulation import RoboRioSim
 from wpimath.geometry import Translation2d
@@ -7,6 +10,7 @@ from wpimath.kinematics import SwerveDrive4Kinematics
 from generated.tuner_constants import TunerConstants
 from robot import MyRobot
 from sysid_robot import SysIdRobot
+from utilities import game
 
 
 class PhysicsEngine:
@@ -43,6 +47,20 @@ class PhysicsEngine:
             module_constants,
         )
 
+        with contextlib.suppress(BaseException):
+            # This will start working when the vision system works
+            # TODO Delete this 'with' block when vision works
+            # TODO Delete 'type: ignore' when vision works
+            self.vision_sim = VisionSystemSim("main")
+            self.vision_sim.addAprilTags(game.apriltag_layout)
+            properties = SimCameraProperties.LL2_1280_720()
+            self.front_camera = PhotonCameraSim(robot.front_vision.camera, properties)  # type: ignore
+            self.front_camera.setMaxSightRange(5.0)
+            self.vision_sim.addCamera(
+                self.front_camera,
+                self.robot.front_vision_transform,  # type: ignore
+            )
+
     def update_sim(self, now: float, tm_diff: float) -> None:
         if isinstance(self.robot, SysIdRobot):
             return
@@ -56,3 +74,8 @@ class PhysicsEngine:
         assert isinstance(self.robot.drivetrain.kinematics, SwerveDrive4Kinematics)
         speeds = self.robot.drivetrain.kinematics.toChassisSpeeds(states)
         self.physics_controller.drive(speeds, tm_diff)
+
+        with contextlib.suppress(BaseException):
+            # This will start working when the vision system works
+            # TODO Delete this 'with' block when vision works
+            self.vision_sim.update(self.physics_controller.get_pose())
