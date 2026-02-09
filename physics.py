@@ -52,7 +52,7 @@ class PhysicsEngine:
         self.front_camera.setMaxSightRange(5.0)
         self.vision_sim.addCamera(
             self.front_camera,
-            self.robot.front_vision_transform,  # type: ignore
+            self.robot.front_vision_transform,
         )
 
     def update_sim(self, now: float, tm_diff: float) -> None:
