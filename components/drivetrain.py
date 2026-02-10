@@ -1,5 +1,5 @@
 import wpilib
-from magicbot import tunable
+from magicbot import feedback, tunable
 from phoenix6.swerve import requests
 from phoenix6.swerve.swerve_module import SwerveModule
 from wpimath.geometry import Pose2d, Rotation2d
@@ -75,6 +75,10 @@ class Drivetrain:
             Rotation2d.fromDegrees(0) if game.is_blue() else Rotation2d.fromDegrees(180)
         )
         self.update_alliance()
+
+    @feedback
+    def roborio_serial(self) -> str:
+        return wpilib.RobotController.getSerialNumber()
 
     def update_alliance(self) -> None:
         # Check whether our alliance has "changed"
