@@ -1,10 +1,14 @@
+import math
+
 import magicbot
 import wpilib
+from wpimath.geometry import Rotation3d, Transform3d, Translation3d
 
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
 from components.shooter import Shooter
+from components.vision import Vision
 
 
 class MyRobot(magicbot.MagicRobot):
@@ -13,6 +17,12 @@ class MyRobot(magicbot.MagicRobot):
     intake: Intake
     shooter: Shooter
     indexer: Indexer
+
+    front_vision: Vision
+    front_vision_camera_name = "Front Camera"
+    front_vision_transform = Transform3d(
+        Translation3d(), Rotation3d(0, math.radians(-30), 0)
+    )
 
     def createObjects(self) -> None:
         self.gamepad = wpilib.XboxController(0)
