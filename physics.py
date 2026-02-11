@@ -5,7 +5,7 @@ from wpilib.simulation import RoboRioSim
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import SwerveDrive4Kinematics
 
-from generated.tuner_constants import TunerConstants
+from generated.comp import TunerConstants
 from robot import MyRobot
 from sysid_robot import SysIdRobot
 from utilities import game

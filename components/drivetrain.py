@@ -1,11 +1,11 @@
 import wpilib
-from magicbot import tunable
+from magicbot import feedback, tunable
 from phoenix6.swerve import requests
 from phoenix6.swerve.swerve_module import SwerveModule
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.units import rotationsToRadians
 
-from generated.tuner_constants import TunerConstants, TunerSwerveDrivetrain
+from ids import RioSerialNumber
 from utilities import game
 from utilities.positions import TeamPoses
 
@@ -17,6 +17,19 @@ class Drivetrain:
     max_angular_rate = tunable(rotationsToRadians(0.75))
 
     def __init__(self) -> None:
+        if wpilib.RobotController.getSerialNumber() == RioSerialNumber.STUMPY_BOT:
+            from generated.stumpy import TunerConstants, TunerSwerveDrivetrain
+        elif wpilib.RobotController.getSerialNumber() == RioSerialNumber.TEST_BOT:
+            from generated.test import (  # type: ignore
+                TunerConstants,
+                TunerSwerveDrivetrain,
+            )
+        else:
+            from generated.comp import (  # type: ignore
+                TunerConstants,
+                TunerSwerveDrivetrain,
+            )
+
         tuner_constants = TunerConstants()
         modules = [
             tuner_constants.front_left,
@@ -27,6 +40,7 @@ class Drivetrain:
         self._phoenix_swerve = TunerSwerveDrivetrain(
             tuner_constants.drivetrain_constants, modules
         )
+        self.tuner_constants = tuner_constants
 
         self._field_drive_request = requests.FieldCentric()
         self._robot_drive_request = requests.RobotCentric()
@@ -44,7 +58,7 @@ class Drivetrain:
         self.on_blue_alliance = game.is_blue()
 
     def setup(self) -> None:
-        self.max_speed = TunerConstants.speed_at_12_volts
+        self.max_speed = self.tuner_constants.speed_at_12_volts
         # speed_at_12_volts desired top speed
         self.field_obj = self.field.getObject("odometry")
         # pass through required methods from phoenix swerve object
@@ -67,6 +81,10 @@ class Drivetrain:
             Rotation2d.fromDegrees(0) if game.is_blue() else Rotation2d.fromDegrees(180)
         )
         self.update_alliance()
+
+    @feedback
+    def roborio_serial(self) -> str:
+        return wpilib.RobotController.getSerialNumber()
 
     def update_alliance(self) -> None:
         # Check whether our alliance has "changed"
