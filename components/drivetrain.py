@@ -20,9 +20,15 @@ class Drivetrain:
         if wpilib.RobotController.getSerialNumber() == RioSerialNumber.STUMPY_BOT:
             from generated.stumpy import TunerConstants, TunerSwerveDrivetrain
         elif wpilib.RobotController.getSerialNumber() == RioSerialNumber.TEST_BOT:
-            from generated.test import TunerConstants, TunerSwerveDrivetrain
+            from generated.test import (  # type: ignore
+                TunerConstants,
+                TunerSwerveDrivetrain,
+            )
         else:
-            from generated.comp import TunerConstants, TunerSwerveDrivetrain
+            from generated.comp import (  # type: ignore
+                TunerConstants,
+                TunerSwerveDrivetrain,
+            )
 
         tuner_constants = TunerConstants()
         modules = [
