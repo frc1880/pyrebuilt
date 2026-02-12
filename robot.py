@@ -35,7 +35,7 @@ class MyRobot(magicbot.MagicRobot):
         pass
 
     def disabledPeriodic(self) -> None:
-        pass
+        self.front_vision.execute()
 
     def teleopInit(self) -> None:
         pass
