@@ -1,18 +1,21 @@
+import math
+
 import wpilib
-from magicbot import feedback, tunable
+from magicbot import feedback, tunable, will_reset_to
 from phoenix6.swerve import requests
 from phoenix6.swerve.swerve_module import SwerveModule
+from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.units import rotationsToRadians
 
 from ids import RioSerialNumber
-from utilities import game
+from utilities import game, positions
 from utilities.positions import TeamPoses
 
 
 class Drivetrain:
     field: wpilib.Field2d
-
+    should_track_hub = will_reset_to(False)
     max_speed = tunable(0.0)
     max_angular_rate = tunable(rotationsToRadians(0.75))
 
@@ -29,6 +32,8 @@ class Drivetrain:
                 TunerConstants,
                 TunerSwerveDrivetrain,
             )
+        self._heading_controller = PIDController(Kp=3, Ki=0, Kd=0)
+        self._heading_controller.enableContinuousInput(-math.pi, math.pi)
 
         tuner_constants = TunerConstants()
         modules = [
@@ -86,6 +91,10 @@ class Drivetrain:
     def roborio_serial(self) -> str:
         return wpilib.RobotController.getSerialNumber()
 
+    @feedback
+    def pose(self) -> Pose2d:
+        return self._phoenix_swerve.get_state().pose
+
     def update_alliance(self) -> None:
         # Check whether our alliance has "changed"
         # If so, it means we have an update from the FMS and need to re-init the odom
@@ -127,6 +136,26 @@ class Drivetrain:
     def set_control(self, request: requests.SwerveRequest) -> None:
         self._request = request
 
+    def track_hub(self) -> None:
+        robot_position = self.get_state().pose.translation()
+        hub_position = positions.hub_position()
+        desired_heading = (
+            math.atan2(
+                hub_position.y - robot_position.y, hub_position.x - robot_position.x
+            )
+            + math.pi
+        )  # Shooter is at rear of robot
+        self._heading_controller.setSetpoint(desired_heading)
+        self.should_track_hub = True
+
     def execute(self) -> None:
+        if self.should_track_hub:
+            if not isinstance(self._request, requests.FieldCentric) and not isinstance(
+                self._request, requests.RobotCentric
+            ):
+                self._request = requests.RobotCentric()
+            current_heading = self.get_state().pose.rotation().radians()
+            vz = self._heading_controller.calculate(current_heading)
+            self._request.rotational_rate = vz
         self._phoenix_swerve.set_control(self._request)
         self.field_obj.setPose(self._phoenix_swerve.get_state().pose)
