@@ -48,6 +48,8 @@ class MyRobot(magicbot.MagicRobot):
 
         if self.gamepad.getAButton():
             self.intake.intake()
+        if self.gamepad.getYButton():
+            self.drivetrain.track_hub()
 
     def testInit(self) -> None:
         pass
