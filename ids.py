@@ -17,7 +17,9 @@ class TalonId(enum.IntEnum):
     """CAN ID for CTRE Talon motor controllers (e.g. Talon FX, Talon SRX)."""
 
     INTAKE_MOTOR = 22
-    SHOOTER_MOTOR = 6
+    SHOOTER_FLYWHEEL_MOTOR = 6
+    SHOOTER_FOLLOWER_FLYWHEEL_MOTOR = 7
+    SHOOTER_HOOD_MOTOR = 8
     INDEXER_ROTATION_MOTOR = 12
     INDEXER_EXIT_MOTOR = 13
 
