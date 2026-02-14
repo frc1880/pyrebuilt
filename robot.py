@@ -7,6 +7,7 @@ from wpimath.geometry import Rotation3d, Transform3d, Translation3d
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
+from components.leds import Leds
 from components.shooter import Shooter
 from components.vision import Vision
 
@@ -17,6 +18,7 @@ class MyRobot(magicbot.MagicRobot):
     intake: Intake
     shooter: Shooter
     indexer: Indexer
+    leds: Leds
 
     front_vision: Vision
     front_vision_camera_name = "Front Camera"
@@ -57,11 +59,18 @@ class MyRobot(magicbot.MagicRobot):
     def testPeriodic(self) -> None:
         if self.gamepad.getAButton():
             self.intake.intake()
+            self.leds.set_intake()
         if self.gamepad.getXButton():
             self.shooter.shoot()
+            self.leds.set_shoot()
         if self.gamepad.getYButton():
             self.indexer.feed()
+        if self.gamepad.getRightBumper():
+            self.leds.set_in_range()
+        if self.gamepad.getLeftBumper():
+            self.leds.set_not_in_range()
 
         self.shooter.execute()
         self.intake.execute()
         self.indexer.execute()
+        self.leds.execute()
