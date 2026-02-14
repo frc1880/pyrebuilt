@@ -7,13 +7,16 @@ import ids
 
 
 class Shooter:
-    shooter_speed = tunable(0.25)
-    desired_hood_angle = tunable(30)
+    speed = tunable(0.25)
+    desired_hood_angle = tunable(70)
     _should_shoot = will_reset_to(False)
 
     # TODO check these values
     HOOD_MIN_ANGLE = 45.0  # degrees from horizontal
     HOOD_MAX_ANGLE = 70.0
+
+    # The hood is driven by a 40T:12T belt and pulleys, which then drives a 200T sector gear with a 20T spur gear
+    GEAR_RATIO = 40.0 / 12.0 * 200.0 / 20.0
 
     def __init__(self) -> None:
         self._should_shoot = False
@@ -21,9 +24,10 @@ class Shooter:
         self._shooter_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.SHOOTER_FLYWHEEL_MOTOR, ids.CanbusId.SHOOTER
         )
+
         # TODO Invert shooter motor if required
         reverse_cfg = configs.MotorOutputConfigs()
-        reverse_cfg.inverted = signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
+        reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
         self._shooter_motor.configurator.apply(
             configs.TalonFXConfiguration().with_motor_output(reverse_cfg)
         )
@@ -41,12 +45,6 @@ class Shooter:
 
         self._hood_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.SHOOTER_HOOD_MOTOR, ids.CanbusId.SHOOTER
-        )
-        # The hood is driven by a 40T:12T belt and pulleys, which then drives a 200T sector gear with a 20T spur gear
-        gear_ratio_cfg = configs.FeedbackConfigs()
-        gear_ratio_cfg.sensor_to_mechanism_ratio = 40.0 / 12.0 * 200.0 / 20.0
-        self._hood_motor.configurator.apply(
-            configs.TalonFXConfiguration().with_feedback(gear_ratio_cfg)
         )
         hood_pid_cfg = configs.Slot0Configs()
         # TODO tune these values
@@ -72,10 +70,6 @@ class Shooter:
         #     .with_k_a(0.030786)
         # )
 
-        # self._shooter_motor.configurator.apply(
-        #     configs.TalonFXConfiguration().with_slot0(flywheel_gains_cfg)
-        # )
-
     def shoot(self) -> None:
         self._should_shoot = True
 
@@ -85,11 +79,15 @@ class Shooter:
 
     @feedback
     def hood_angle(self) -> float:
-        return self._hood_motor.get_position().value * 360.0
+        return self._hood_motor.get_position().value * 360.0 / self.GEAR_RATIO
 
     @feedback
     def hood_current(self) -> float:
         return self._hood_motor.get_stator_current().value
+
+    @feedback
+    def setpoint(self) -> float:
+        return self.desired_hood_angle / 360.0 * self.GEAR_RATIO
 
     def execute(self) -> None:
         if not self._initialized:
@@ -105,9 +103,9 @@ class Shooter:
             # TODO Check 1 degree threshold is okay
             # TODO Maybe use current as well - we expect a spike when stalled, but it will also spike on start
             # TODO Check 2A current threshold is okay
-            if abs(angle - self._prev_hood_angle) < 1.0 and current > 2.0:
+            if abs(angle - self._prev_hood_angle) < 0.5 and current > 4.0:
                 self._hood_motor.set_position(
-                    self.HOOD_MAX_ANGLE
+                    self.HOOD_MAX_ANGLE / 360.0 * self.GEAR_RATIO
                 )  # max angle is the high, lob shot
                 self._initialized = True
             else:
@@ -120,14 +118,16 @@ class Shooter:
                 self.desired_hood_angle, self.HOOD_MIN_ANGLE, self.HOOD_MAX_ANGLE
             )
             / 360.0
+            * self.GEAR_RATIO
         )
         self._hood_motor.set_control(controls.PositionVoltage(desired_hood_rotation))
 
         if self._should_shoot:
             # spin shooter motor
             self._shooter_motor.set_control(
-                controls.DutyCycleOut(self.shooter_speed)
+                controls.DutyCycleOut(self.speed)
                 # controls.VelocityVoltage(self.shooter_speed)
             )
         else:
             self._shooter_motor.stopMotor()
+            self._shooter_follower_motor.stopMotor()
