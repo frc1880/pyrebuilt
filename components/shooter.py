@@ -28,6 +28,7 @@ class Shooter:
         # TODO Invert shooter motor if required
         reverse_cfg = configs.MotorOutputConfigs()
         reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
+        reverse_cfg.neutral_mode = signals.NeutralModeValue.COAST
         self._shooter_motor.configurator.apply(
             configs.TalonFXConfiguration().with_motor_output(reverse_cfg)
         )
@@ -130,4 +131,3 @@ class Shooter:
             )
         else:
             self._shooter_motor.stopMotor()
-            self._shooter_follower_motor.stopMotor()
