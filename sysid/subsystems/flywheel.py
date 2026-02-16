@@ -2,15 +2,33 @@ from collections.abc import Callable
 
 from commands2 import Command, Subsystem
 from commands2.sysid import SysIdRoutine
-from phoenix6 import BaseStatusSignal, CANBus, SignalLogger, configs, controls, hardware
+from phoenix6 import (
+    BaseStatusSignal,
+    CANBus,
+    SignalLogger,
+    configs,
+    controls,
+    hardware,
+    signals,
+)
 from wpilib.sysid import SysIdRoutineLog
 
 
 class FlywheelMechanism(Subsystem):
-    def __init__(self, device_id: int, canbus: CANBus) -> None:
+    def __init__(
+        self, device_id: int, canbus: CANBus, follower_id: int | None = None
+    ) -> None:
         self.motor_to_test = hardware.TalonFX(device_id, canbus)
         self.joystick_control = controls.DutyCycleOut(0)
         self.sys_id_control = controls.VoltageOut(0)
+
+        if follower_id is not None:
+            self.follower_to_test = hardware.TalonFX(device_id, canbus)
+            self.follower_to_test.set_control(
+                controls.Follower(
+                    self.motor_to_test.device_id, signals.MotorAlignmentValue.OPPOSED
+                )
+            )
 
         self.sys_id_routine = SysIdRoutine(
             SysIdRoutine.Config(

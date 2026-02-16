@@ -10,7 +10,11 @@ from sysid.subsystems.flywheel import FlywheelMechanism
 class RobotContainer:
     def __init__(self) -> None:
         self.joystick = CommandXboxController(0)
-        self.mechanism = FlywheelMechanism(TalonId.SHOOTER_MOTOR, CanbusId.SHOOTER)
+        self.mechanism = FlywheelMechanism(
+            TalonId.SHOOTER_FLYWHEEL_MOTOR,
+            CanbusId.SHOOTER,
+            TalonId.SHOOTER_FOLLOWER_FLYWHEEL_MOTOR,
+        )
 
         self.configureBindings()
 
