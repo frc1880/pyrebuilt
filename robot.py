@@ -8,6 +8,7 @@ from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
+from components.leds import Leds
 from components.shooter import Shooter
 from components.vision import Vision
 from utilities.scalers import map_exponential
@@ -64,7 +65,6 @@ class MyRobot(magicbot.MagicRobot):
             self.drivetrain.track_hub()
            
 
-
     def testInit(self) -> None:
         self._test_shooter_on = False
 
@@ -87,7 +87,7 @@ class MyRobot(magicbot.MagicRobot):
             self.leds.set_in_range()
    
         if self.gamepad.getLeftBumper():
-            self.leds.set_not_in_range()        
+            self.leds.set_not_in_range()
 
         if self._test_shooter_on:
             self.shooter.shoot()

@@ -10,7 +10,6 @@ class CanbusId:
     INTAKE = CANBus("rio")
     SHOOTER = CANBus("rio")
     INDEXER = CANBus("rio")
-    
 
 
 @enum.unique
