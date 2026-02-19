@@ -4,6 +4,7 @@ import magicbot
 import wpilib
 from wpimath.geometry import Rotation3d, Transform3d, Translation3d
 
+from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
@@ -13,6 +14,7 @@ from components.vision import Vision
 
 class MyRobot(magicbot.MagicRobot):
     # Components
+    ballistics: Ballistics
     drivetrain: Drivetrain
     intake: Intake
     shooter: Shooter
