@@ -4,7 +4,7 @@ from phoenix6.controls.solid_color import SolidColor
 from phoenix6.hardware.candle import CANdle
 from phoenix6.signals.rgbw_color import RGBWColor
 
-from ids import CandleId
+from ids import CanbusId, CandleId
 from utilities.game import is_hub_active
 
 
@@ -15,14 +15,6 @@ class LEDMode:
     SHOOTING = "fire"
     CLIMBING = "yellow"
     DEFAULT = "hub_not_active"
-
-
-class LEDConfigs:
-    led_start = 0
-    led_end = 7  # change acc to add strip
-
-    brightness = 1.0
-    speed = 0.6
 
 
 class Leds:
@@ -36,12 +28,11 @@ class Leds:
     YELLOW = RGBWColor(255, 255, 0, 0)
     WHITE = RGBWColor(0, 0, 0, 255)
 
-    def __init__(self, config: LEDConfigs):
-        self.candle = CANdle(device_id=CandleId.LED)
+    def __init__(self):
+        self._candle = CANdle(device_id=CandleId.LED, canbus=CanbusId.LEDS)
+        self._led_count = 7
 
-        self.config = LEDConfigs()
-
-        self.range_status = False
+        self._pattern: FireAnimation|SolidColor|RainbowAnimation = SolidColor(0, self._led_count)
 
         self.desired_mode: LEDMode = LEDMode.DEFAULT
         self.prev_mode: LEDMode | None = None
@@ -117,11 +108,26 @@ class Leds:
             color=Leds.GREEN if self.range_status else Leds.RED,
         )
 
+    def in_range(self) -> None:
+        self._pattern = SolidColor(0, self._led_count, RGBWColor(0,0,255,0))
+
     def execute(self) -> None:
+        if (whatever test to determine if in range):
+            self.in_range()
+        elif (something else):
+            self.hub_active()
+        else:
+            self.off()
+
+        self._candle.set_control(self._pattern)
+        
+
+
+
         hub_active = is_hub_active()
         set_mode = (self.desired_mode, hub_active, self.range_status)
 
         if set_mode != self.prev_mode:
             self.curr_mode = self.change_mode(self.desired_mode)
-            self.candle.set_control(self.curr_mode)
+            self._candle.set_control(self.curr_mode)
             self.prev_mode = set_mode
