@@ -19,7 +19,7 @@ class Ballistics:
     drivetrain: Drivetrain
 
     ranges = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]  # metres
-    flywheel_speeds = [100, 100, 100, 100, 100, 100]  # rev/s
+    flywheel_speeds = [50, 60, 70, 80, 90, 100]  # rev/s
     hood_angles = [70.0, 65.0, 60.0, 55.0, 50.0, 45.0]  # degrees from horizontal
 
     def __init__(self) -> None:
