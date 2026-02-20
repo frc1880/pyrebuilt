@@ -8,6 +8,10 @@ def is_blue() -> bool:
     return wpilib.DriverStation.getAlliance() == wpilib.DriverStation.Alliance.kBlue
 
 
+def is_red() -> bool:
+    return not is_blue()
+
+
 apriltag_layout = robotpy_apriltag.AprilTagFieldLayout.loadField(
     robotpy_apriltag.AprilTagField.k2026RebuiltWelded
 )
@@ -18,19 +22,10 @@ def is_hub_active() -> bool:
     # https://frc-docs--3246.org.readthedocs.build/en/3246/docs/yearly-overview/2026-game-data.html#c-java-python
     # Returns True if alliance hub is active.
 
-    alliance = DriverStation.getAlliance()
-
-    # Team not in match
-    if alliance is None:
-        return False
-
     # HUB always active during AUTO
-    if DriverStation.isAutonomousEnabled():
+    # Also enable in test mode
+    if DriverStation.isAutonomousEnabled() or DriverStation.isTestEnabled():
         return True
-
-    # If not Teleop, dont compute
-    if not DriverStation.isTeleopEnabled():
-        return False
 
     match_time = DriverStation.getMatchTime()
     game_data = DriverStation.getGameSpecificMessage()
@@ -43,11 +38,7 @@ def is_hub_active() -> bool:
         return True
 
     # Check which alliance hub is Active. If R inactive, B starts S1
-    shift1_active = (
-        (not red_inactive_first)
-        if alliance == DriverStation.Alliance.kRed
-        else red_inactive_first
-    )
+    shift1_active = (not red_inactive_first) if is_red() else red_inactive_first
 
     if match_time > 130:
         # Transition shift
