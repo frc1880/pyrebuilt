@@ -10,9 +10,14 @@ from components.indexer import Indexer
 from components.intake import Intake
 from components.shooter import Shooter
 from components.vision import Vision
+from controllers.shooter import ShooterController
 
 
 class MyRobot(magicbot.MagicRobot):
+    # CONTROLLERS MUST COME FIRST SO THAT will_reset_to works properly!!
+    # Controllers
+    shooter_controller: ShooterController
+
     # Components
     ballistics: Ballistics
     drivetrain: Drivetrain

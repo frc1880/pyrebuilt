@@ -2,10 +2,12 @@ import math
 
 import wpilib
 from magicbot import feedback, tunable, will_reset_to
+from pathplannerlib.config import ModuleConfig, RobotConfig
 from phoenix6.swerve import requests
 from phoenix6.swerve.swerve_module import SwerveModule
 from wpimath.controller import PIDController
-from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.geometry import Pose2d, Rotation2d, Translation2d
+from wpimath.system.plant import DCMotor
 from wpimath.units import rotationsToRadians
 
 from ids import RioSerialNumber
@@ -15,7 +17,7 @@ from utilities.positions import TeamPoses
 
 class Drivetrain:
     field: wpilib.Field2d
-    should_track_hub = will_reset_to(False)
+    _should_track_hub = will_reset_to(False)
     max_speed = tunable(0.0)
     max_angular_rate = tunable(rotationsToRadians(0.75))
 
@@ -34,6 +36,7 @@ class Drivetrain:
             )
         self._heading_controller = PIDController(Kp=3, Ki=0, Kd=0)
         self._heading_controller.enableContinuousInput(-math.pi, math.pi)
+        self._aligned = False
 
         tuner_constants = TunerConstants()
         modules = [
@@ -61,6 +64,34 @@ class Drivetrain:
         self._request: requests.SwerveRequest = requests.Idle()
 
         self.on_blue_alliance = game.is_blue()
+
+        robot_mass = 60.0  # kg
+        robot_moment_of_inertia = (
+            robot_mass * (0.7**2) / 6.0
+        )  # approximated -> square plate with 0.7m sides
+        self.pp_robot_config = RobotConfig(
+            massKG=robot_mass,
+            MOI=robot_moment_of_inertia,
+            moduleConfig=ModuleConfig(
+                wheelRadiusMeters=self.tuner_constants._wheel_radius,
+                maxDriveVelocityMPS=self.tuner_constants.speed_at_12_volts,
+                wheelCOF=1.0,
+                driveMotor=DCMotor.krakenX60FOC().withReduction(
+                    self.tuner_constants._drive_gear_ratio
+                ),
+                driveCurrentLimit=self.tuner_constants._slip_current,
+                numMotors=1,
+            ),
+            moduleOffsets=[
+                Translation2d(m.location_x, m.location_y)
+                for m in [
+                    self.tuner_constants.front_left,
+                    self.tuner_constants.front_right,
+                    self.tuner_constants.back_left,
+                    self.tuner_constants.back_right,
+                ]
+            ],
+        )
 
     def setup(self) -> None:
         self.max_speed = self.tuner_constants.speed_at_12_volts
@@ -117,6 +148,9 @@ class Drivetrain:
     def drive_robot(self, vx: float, vy: float, vz: float) -> None:
         self._set_request_velocities(self._robot_drive_request, vx, vy, vz)
 
+    def stop(self) -> None:
+        self._set_request_velocities(self._robot_drive_request, 0.0, 0.0, 0.0)
+
     def _set_request_velocities(
         self,
         request: requests.FieldCentric | requests.RobotCentric,
@@ -138,24 +172,27 @@ class Drivetrain:
 
     def track_hub(self) -> None:
         robot_position = self.get_state().pose.translation()
-        hub_position = positions.hub_position()
         desired_heading = (
-            math.atan2(
-                hub_position.y - robot_position.y, hub_position.x - robot_position.x
-            )
-            + math.pi
+            positions.bearing_to_hub(robot_position).radians() + math.pi
         )  # Shooter is at rear of robot
         self._heading_controller.setSetpoint(desired_heading)
-        self.should_track_hub = True
+        self._should_track_hub = True
+
+    @feedback
+    def is_aligned_with_hub(self) -> bool:
+        return self._aligned
 
     def execute(self) -> None:
-        if self.should_track_hub:
+        if self._should_track_hub:
             if not isinstance(self._request, requests.FieldCentric) and not isinstance(
                 self._request, requests.RobotCentric
             ):
                 self._request = requests.RobotCentric()
             current_heading = self.get_state().pose.rotation().radians()
             vz = self._heading_controller.calculate(current_heading)
+            self._aligned = self._heading_controller.atSetpoint()
             self._request.rotational_rate = vz
+        else:
+            self._aligned = False
         self._phoenix_swerve.set_control(self._request)
         self.field_obj.setPose(self._phoenix_swerve.get_state().pose)
