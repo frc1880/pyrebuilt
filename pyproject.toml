@@ -109,7 +109,7 @@ dependencies = [
     "robotpy[apriltag]~=2026.2.1",
     "robotpy-commands-v2~=2026.2.1",
     "robotpy-rev~=2026.0.1",
-    "robotpy-wpilib-utilities~=2026.0.1",
+    "robotpy-wpilib-utilities~=2026.1.0",
     "photonlibpy~=2026.2.1",
 ]
 
@@ -118,8 +118,8 @@ requires = [
     "phoenix6~=26.1.0",
     "robotpy-commands-v2~=2026.2.1",
     "robotpy-rev~=2026.0.1",
-    "robotpy-wpilib-utilities~=2026.0.1",
+    "robotpy-wpilib-utilities~=2026.1.0",
     "photonlibpy~=2026.2.1",
 ]
-robotpy_version = "2026.2.1"
+robotpy_version = "2026.2.1.1"
 components = ["apriltag"]
