@@ -8,6 +8,7 @@ import ids
 
 class Shooter:
     speed = tunable(0.25)
+    intake_speed = tunable(0.25)
     desired_hood_angle = tunable(70)
     _should_shoot = will_reset_to(False)
 
@@ -23,6 +24,9 @@ class Shooter:
 
         self._shooter_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.SHOOTER_FLYWHEEL_MOTOR, ids.CanbusId.SHOOTER
+        )
+        self._intake_shooter_motor = phoenix6.hardware.TalonFX(
+            ids.TalonId.SHOOTER_INTAKE_MOTOR, ids.CanbusId.SHOOTER
         )
 
         # TODO Invert shooter motor if required
@@ -129,5 +133,8 @@ class Shooter:
                 controls.DutyCycleOut(self.speed)
                 # controls.VelocityVoltage(self.shooter_speed)
             )
+            self._intake_shooter_motor.set_control(controls.DutyCycleOut(self.speed))
         else:
             self._shooter_motor.stopMotor()
+            self._intake_shooter_motor.stopMotor()
+        self._should_shoot = False

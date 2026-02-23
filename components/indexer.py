@@ -7,20 +7,16 @@ import ids
 
 class Indexer:
     indexer_speed_rotation = tunable(0.1)
-    indexer_speed_exit = tunable(0.25)
 
     def __init__(self) -> None:
         self._should_feed = False
         self._indexer_rotation_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.INDEXER_ROTATION_MOTOR, ids.CanbusId.INDEXER
         )
-        self._indexer_exit_motor = phoenix6.hardware.TalonFX(
-            ids.TalonId.INDEXER_EXIT_MOTOR, ids.CanbusId.INDEXER
-        )
         invert_cfg = configs.MotorOutputConfigs().with_inverted(
             signals.InvertedValue.CLOCKWISE_POSITIVE
         )
-        self._indexer_exit_motor.configurator.apply(
+        self._indexer_rotation_motor.configurator.apply(
             configs.TalonFXConfiguration().with_motor_output(invert_cfg)
         )
 
@@ -31,8 +27,6 @@ class Indexer:
         if self._should_feed:
             # Spin the index motor
             self._indexer_rotation_motor.set(self.indexer_speed_rotation)
-            self._indexer_exit_motor.set(self.indexer_speed_exit)
         else:
             self._indexer_rotation_motor.stopMotor()
-            self._indexer_exit_motor.stopMotor()
         self._should_feed = False
