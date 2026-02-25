@@ -5,7 +5,7 @@ from magicbot import feedback, tunable, will_reset_to
 from phoenix6.swerve import requests
 from phoenix6.swerve.swerve_module import SwerveModule
 from wpimath.controller import PIDController
-from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.units import rotationsToRadians
 
 from ids import RioSerialNumber
@@ -137,14 +137,24 @@ class Drivetrain:
         self._request = request
 
     def track_hub(self) -> None:
-        robot_position = self.get_state().pose.translation()
+        robot_pose = self.get_state().pose
+        dx = -8.225 * 0.0254  # shooter offset in CAD
+        dy = 8.527 * 0.0254
+        sin = robot_pose.rotation().sin()
+        cos = robot_pose.rotation().cos()
+        shooter_offset_in_world = Translation2d(
+            cos * dx - sin * dy, sin * dx + cos * dy
+        )
+        shooter_position = robot_pose.translation() + shooter_offset_in_world
         hub_position = positions.hub_position()
+        # The desired heading is for the shooter where it is now, and it will move as we rotate
+        # This will still converge because we keep updating the setpoint as the shooter moves around
         desired_heading = (
             math.atan2(
-                hub_position.y - robot_position.y, hub_position.x - robot_position.x
+                hub_position.y - shooter_position.y, hub_position.x - shooter_position.x
             )
-            + math.pi
-        )  # Shooter is at rear of robot
+            - math.pi / 2.0
+        )  # Shooter is at rear of robot facing on the +ve y axis
         self._heading_controller.setSetpoint(desired_heading)
         self.should_track_hub = True
 
