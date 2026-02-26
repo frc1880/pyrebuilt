@@ -2,7 +2,47 @@
 
 The Warriors' robot code for FRC REBUILT 2026
 
+## Reference Material
+
+- [Python tutorial][python]
+- [GitHub tutorial][github]
+- [FRC robot Python package][robotpy]
+  - [Python MagicBot framework][magicbot]
+
+
+[python]: https://www.tutorialspoint.com/python/index.htm
+[github]: https://docs.github.com/en/get-started/start-your-journey/hello-world
+[robotpy]: https://robotpy.readthedocs.io/en/stable/
+[magicbot]: https://robotpy.readthedocs.io/en/stable/frameworks/magicbot.html
+
+
 ## Setup
+
+### Preconditions
+
+#### GitHub
+
+- Create an account here on GitHub: https://github.com/signup
+
+- Download a copy of GitHub Desktop: https://desktop.github.com/download/
+
+#### Coding Environment
+
+- Download VS Code: https://code.visualstudio.com/download
+
+#### Download code
+
+- Use GitHub Desktop to clone this repository (`File->Clone repository...`)
+  - If you have been added to the `frc1880` team the repo should automatically appear in the list.
+  - If not, you can enter the URL. *Make sure to let one of the mentors know your GitHub username so you can be added later*.
+  - Remember where it downloaded it to (by default `C:\Users\<your-username>\Documents\GitHub`).
+- Open VS Code
+   - `File->Open Folder...`
+   - Select the folder that GitHub Desktop cloned this repository into.
+   - Start a terminal to perform the commands needed in the next sections:
+     - `Terminal->New Terminal Window`
+     - Make sure the prompt shows you in the directory with this code in it (for example `C:\Users\james\Documents\GitHub\pyrebuilt`)
+       - If not, change to that directory: `cd \Users\<your-username>\Documents\GitHub\pyrebuilt`
 
 ### Install dependencies
 
