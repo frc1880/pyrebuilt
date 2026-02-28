@@ -145,8 +145,8 @@ class TunerConstants:
     _front_left_steer_motor_inverted = False
     _front_left_encoder_inverted = False
 
-    _front_left_x_pos: units.meter = inchesToMeters(10.5)
-    _front_left_y_pos: units.meter = inchesToMeters(12)
+    _front_left_x_pos: units.meter = inchesToMeters(10.375)
+    _front_left_y_pos: units.meter = inchesToMeters(11.875)
 
     # Front Right
     _front_right_drive_motor_id = 4
@@ -156,8 +156,8 @@ class TunerConstants:
     _front_right_steer_motor_inverted = False
     _front_right_encoder_inverted = False
 
-    _front_right_x_pos: units.meter = inchesToMeters(10.5)
-    _front_right_y_pos: units.meter = inchesToMeters(-12)
+    _front_right_x_pos: units.meter = inchesToMeters(10.375)
+    _front_right_y_pos: units.meter = inchesToMeters(-11.875)
 
     # Back Left
     _back_left_drive_motor_id = 34
@@ -167,8 +167,8 @@ class TunerConstants:
     _back_left_steer_motor_inverted = False
     _back_left_encoder_inverted = False
 
-    _back_left_x_pos: units.meter = inchesToMeters(-10.5)
-    _back_left_y_pos: units.meter = inchesToMeters(12)
+    _back_left_x_pos: units.meter = inchesToMeters(-10.375)
+    _back_left_y_pos: units.meter = inchesToMeters(11.875)
 
     # Back Right
     _back_right_drive_motor_id = 30
@@ -178,8 +178,8 @@ class TunerConstants:
     _back_right_steer_motor_inverted = False
     _back_right_encoder_inverted = False
 
-    _back_right_x_pos: units.meter = inchesToMeters(-10.5)
-    _back_right_y_pos: units.meter = inchesToMeters(-12)
+    _back_right_x_pos: units.meter = inchesToMeters(-10.375)
+    _back_right_y_pos: units.meter = inchesToMeters(-11.875)
 
     front_left = _constants_creator.create_module_constants(
         _front_left_steer_motor_id,
