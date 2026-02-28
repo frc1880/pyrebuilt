@@ -129,8 +129,11 @@ class Shooter:
 
         if self._should_shoot:
             # spin shooter motor
+            # See https://www.chiefdelphi.com/t/kraken-x60-limp-mode-behavior/515080/44
+            # for teams that have problems with Krakens in follower mode with FOC on
+            # For now, we run without FOC enabled
             self._shooter_motor.set_control(
-                controls.DutyCycleOut(self.speed)
+                controls.DutyCycleOut(self.speed, enable_foc=False)
                 # controls.VelocityVoltage(self.shooter_speed)
             )
             self._intake_shooter_motor.set_control(controls.DutyCycleOut(self.speed))
