@@ -25,6 +25,10 @@ ignore_errors = true
 # Ignore all errors in modules within the 'sysid' package
 module = "sysid.*"
 ignore_errors = true
+# Ignore all errors in modules within the 'phoenix6' package
+[[tool.mypy.overrides]]
+module = ["phoenix6", "phoenix6.*"]
+ignore_missing_imports = true
 
 
 [tool.poe.tasks]

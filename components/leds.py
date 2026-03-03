@@ -1,10 +1,10 @@
-from ballistics import Ballistics
 from phoenix6.controls.fire_animation import FireAnimation
 from phoenix6.controls.rainbow_animation import RainbowAnimation
 from phoenix6.controls.solid_color import SolidColor
 from phoenix6.hardware.candle import CANdle
 from phoenix6.signals.rgbw_color import RGBWColor
 
+from components.ballistics import Ballistics
 from ids import CanbusId, CandleId
 from utilities.game import is_hub_active
 
