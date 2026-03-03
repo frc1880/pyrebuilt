@@ -11,6 +11,7 @@ from components.intake import Intake
 from components.shooter import Shooter
 from components.vision import Vision
 from utilities.scalers import map_exponential
+from components.leds import Leds
 
 
 class MyRobot(magicbot.MagicRobot):
@@ -20,6 +21,7 @@ class MyRobot(magicbot.MagicRobot):
     intake: Intake
     shooter: Shooter
     indexer: Indexer
+    leds: Leds
 
     front_vision: Vision
     front_vision_camera_name = "Front Camera"
@@ -60,6 +62,8 @@ class MyRobot(magicbot.MagicRobot):
             self.intake.intake()
         if self.gamepad.getYButton():
             self.drivetrain.track_hub()
+           
+
 
     def testInit(self) -> None:
         self._test_shooter_on = False
@@ -67,10 +71,23 @@ class MyRobot(magicbot.MagicRobot):
     def testPeriodic(self) -> None:
         if self.gamepad.getAButton():
             self.intake.intake()
+
         if self.gamepad.getXButtonPressed():
             self._test_shooter_on = not self._test_shooter_on
+            self.leds.set_intake()
+
+        if self.gamepad.getXButton():
+            self.shooter.shoot()
+            self.leds.set_shoot()
+
         if self.gamepad.getYButton():
             self.indexer.feed()
+  
+        if self.gamepad.getRightBumper():
+            self.leds.set_in_range()
+   
+        if self.gamepad.getLeftBumper():
+            self.leds.set_not_in_range()        
 
         if self._test_shooter_on:
             self.shooter.shoot()
@@ -78,3 +95,4 @@ class MyRobot(magicbot.MagicRobot):
         self.shooter.execute()
         self.intake.execute()
         self.indexer.execute()
+        self.leds.execute()
