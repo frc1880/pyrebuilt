@@ -63,7 +63,6 @@ class MyRobot(magicbot.MagicRobot):
             self.intake.intake()
         if self.gamepad.getYButton():
             self.drivetrain.track_hub()
-           
 
     def testInit(self) -> None:
         self._test_shooter_on = False

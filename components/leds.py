@@ -1,11 +1,11 @@
+from ballistics import Ballistics
 from phoenix6.controls.fire_animation import FireAnimation
 from phoenix6.controls.rainbow_animation import RainbowAnimation
 from phoenix6.controls.solid_color import SolidColor
 from phoenix6.hardware.candle import CANdle
 from phoenix6.signals.rgbw_color import RGBWColor
 
-from ballistics import Ballistics
-from ids import CandleId, CanbusId
+from ids import CanbusId, CandleId
 from utilities.game import is_hub_active
 
 
@@ -56,7 +56,6 @@ class Leds:
 
     def default(self) -> None:
         self._pattern = SolidColor(self.WHITE, self.config)
-
 
     def teleop_lights(self) -> None:
         if not is_hub_active():

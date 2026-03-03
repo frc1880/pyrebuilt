@@ -3,7 +3,6 @@ import math
 import wpilib
 from magicbot import feedback, tunable, will_reset_to
 from phoenix6.swerve import requests
-from phoenix6.swerve import SwerveDriveTrain
 from phoenix6.swerve.swerve_module import SwerveModule
 from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
@@ -99,9 +98,8 @@ class Drivetrain:
         self.field_obj.setPose(pose)
         return pose
 
-
     def get_current_position(self) -> tuple[float, float, float]:
-       # Convert rotation units : (x, y, deg) 
+        # Convert rotation units : (x, y, deg)
         pose = self.current_pose()
         return (pose.x, pose.y, pose.rotation().degrees())
 

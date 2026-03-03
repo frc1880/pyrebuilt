@@ -2,11 +2,10 @@ from collections import namedtuple
 
 import numpy
 from magicbot import feedback
+from wpimath.geometry import Pose2d
 
 from components.drivetrain import Drivetrain
 from utilities.positions import hub_position
-from wpimath.geometry import Pose2d
-
 
 Solution = namedtuple("Solution", ("flywheel_speed", "hood_angle"))
 
@@ -27,8 +26,6 @@ class Ballistics:
     min_score_range = 1.0
     max_score_range = 6.0
 
-
-
     def __init__(self) -> None:
         self._solution = Solution(flywheel_speed=0.0, hood_angle=0.0)
         self._distance_to_hub = 0.0
@@ -38,7 +35,6 @@ class Ballistics:
     def solution(self) -> Solution:
         return self._solution
 
-    
     @feedback
     def distance_to_hub(self) -> float:
         return self._distance_to_hub
@@ -46,7 +42,7 @@ class Ballistics:
     @feedback
     def in_range(self) -> bool:
         return self._in_range
-    
+
     def robot_pose(self) -> Pose2d:
         return self.drivetrain.current_pose()
 
@@ -65,11 +61,8 @@ class Ballistics:
         if d < self.min_score_range or d > self.max_score_range:
             return False
 
-        # Ensure it's within the table domain 
-        if d < min(self.ranges) or d > max(self.ranges):
-            return False
-
-        return True
+        # Ensure it's within the table domain
+        return not (d < min(self.ranges) or d > max(self.ranges))
 
     def execute(self) -> None:
         """
@@ -80,8 +73,6 @@ class Ballistics:
         self._distance_to_hub = self.calc_hub_distance()
 
         self._in_range = self.in_range()
-
-
 
         speed = numpy.interp(self._distance_to_hub, self.ranges, self.flywheel_speeds)
         angle = numpy.interp(self._distance_to_hub, self.ranges, self.hood_angles)
