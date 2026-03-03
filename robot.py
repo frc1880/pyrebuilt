@@ -33,6 +33,9 @@ class MyRobot(magicbot.MagicRobot):
         self.field = wpilib.Field2d()
         wpilib.SmartDashboard.putData(self.field)
 
+        # Variables used in test mode
+        self._test_shooter_on = False
+
     def disabledInit(self) -> None:
         pass
 
@@ -55,15 +58,18 @@ class MyRobot(magicbot.MagicRobot):
             self.drivetrain.track_hub()
 
     def testInit(self) -> None:
-        pass
+        self._test_shooter_on = False
 
     def testPeriodic(self) -> None:
         if self.gamepad.getAButton():
             self.intake.intake()
-        if self.gamepad.getXButton():
-            self.shooter.shoot()
+        if self.gamepad.getXButtonPressed():
+            self._test_shooter_on = not self._test_shooter_on
         if self.gamepad.getYButton():
             self.indexer.feed()
+
+        if self._test_shooter_on:
+            self.shooter.shoot()
 
         self.shooter.execute()
         self.intake.execute()

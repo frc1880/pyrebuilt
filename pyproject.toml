@@ -121,5 +121,5 @@ requires = [
     "robotpy-wpilib-utilities~=2026.1.0",
     "photonlibpy~=2026.2.1",
 ]
-robotpy_version = "2026.2.1.1"
+robotpy_version = "2026.2.1"
 components = ["apriltag"]
