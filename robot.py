@@ -76,11 +76,16 @@ class MyRobot(magicbot.MagicRobot):
             self.shooter.shoot()
             self.leds.shoot()
 
+        if self.gamepad.getXButtonPressed():
+            self._test_shooter_on = not self._test_shooter_on
         if self.gamepad.getYButton():
             self.indexer.feed()
   
         if self.gamepad.getRightBumper():
             self.leds.teleop_lights()
+
+        if self._test_shooter_on:
+            self.shooter.shoot()
 
         self.shooter.execute()
         self.intake.execute()
