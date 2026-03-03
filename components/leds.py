@@ -31,10 +31,9 @@ class Leds:
     YELLOW = RGBWColor(255, 255, 0, 0)
     WHITE = RGBWColor(0, 0, 0, 255)
 
-    def __init__(self, config: LEDConfigs | None = None):
+    def __init__(self) -> None:
         self._candle = CANdle(device_id=CandleId.LED, canbus=CanbusId.LEDS)
-
-        self.config = config or LEDConfigs()
+        self.config = LEDConfigs()
 
         # Default pattern
         self._pattern = SolidColor(self.WHITE, self.config)
