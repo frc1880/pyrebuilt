@@ -3,6 +3,7 @@ import math
 import wpilib
 from magicbot import feedback, tunable, will_reset_to
 from phoenix6.swerve import requests
+from phoenix6.swerve import SwerveDriveTrain
 from phoenix6.swerve.swerve_module import SwerveModule
 from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
@@ -92,8 +93,17 @@ class Drivetrain:
         return wpilib.RobotController.getSerialNumber()
 
     @feedback
-    def pose(self) -> Pose2d:
-        return self._phoenix_swerve.get_state().pose
+    def current_pose(self) -> Pose2d:
+        pose = self._phoenix_swerve.get_state().pose
+        self.field.setRobotPose(pose)
+        self.field_obj.setPose(pose)
+        return pose
+
+
+    def get_current_position(self) -> tuple[float, float, float]:
+       # Convert rotation units : (x, y, deg) 
+        pose = self.current_pose()
+        return (pose.x, pose.y, pose.rotation().degrees())
 
     def update_alliance(self) -> None:
         # Check whether our alliance has "changed"
@@ -168,4 +178,4 @@ class Drivetrain:
             vz = self._heading_controller.calculate(current_heading)
             self._request.rotational_rate = vz
         self._phoenix_swerve.set_control(self._request)
-        self.field_obj.setPose(self._phoenix_swerve.get_state().pose)
+        self.current_pose()
