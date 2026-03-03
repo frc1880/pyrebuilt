@@ -80,7 +80,7 @@ class MyRobot(magicbot.MagicRobot):
             self._test_shooter_on = not self._test_shooter_on
         if self.gamepad.getYButton():
             self.indexer.feed()
-  
+
         if self.gamepad.getRightBumper():
             self.leds.teleop_lights()
 
