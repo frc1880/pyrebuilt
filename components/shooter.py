@@ -7,7 +7,7 @@ import ids
 
 
 class Shooter:
-    speed = tunable(0.25)
+    speed = tunable(25)
     desired_hood_angle = tunable(70)
     _should_shoot = will_reset_to(False)
 
@@ -54,15 +54,18 @@ class Shooter:
         self._prev_hood_angle = 999.0
 
         # Example of closed loop mode once we have run sysid
-        # flywheel_gains_cfg = (
-        #     configs.Slot0Configs()
-        #     .with_k_p(0.20324)
-        #     .with_k_i(0)
-        #     .with_k_d(0)
-        #     .with_k_s(0.10208)
-        #     .with_k_v(0.11809)
-        #     .with_k_a(0.030786)
-        # )
+        flywheel_gains_cfg = (
+            configs.Slot0Configs()
+            .with_k_p(0.6)
+            .with_k_i(0)
+            .with_k_d(0)
+            .with_k_s(0.22446)
+            .with_k_v(0.1213)
+            .with_k_a(0.024026)
+        )
+        self._shooter_motor.configurator.apply(
+            configs.TalonFXConfiguration().with_slot0(flywheel_gains_cfg)
+        )
 
     def shoot(self) -> None:
         self._should_shoot = True
@@ -122,8 +125,7 @@ class Shooter:
             # for teams that have problems with Krakens in follower mode with FOC on
             # For now, we run without FOC enabled
             self._shooter_motor.set_control(
-                controls.DutyCycleOut(self.speed, enable_foc=False)
-                # controls.VelocityVoltage(self.shooter_speed)
+                controls.VelocityVoltage(-self.speed, enable_foc=True)
             )
         else:
             self._shooter_motor.stopMotor()
