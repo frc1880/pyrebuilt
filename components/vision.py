@@ -1,3 +1,5 @@
+import math
+
 from magicbot import feedback
 from photonlibpy import PhotonCamera, PhotonPoseEstimator
 from photonlibpy.targeting.photonTrackedTarget import PhotonTrackedTarget
@@ -37,6 +39,8 @@ class Vision:
                 pose = self.estimator.estimateLowestAmbiguityPose(result)
             if pose is not None:
                 self.drivetrain.add_vision_measurement(
-                    pose.estimatedPose.toPose2d(), pose.timestampSeconds
+                    pose.estimatedPose.toPose2d(),
+                    pose.timestampSeconds,
+                    (0.05, 0.05, math.radians(5)),
                 )
         self.drivetrain.update_odometry()

@@ -10,6 +10,7 @@ from components.indexer import Indexer
 from components.intake import Intake
 from components.shooter import Shooter
 from components.vision import Vision
+from utilities.conversion import inch_to_metre
 from utilities.scalers import map_exponential
 
 
@@ -21,10 +22,13 @@ class MyRobot(magicbot.MagicRobot):
     shooter: Shooter
     indexer: Indexer
 
-    front_vision: Vision
-    front_vision_camera_name = "Front Camera"
-    front_vision_transform = Transform3d(
-        Translation3d(), Rotation3d(0, math.radians(-30), 0)
+    shooter_vision: Vision
+    shooter_vision_camera_name = "shooter"
+    shooter_vision_transform = Transform3d(
+        Translation3d(
+            inch_to_metre(-13.480), inch_to_metre(-8.521555), inch_to_metre(13.931969)
+        ),
+        Rotation3d(0, math.radians(-20), math.radians(-90)),
     )
 
     def createObjects(self) -> None:
@@ -41,8 +45,9 @@ class MyRobot(magicbot.MagicRobot):
         pass
 
     def disabledPeriodic(self) -> None:
-        self.front_vision.execute()
+        self.shooter_vision.execute()
         self.ballistics.execute()
+        self.drivetrain.execute()  # tick so that odometry estimate is displayed
 
     def teleopInit(self) -> None:
         pass
