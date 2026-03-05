@@ -1,6 +1,8 @@
 import math
 
+import wpilib
 from magicbot import feedback
+from phoenix6.utils import fpga_to_current_time
 from photonlibpy import PhotonCamera, PhotonPoseEstimator
 from photonlibpy.targeting.photonTrackedTarget import PhotonTrackedTarget
 from wpimath.geometry import Transform3d
@@ -16,6 +18,7 @@ class Vision:
 
     # We need to access the drivetrain to add measurements
     drivetrain: Drivetrain
+    field: wpilib.Field2d
 
     def __init__(self, camera_name: str, transform: Transform3d) -> None:
         # Instantiate the camera/photonvision
@@ -23,6 +26,11 @@ class Vision:
         self.estimator = PhotonPoseEstimator(apriltag_layout, transform)
 
         self._targets: list[PhotonTrackedTarget] = []
+
+        self._has_seen_multitag = False
+
+    def setup(self) -> None:
+        self._field_obj = self.field.getObject(self.camera.getName() + "_vision")
 
     @feedback
     def targets(self) -> list[int]:
@@ -32,14 +40,30 @@ class Vision:
 
     def execute(self) -> None:
         # Get any observations from photonvision and add them to the drivetrain
+        self.estimator.addHeadingData(
+            wpilib.Timer.getFPGATimestamp(), self.drivetrain.pose().rotation()
+        )
         for result in self.camera.getAllUnreadResults():
             self._targets = result.getTargets()
             pose = self.estimator.estimateCoprocMultiTagPose(result)
-            if pose is None:
-                pose = self.estimator.estimateLowestAmbiguityPose(result)
-            if pose is not None:
+            if pose:
+                # Multitag successful
+                self._field_obj.setPose(pose.estimatedPose.toPose2d())
                 self.drivetrain.add_vision_measurement(
                     pose.estimatedPose.toPose2d(),
-                    pose.timestampSeconds,
-                    (0.05, 0.05, math.radians(5)),
+                    fpga_to_current_time(pose.timestampSeconds),
+                    (0.05, 0.05, math.radians(3)),
+                )
+                self._has_seen_multitag = True
+                continue
+            if not self._has_seen_multitag:
+                # Don't fuse single tags until multitag has given us a proper heading
+                continue
+            # We don't have multitag result, so try single tag
+            pose = self.estimator.estimatePnpDistanceTrigSolvePose(result)
+            if pose:
+                self.drivetrain.add_vision_measurement(
+                    pose.estimatedPose.toPose2d(),
+                    fpga_to_current_time(pose.timestampSeconds),
+                    (0.3, 0.3, math.radians(10)),
                 )
