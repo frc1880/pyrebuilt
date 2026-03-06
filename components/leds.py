@@ -58,12 +58,12 @@ class Leds:
     def not_in_range(self) -> None:
         self._pattern = self._solid(self.RED)
 
-    def default(self) -> None:
+    def inactive(self) -> None:
         self._pattern = self._solid(self.WHITE)
 
     def teleop_lights(self) -> None:
         if not is_hub_active():
-            self.default()
+            self.inactive()
             return
 
         if self.ballistics.in_range():

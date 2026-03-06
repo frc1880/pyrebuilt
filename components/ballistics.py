@@ -23,8 +23,8 @@ class Ballistics:
     flywheel_speeds = [50, 60, 70, 80, 90, 100]  # rev/s
     hood_angles = [70.0, 65.0, 60.0, 55.0, 50.0, 45.0]  # degrees from horizontal
 
-    min_score_range = 1.0
-    max_score_range = 6.0
+    min_score_range = ranges[0]
+    max_score_range = ranges[-1]
 
     def __init__(self) -> None:
         self._solution = Solution(flywheel_speed=0.0, hood_angle=0.0)
@@ -51,7 +51,7 @@ class Ballistics:
         hub_pos = hub_position()
         return robot_pose.distance(hub_pos)
 
-    def is_in_range_to_score(self) -> bool:
+    def is_in_range_to_score(self):
         """
         Returns True if current robot-to-hub distance is inside the table.
         """
@@ -60,9 +60,6 @@ class Ballistics:
         # Must be within table
         if d < self.min_score_range or d > self.max_score_range:
             return False
-
-        # Ensure it's within the table domain
-        return not (d < min(self.ranges) or d > max(self.ranges))
 
     def execute(self) -> None:
         """

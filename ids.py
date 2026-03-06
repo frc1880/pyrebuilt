@@ -73,4 +73,4 @@ class AnalogChannel(enum.IntEnum):
 class CandleId(enum.IntEnum):
     """CAN ID for CTRE CANdle devices"""
 
-    LED = 00
+    LED = 27
