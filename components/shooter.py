@@ -12,7 +12,7 @@ class Shooter:
     _should_shoot = will_reset_to(False)
 
     # TODO check these values
-    HOOD_MIN_ANGLE = 45.0  # degrees from horizontal
+    HOOD_MIN_ANGLE = 36.0  # degrees from horizontal
     HOOD_MAX_ANGLE = 70.0
 
     # The hood is driven by a 40T:12T belt and pulleys, which then drives a 200T sector gear with a 20T spur gear
