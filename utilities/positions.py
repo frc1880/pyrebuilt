@@ -1,10 +1,12 @@
+import math
+
 from wpimath.geometry import Pose2d, Translation2d
 
 from utilities.game import field_flip_pose2d, field_flip_translation2d, is_blue
 
 
 class TeamPoses:
-    BLUE_TEST_POSE = Pose2d(3.5, 5.0, 0.0)
+    BLUE_TEST_POSE = Pose2d(3.5, 5.0, math.radians(-90.0))
     RED_TEST_POSE = field_flip_pose2d(BLUE_TEST_POSE)
 
 

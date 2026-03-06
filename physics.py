@@ -47,12 +47,12 @@ class PhysicsEngine:
 
         self.vision_sim = VisionSystemSim("main")
         self.vision_sim.addAprilTags(game.apriltag_layout)
-        properties = SimCameraProperties.LL2_1280_720()
-        self.front_camera = PhotonCameraSim(robot.front_vision.camera, properties)  # type: ignore
+        properties = SimCameraProperties.OV9281_1280_720()
+        self.front_camera = PhotonCameraSim(robot.shooter_vision.camera, properties)  # type: ignore
         self.front_camera.setMaxSightRange(5.0)
         self.vision_sim.addCamera(
             self.front_camera,
-            self.robot.front_vision_transform,
+            self.robot.shooter_vision_transform,
         )
 
     def update_sim(self, now: float, tm_diff: float) -> None:
