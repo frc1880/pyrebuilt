@@ -70,11 +70,9 @@ class MyRobot(magicbot.MagicRobot):
     def testPeriodic(self) -> None:
         if self.gamepad.getAButton():
             self.intake.intake()
-            self.leds.intake()
 
         if self.gamepad.getXButton():
             self.shooter.shoot()
-            self.leds.shoot()
 
         if self.gamepad.getXButtonPressed():
             self._test_shooter_on = not self._test_shooter_on
@@ -82,7 +80,12 @@ class MyRobot(magicbot.MagicRobot):
             self.indexer.feed()
 
         if self.gamepad.getRightBumper():
-            self.leds.teleop_lights()
+            if self.gamepad.getAButton():
+                self.leds.teleop_lights()
+            if self.gamepad.getBButton():
+                self.leds.in_range()
+                self.leds.intake()
+                self.shooter.shoot()
 
         if self._test_shooter_on:
             self.shooter.shoot()

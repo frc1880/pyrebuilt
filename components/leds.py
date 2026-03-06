@@ -1,6 +1,7 @@
 from phoenix6.controls.solid_color import SolidColor
 from phoenix6.hardware.candle import CANdle
 from phoenix6.signals.rgbw_color import RGBWColor
+from wpilib import DriverStation
 
 from components.ballistics import Ballistics
 from ids import CanbusId, CandleId
@@ -44,12 +45,6 @@ class Leds:
     #     self.led_start, self.led_end, brightness=self.brightness
     #  )
 
-    def shoot(self) -> None:
-        self._pattern = self._solid(self.ORANGE)
-        # self._pattern = FireAnimation(
-        #    self.led_start, self.led_end, brightness=self.brightness
-        # )
-
     def climb(self) -> None:
         self._pattern = self._solid(self.YELLOW)
 
@@ -73,6 +68,7 @@ class Leds:
             self.not_in_range()
 
     def execute(self) -> None:
+        if not DriverStation.isTestEnabled():
+            pass
 
-        self.teleop_lights()
         self._candle.set_control(self._pattern)
