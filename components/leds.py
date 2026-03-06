@@ -1,5 +1,3 @@
-from phoenix6.controls.fire_animation import FireAnimation
-from phoenix6.controls.rainbow_animation import RainbowAnimation
 from phoenix6.controls.solid_color import SolidColor
 from phoenix6.hardware.candle import CANdle
 from phoenix6.signals.rgbw_color import RGBWColor
@@ -21,7 +19,9 @@ class Leds:
     RED = RGBWColor(255, 0, 0, 0)
     GREEN = RGBWColor(0, 255, 0, 0)
     YELLOW = RGBWColor(255, 255, 0, 0)
+    BLUE = RGBWColor(0, 0, 255, 0)
     WHITE = RGBWColor(0, 0, 0, 255)
+    ORANGE = RGBWColor(255, 165, 0, 0)
 
     led_start: int = 0
     led_end: int = 7
@@ -34,17 +34,21 @@ class Leds:
         self._pattern = self._solid(self.WHITE)
 
     def _solid(self, color: RGBWColor) -> SolidColor:
-        return SolidColor(self.led_start, self.led_end, self.brightness, color)
+        return SolidColor(self.led_start, self.led_end, color)
 
     def intake(self) -> None:
-        self._pattern = RainbowAnimation(
-            self.led_start, self.led_end, brightness=self.brightness
-        )
+        self._pattern = self._solid(self.BLUE)
+
+        # self._pattern = RainbowAnimation(
+
+    #     self.led_start, self.led_end, brightness=self.brightness
+    #  )
 
     def shoot(self) -> None:
-        self._pattern = FireAnimation(
-            self.led_start, self.led_end, brightness=self.brightness
-        )
+        self._pattern = self._solid(self.ORANGE)
+        # self._pattern = FireAnimation(
+        #    self.led_start, self.led_end, brightness=self.brightness
+        # )
 
     def climb(self) -> None:
         self._pattern = self._solid(self.YELLOW)
