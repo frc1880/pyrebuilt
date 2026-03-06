@@ -115,6 +115,7 @@ dependencies = [
     "robotpy-rev~=2026.0.1",
     "robotpy-wpilib-utilities~=2026.1.0",
     "photonlibpy~=2026.2.1",
+    "pre-commit>=4.5.1",
 ]
 
 [tool.robotpy]

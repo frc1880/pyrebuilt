@@ -9,14 +9,6 @@ from ids import CanbusId, CandleId
 from utilities.game import is_hub_active
 
 
-class LEDConfigs:
-    led_start = 0
-    led_end = 7  # change according to your strip length
-
-    brightness = 1.0
-    speed = 0.6
-
-
 class Leds:
     """
     Light patterns for driver feedback.
@@ -31,30 +23,43 @@ class Leds:
     YELLOW = RGBWColor(255, 255, 0, 0)
     WHITE = RGBWColor(0, 0, 0, 255)
 
+    led_start: int = 0
+    led_end: int = 7
+    brightness: float = 1.0
+    speed: float = 0.6
+
     def __init__(self) -> None:
         self._candle = CANdle(device_id=CandleId.LED, canbus=CanbusId.LEDS)
-        self.config = LEDConfigs()
 
         # Default pattern
-        self._pattern = SolidColor(self.WHITE, self.config)
+        self._pattern = self._solid(self.WHITE)
+
+    def _solid(self, color: RGBWColor) -> SolidColor:
+        return SolidColor(
+            self.led_start, self.led_end, self.brightness, self.speed, color=color
+        )
 
     def intake(self) -> None:
-        self._pattern = RainbowAnimation(self.config)
+        self._pattern = RainbowAnimation(
+            self.led_start, self.led_end, self.brightness, self.speed
+        )
 
     def shoot(self) -> None:
-        self._pattern = FireAnimation(self.config)
+        self._pattern = FireAnimation(
+            self.led_start, self.led_end, self.brightness, self.speed
+        )
 
     def climb(self) -> None:
-        self._pattern = SolidColor(self.YELLOW, self.config)
+        self._pattern = self._solid(self.YELLOW)
 
     def in_range(self) -> None:
-        self._pattern = SolidColor(self.GREEN, self.config)
+        self._pattern = self._solid(self.GREEN)
 
     def not_in_range(self) -> None:
-        self._pattern = SolidColor(self.RED, self.config)
+        self._pattern = self._solid(self.RED)
 
     def default(self) -> None:
-        self._pattern = SolidColor(self.WHITE, self.config)
+        self._pattern = self._solid(self.WHITE)
 
     def teleop_lights(self) -> None:
         if not is_hub_active():
@@ -67,5 +72,6 @@ class Leds:
             self.not_in_range()
 
     def execute(self) -> None:
-        # Apply the currently selected pattern to the CANdle
+
+        self.teleop_lights()
         self._candle.set_control(self._pattern)
