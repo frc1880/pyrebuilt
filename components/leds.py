@@ -35,9 +35,7 @@ class Leds:
         self._pattern = self._solid(self.WHITE)
 
     def _solid(self, color: RGBWColor) -> SolidColor:
-        return SolidColor(
-            self.led_start, self.led_end, self.brightness, self.speed, color=color
-        )
+        return SolidColor(self.led_start, self.led_end, color)
 
     def intake(self) -> None:
         self._pattern = RainbowAnimation(
