@@ -26,7 +26,6 @@ class Leds:
     led_start: int = 0
     led_end: int = 7
     brightness: float = 1.0
-    speed: float = 0.6
 
     def __init__(self) -> None:
         self._candle = CANdle(device_id=CandleId.LED, canbus=CanbusId.LEDS)
@@ -35,16 +34,16 @@ class Leds:
         self._pattern = self._solid(self.WHITE)
 
     def _solid(self, color: RGBWColor) -> SolidColor:
-        return SolidColor(self.led_start, self.led_end, color)
+        return SolidColor(self.led_start, self.led_end, self.brightness, color)
 
     def intake(self) -> None:
         self._pattern = RainbowAnimation(
-            self.led_start, self.led_end, self.brightness, self.speed
+            self.led_start, self.led_end, brightness=self.brightness
         )
 
     def shoot(self) -> None:
         self._pattern = FireAnimation(
-            self.led_start, self.led_end, self.brightness, self.speed
+            self.led_start, self.led_end, brightness=self.brightness
         )
 
     def climb(self) -> None:
