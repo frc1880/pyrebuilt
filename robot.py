@@ -10,6 +10,7 @@ from components.indexer import Indexer
 from components.intake import Intake
 from components.shooter import Shooter
 from components.vision import Vision
+from utilities.scalers import map_exponential
 
 
 class MyRobot(magicbot.MagicRobot):
@@ -47,9 +48,12 @@ class MyRobot(magicbot.MagicRobot):
         pass
 
     def teleopPeriodic(self) -> None:
-        vx = -self.gamepad.getLeftY() * self.drivetrain.max_speed
-        vy = -self.gamepad.getLeftX() * self.drivetrain.max_speed
-        vz = -self.gamepad.getRightX() * self.drivetrain.max_angular_rate
+        vx = -map_exponential(self.gamepad.getLeftY(), 1.5) * self.drivetrain.max_speed
+        vy = -map_exponential(self.gamepad.getLeftX(), 1.5) * self.drivetrain.max_speed
+        vz = -(
+            map_exponential(self.gamepad.getRightX(), 2.0)
+            * self.drivetrain.max_angular_rate
+        )
         self.drivetrain.drive_field(vx, vy, vz)
 
         if self.gamepad.getAButton():
