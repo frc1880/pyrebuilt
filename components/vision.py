@@ -38,6 +38,9 @@ class Vision:
         ids.sort()
         return ids
 
+    def is_initialized(self) -> bool:
+        return self._has_seen_multitag
+
     def execute(self) -> None:
         # Get any observations from photonvision and add them to the drivetrain
         self.estimator.addHeadingData(
