@@ -16,12 +16,16 @@ class CanbusId:
 class TalonId(enum.IntEnum):
     """CAN ID for CTRE Talon motor controllers (e.g. Talon FX, Talon SRX)."""
 
-    INTAKE_MOTOR = 29
+    # Partition shooter motors into 21-29
     SHOOTER_FLYWHEEL_MOTOR = 21
     SHOOTER_FOLLOWER_FLYWHEEL_MOTOR = 22
     SHOOTER_HOOD_MOTOR = 23
+    # Indexer 31-39
     INDEXER_INJECTOR_MOTOR = 34
     INDEXER_ROTATION_MOTOR = 35
+    # Intake 41-49
+    INTAKE_ROLLER_MOTOR = 41
+    INTAKE_DEPLOY_MOTOR = 42
 
 
 @enum.unique
