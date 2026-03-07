@@ -1,4 +1,5 @@
 from phoenix6.controls.solid_color import SolidColor
+from phoenix6.controls.strobe_animation import StrobeAnimation
 from phoenix6.hardware.candle import CANdle
 from phoenix6.signals.rgbw_color import RGBWColor
 from wpilib import DriverStation
@@ -37,8 +38,13 @@ class Leds:
     def _solid(self, color: RGBWColor) -> SolidColor:
         return SolidColor(self.led_start, self.led_end, color)
 
-    def intake(self) -> None:
-        self._pattern = self._solid(self.BLUE)
+    def _flashing(self, color: RGBWColor) -> StrobeAnimation:
+        return StrobeAnimation(self.led_start, self.led_end, 0, color)
+
+    def intake(self, should_flash: bool = False) -> None:
+        self._pattern = (
+            self._flashing(self.BLUE) if should_flash else self._solid(self.BLUE)
+        )
 
         # self._pattern = RainbowAnimation(
 
@@ -69,6 +75,8 @@ class Leds:
 
     def execute(self) -> None:
         if not DriverStation.isTestEnabled():
-            pass
+            should_flash = game.time_to_hub_active() < 5.0
+            if self.ballistics.in_range():
+                self.in_range(should_flash)
 
         self._candle.set_control(self._pattern)
