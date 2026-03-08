@@ -10,6 +10,7 @@ from components.indexer import Indexer
 from components.intake import Intake
 from components.shooter import Shooter
 from components.vision import Vision
+from utilities.conversion import inch_to_metre
 from utilities.scalers import map_exponential
 
 
@@ -21,10 +22,16 @@ class MyRobot(magicbot.MagicRobot):
     shooter: Shooter
     indexer: Indexer
 
-    front_vision: Vision
-    front_vision_camera_name = "Front Camera"
-    front_vision_transform = Transform3d(
-        Translation3d(), Rotation3d(0, math.radians(-30), 0)
+    shooter_vision: Vision
+    shooter_vision_camera_name = "shooter"
+    # Offsets are measured from the robot corner in CAD, hence the calcs below
+    shooter_vision_transform = Transform3d(
+        Translation3d(
+            inch_to_metre(-26.0 / 2 + 4.751181),
+            inch_to_metre(28.0 / 2 - 0.795),
+            inch_to_metre(13.887533),
+        ),
+        Rotation3d(0, math.radians(-20), math.radians(90)),
     )
 
     def createObjects(self) -> None:
@@ -41,7 +48,7 @@ class MyRobot(magicbot.MagicRobot):
         pass
 
     def disabledPeriodic(self) -> None:
-        self.front_vision.execute()
+        self.shooter_vision.execute()
         self.ballistics.execute()
 
     def teleopInit(self) -> None:
