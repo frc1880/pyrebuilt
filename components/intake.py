@@ -50,7 +50,7 @@ class Intake:
         self._desired_intake_position = 0.0
 
     def execute(self) -> None:
-        self._initialized = True
+        self._initialized = True  # TODO Remove this when we have a retract motor
         if not self._initialized:
             # Drive the motor very slowly towards the hard stop
             # Check to see if we are still moving/current spike
@@ -70,7 +70,7 @@ class Intake:
                 self._initialized = True
             else:
                 self._prev_intake_angle = angle
-                return  # we can't shoot until we are ready
+                return  # we can't intake until we are ready
 
         self._deploy_motor.set_control(
             controls.PositionVoltage(self._desired_intake_position)
