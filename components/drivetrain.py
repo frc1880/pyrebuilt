@@ -167,5 +167,10 @@ class Drivetrain:
             current_heading = self.get_state().pose.rotation().radians()
             vz = self._heading_controller.calculate(current_heading)
             self._request.rotational_rate = vz
+
         self._phoenix_swerve.set_control(self._request)
+        self._request = (
+            requests.Idle()
+        )  # Safety so that robot stops if not commanded next cycle
+
         self.field_obj.setPose(self._phoenix_swerve.get_state().pose)
