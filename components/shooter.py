@@ -11,8 +11,8 @@ from components.ballistics import Ballistics
 class Shooter:
     ballistics: Ballistics
 
-    speed = tunable(25)
-    desired_hood_angle = tunable(70)
+    speed = tunable(25.0)
+    desired_hood_angle = tunable(70.0)
     _should_shoot = will_reset_to(False)
 
     # TODO check these values
