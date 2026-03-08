@@ -2,11 +2,15 @@ import numpy
 import phoenix6
 from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
+from wpilib import DriverStation
 
 import ids
+from components.ballistics import Ballistics
 
 
 class Shooter:
+    ballistics: Ballistics
+
     speed = tunable(25)
     desired_hood_angle = tunable(70)
     _should_shoot = will_reset_to(False)
@@ -109,23 +113,34 @@ class Shooter:
                 self._prev_hood_angle = angle
                 return  # we can't shoot until we are ready
 
+        # Always run except in test mode
+        if DriverStation.isTestEnabled():
+            # Get values from dashboard
+            desired_hood_angle = self.desired_hood_angle
+            desired_speed = self.speed
+            should_spin = self._should_shoot
+        else:
+            # Teleop or auto, so always set to what ballistics says
+            solution = self.ballistics.solution()
+            desired_hood_angle = solution.hood_angle
+            desired_speed = solution.flywheel_speed
+            should_spin = True
+
         # Update hood setpoint even if not shooting
         desired_hood_rotation = (
-            numpy.clip(
-                self.desired_hood_angle, self.HOOD_MIN_ANGLE, self.HOOD_MAX_ANGLE
-            )
+            numpy.clip(desired_hood_angle, self.HOOD_MIN_ANGLE, self.HOOD_MAX_ANGLE)
             / 360.0
             * self.GEAR_RATIO
         )
         self._hood_motor.set_control(controls.PositionVoltage(desired_hood_rotation))
 
-        if self._should_shoot:
+        if should_spin:
             # spin shooter motor
             # See https://www.chiefdelphi.com/t/kraken-x60-limp-mode-behavior/515080/44
             # for teams that have problems with Krakens in follower mode with FOC on
             # For now, we run without FOC enabled
             self._shooter_motor.set_control(
-                controls.VelocityVoltage(-self.speed, enable_foc=True)
+                controls.VelocityVoltage(-desired_speed, enable_foc=True)
             )
         else:
             self._shooter_motor.stopMotor()

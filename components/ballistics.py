@@ -1,4 +1,4 @@
-from collections import namedtuple
+from typing import NamedTuple
 
 import numpy
 from magicbot import feedback
@@ -7,7 +7,10 @@ from components.drivetrain import Drivetrain
 from utilities.conversion import inch_to_metre
 from utilities.positions import hub_position
 
-Solution = namedtuple("Solution", ("flywheel_speed", "hood_angle"))
+
+class Solution(NamedTuple):
+    flywheel_speed: float
+    hood_angle: float
 
 
 class Ballistics:
