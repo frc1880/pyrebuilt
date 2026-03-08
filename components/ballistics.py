@@ -2,9 +2,9 @@ from collections import namedtuple
 
 import numpy
 from magicbot import feedback
-from utilities.conversion import inch_to_metre
 
 from components.drivetrain import Drivetrain
+from utilities.conversion import inch_to_metre
 from utilities.positions import hub_position
 
 Solution = namedtuple("Solution", ("flywheel_speed", "hood_angle"))
