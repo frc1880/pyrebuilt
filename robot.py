@@ -75,6 +75,26 @@ class MyRobot(magicbot.MagicRobot):
         if self._test_shooter_on:
             self.shooter.shoot()
 
+        if self.gamepad.getLeftBumper():
+            speed_scaling = 0.25
+            vx = (
+                -map_exponential(self.gamepad.getLeftY(), 1.5)
+                * self.drivetrain.max_speed
+                * speed_scaling
+            )
+            vy = (
+                -map_exponential(self.gamepad.getLeftX(), 1.5)
+                * self.drivetrain.max_speed
+                * speed_scaling
+            )
+            vz = -(
+                map_exponential(self.gamepad.getRightX(), 2.0)
+                * self.drivetrain.max_angular_rate
+                * speed_scaling
+            )
+            self.drivetrain.drive_robot(vx, vy, vz)
+
+        self.drivetrain.execute()
         self.shooter.execute()
         self.intake.execute()
         self.indexer.execute()
