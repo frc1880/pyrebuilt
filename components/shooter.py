@@ -42,7 +42,7 @@ class Shooter:
         )
         hood_pid_cfg = configs.Slot0Configs()
         # TODO tune these values
-        hood_pid_cfg.k_p = 1.0  # 1 rev error will output 1V
+        hood_pid_cfg.k_p = 4.0  # 1 rev error will output 1V
         hood_pid_cfg.k_i = 0.0
         hood_pid_cfg.k_d = 0.0
         self._hood_motor.configurator.apply(
@@ -92,7 +92,7 @@ class Shooter:
             # Check to see if we are still moving/current spike
             # If we are stopped, reset the encoder value and put the motor in closed loop mode
             # TODO Is this output too small?
-            self._hood_motor.set_control(controls.DutyCycleOut(0.05))
+            self._hood_motor.set_control(controls.DutyCycleOut(0.1))
 
             angle = self.hood_angle()
             current = self.hood_current()
@@ -100,7 +100,7 @@ class Shooter:
             # TODO Check 1 degree threshold is okay
             # TODO Maybe use current as well - we expect a spike when stalled, but it will also spike on start
             # TODO Check 2A current threshold is okay
-            if abs(angle - self._prev_hood_angle) < 0.5 and current > 4.0:
+            if abs(angle - self._prev_hood_angle) < 0.25 and current > 6.0:
                 self._hood_motor.set_position(
                     self.HOOD_MAX_ANGLE / 360.0 * self.GEAR_RATIO
                 )  # max angle is the high, lob shot
