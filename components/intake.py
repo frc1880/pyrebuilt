@@ -1,6 +1,6 @@
 import phoenix6
 from magicbot import tunable
-from phoenix6 import configs, controls
+from phoenix6 import configs, controls, signals
 
 import ids
 
@@ -33,6 +33,13 @@ class Intake:
         self._prev_intake_angle = 0.0
         self._initialized = False
 
+        reverse_cfg = configs.MotorOutputConfigs()
+        reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
+        reverse_cfg.neutral_mode = signals.NeutralModeValue.COAST
+        self._roller_motor.configurator.apply(
+            configs.TalonFXConfiguration().with_motor_output(reverse_cfg)
+        )
+
     def intake(self) -> None:
         self._should_intake = True
 
@@ -43,6 +50,7 @@ class Intake:
         self._desired_intake_position = 0.0
 
     def execute(self) -> None:
+        self._initialized = True
         if not self._initialized:
             # Drive the motor very slowly towards the hard stop
             # Check to see if we are still moving/current spike
