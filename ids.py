@@ -7,9 +7,9 @@ class CanbusId:
     """CAN bus ID for multiple buses on the robot"""
 
     DRIVETRAIN = CANBus("rio")
-    INTAKE = CANBus("rio")
-    SHOOTER = CANBus("rio")
-    INDEXER = CANBus("rio")
+    INTAKE = CANBus("mechanism")
+    SHOOTER = CANBus("mechanism")
+    INDEXER = CANBus("mechanism")
 
 
 @enum.unique
