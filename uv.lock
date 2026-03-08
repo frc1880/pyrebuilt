@@ -590,6 +590,7 @@ dependencies = [
     { name = "photonlibpy" },
     { name = "robotpy", extra = ["apriltag"] },
     { name = "robotpy-commands-v2" },
+    { name = "robotpy-pathplannerlib" },
     { name = "robotpy-rev" },
     { name = "robotpy-wpilib-utilities" },
 ]
@@ -609,6 +610,7 @@ requires-dist = [
     { name = "photonlibpy", specifier = "~=2026.2.1" },
     { name = "robotpy", extras = ["apriltag"], specifier = "~=2026.2.1" },
     { name = "robotpy-commands-v2", specifier = "~=2026.2.1" },
+    { name = "robotpy-pathplannerlib", specifier = "~=2026.1.2" },
     { name = "robotpy-rev", specifier = "~=2026.0.1" },
     { name = "robotpy-wpilib-utilities", specifier = "~=2026.1.0" },
 ]
@@ -896,6 +898,23 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/63/a9/35aeec2bd6c6f0564afa2ac8a71c96d69755f0d9eed40fb91f23af185764/robotpy_native_wpiutil-2026.2.1-py3-none-manylinux_2_35_aarch64.whl", hash = "sha256:73cce29328250f6aee2dc3e0e1de125179010069a498da0819eeeea9298c42bb", size = 2601083, upload-time = "2026-01-16T18:27:47.944Z" },
     { url = "https://files.pythonhosted.org/packages/ff/8b/8476b8e0762ad8f0bf0c65354ffcb7de6588d4c68f634c303982d8bf4c30/robotpy_native_wpiutil-2026.2.1-py3-none-manylinux_2_35_x86_64.whl", hash = "sha256:949d59d10bbd1b1941a480bd53ed59dfda8f2e92d1c35b895def2df0027e1f32", size = 2705229, upload-time = "2026-01-16T18:27:49.258Z" },
     { url = "https://files.pythonhosted.org/packages/40/2b/661ce9724a624028ba0f8c955c9fcbff5052e8e5cf302197f6ce6e69208f/robotpy_native_wpiutil-2026.2.1-py3-none-win_amd64.whl", hash = "sha256:5d736db4abb501ba3ecacba82d439da3a70b9136350c339c3f7b933e4eed1e76", size = 3006583, upload-time = "2026-01-16T18:27:50.924Z" },
+]
+
+[[package]]
+name = "robotpy-pathplannerlib"
+version = "2026.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "pyntcore" },
+    { name = "robotpy-commands-v2" },
+    { name = "robotpy-hal" },
+    { name = "robotpy-wpimath" },
+    { name = "robotpy-wpiutil" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e8/2d/0266f868749cb7e29861056c13d0178ed3a1b54468f1e64758288d784c3f/robotpy_pathplannerlib-2026.1.2.tar.gz", hash = "sha256:d169e3f2af7095d0aa52c23d0888b54e490505f79fcf8ce0fe0296cb14655c83", size = 48070, upload-time = "2026-01-25T05:21:24.172Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/ff/7cd65921c88a7b201c3e9ac7d01c9c3f78ef60b8ab1df493f1ed90d67ff9/robotpy_pathplannerlib-2026.1.2-py3-none-any.whl", hash = "sha256:3b64761432f658474c42de3967dcf0bc5114dc516694b641c6369cc4cd2f7437", size = 53850, upload-time = "2026-01-25T05:21:22.714Z" },
 ]
 
 [[package]]

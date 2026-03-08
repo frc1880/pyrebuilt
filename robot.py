@@ -10,11 +10,16 @@ from components.indexer import Indexer
 from components.intake import Intake
 from components.shooter import Shooter
 from components.vision import Vision
+from controllers.shooter import ShooterController
 from utilities.conversion import inch_to_metre
 from utilities.scalers import map_exponential
 
 
 class MyRobot(magicbot.MagicRobot):
+    # CONTROLLERS MUST COME FIRST SO THAT will_reset_to works properly!!
+    # Controllers
+    shooter_controller: ShooterController
+
     # Components
     ballistics: Ballistics
     drivetrain: Drivetrain
@@ -65,8 +70,8 @@ class MyRobot(magicbot.MagicRobot):
 
         if self.gamepad.getAButton():
             self.intake.intake()
-        if self.gamepad.getYButton():
-            self.drivetrain.track_hub()
+        if self.gamepad.getRightTriggerAxis() > 0.5:
+            self.shooter_controller.engage()
 
     def testInit(self) -> None:
         self._test_shooter_on = False
