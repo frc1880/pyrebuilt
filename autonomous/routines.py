@@ -10,7 +10,7 @@ from wpimath.kinematics import ChassisSpeeds
 from components.drivetrain import Drivetrain
 from controllers.shooter import ShooterController
 from utilities.game import is_blue
-from utilities.positions import bearing_to_hub
+from utilities.positions import shooter_to_hub
 
 
 class AutoBase(AutonomousStateMachine):
@@ -96,7 +96,7 @@ class Shoot(AutoBase):
 
             self.set_trajectory(
                 [robot_pose, shooting_pose],
-                bearing_to_hub(shooting_position).rotateBy(Rotation2d.fromDegrees(180)),
+                shooter_to_hub(shooting_pose),
             )
 
         # Follow the trajectory until we are in shooting position
