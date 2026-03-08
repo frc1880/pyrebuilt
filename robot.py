@@ -50,7 +50,6 @@ class MyRobot(magicbot.MagicRobot):
     def disabledPeriodic(self) -> None:
         self.shooter_vision.execute()
         self.ballistics.execute()
-        self.drivetrain.execute()  # tick so that odometry estimate is displayed
 
     def teleopInit(self) -> None:
         pass
