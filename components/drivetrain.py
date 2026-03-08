@@ -111,6 +111,9 @@ class Drivetrain:
         self.field.setRobotPose(pose)
         self.field_obj.setPose(pose)
 
+    def update_odometry(self) -> None:
+        self.field_obj.setPose(self._phoenix_swerve.get_state().pose)
+
     def drive_field(self, vx: float, vy: float, vz: float) -> None:
         self._set_request_velocities(self._field_drive_request, vx, vy, vz)
 
@@ -173,4 +176,4 @@ class Drivetrain:
             requests.Idle()
         )  # Safety so that robot stops if not commanded next cycle
 
-        self.field_obj.setPose(self._phoenix_swerve.get_state().pose)
+        self.update_odometry()
