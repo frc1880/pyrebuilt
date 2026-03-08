@@ -1,10 +1,12 @@
 from magicbot import StateMachine, state
 
 from components.drivetrain import Drivetrain
+from components.indexer import Indexer
 
 
 class ShooterController(StateMachine):
     drivetrain: Drivetrain
+    indexer: Indexer
 
     @state(first=True)
     def aligning(self) -> None:
@@ -22,4 +24,4 @@ class ShooterController(StateMachine):
             self.next_state_now("aligning")
         else:
             # We are still aligned, so keep shooting
-            pass
+            self.indexer.feed()
