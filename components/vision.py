@@ -39,3 +39,4 @@ class Vision:
                 self.drivetrain.add_vision_measurement(
                     pose.estimatedPose.toPose2d(), pose.timestampSeconds
                 )
+        self.drivetrain.update_odometry()

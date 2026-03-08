@@ -111,6 +111,9 @@ class Drivetrain:
         self.field.setRobotPose(pose)
         self.field_obj.setPose(pose)
 
+    def update_odometry(self) -> None:
+        self.field_obj.setPose(self._phoenix_swerve.get_state().pose)
+
     def drive_field(self, vx: float, vy: float, vz: float) -> None:
         self._set_request_velocities(self._field_drive_request, vx, vy, vz)
 
@@ -167,5 +170,10 @@ class Drivetrain:
             current_heading = self.get_state().pose.rotation().radians()
             vz = self._heading_controller.calculate(current_heading)
             self._request.rotational_rate = vz
+
         self._phoenix_swerve.set_control(self._request)
-        self.field_obj.setPose(self._phoenix_swerve.get_state().pose)
+        self._request = (
+            requests.Idle()
+        )  # Safety so that robot stops if not commanded next cycle
+
+        self.update_odometry()
