@@ -70,8 +70,8 @@ class MyRobot(magicbot.MagicRobot):
 
         if self.gamepad.getAButton():
             self.intake.intake()
-        if self.gamepad.getYButton():
-            self.drivetrain.track_hub()
+        if self.gamepad.getRightTriggerAxis() > 0.5:
+            self.shooter_controller.engage()
 
     def testInit(self) -> None:
         self._test_shooter_on = False
