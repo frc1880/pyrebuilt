@@ -4,6 +4,7 @@ import magicbot
 import wpilib
 from wpimath.geometry import Rotation3d, Transform3d, Translation3d
 
+from autonomous.routines import AutoBase
 from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
@@ -77,6 +78,15 @@ class MyRobot(magicbot.MagicRobot):
     def disabledPeriodic(self) -> None:
         self.shooter_vision.execute()
         self.ballistics.execute()
+
+        # Indicate that we don't have an auto mode selected
+        selected_auto = self._automodes.chooser.getSelected()
+        if isinstance(selected_auto, AutoBase):
+            # Maybe check that we are in the right spot to start?
+            pass
+        else:
+            # No auto so set the lights
+            pass
 
     def teleopInit(self) -> None:
         pass
