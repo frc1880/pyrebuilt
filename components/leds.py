@@ -6,7 +6,7 @@ from wpilib import DriverStation
 
 from components.ballistics import Ballistics
 from ids import CanbusId, CandleId
-from utilities.game import is_hub_active
+from utilities.game import is_hub_active, time_to_hub_active
 
 
 class Leds:
@@ -41,42 +41,30 @@ class Leds:
     def _flashing(self, color: RGBWColor) -> StrobeAnimation:
         return StrobeAnimation(self.led_start, self.led_end, 0, color)
 
-    def intake(self, should_flash: bool = False) -> None:
-        self._pattern = (
-            self._flashing(self.BLUE) if should_flash else self._solid(self.BLUE)
-        )
-
-        # self._pattern = RainbowAnimation(
-
-    #     self.led_start, self.led_end, brightness=self.brightness
-    #  )
+    def intake(self) -> None:
+        self._pattern = self._solid(self.BLUE)
 
     def climb(self) -> None:
         self._pattern = self._solid(self.YELLOW)
 
-    def in_range(self) -> None:
-        self._pattern = self._solid(self.GREEN)
+    def in_range(self, should_flash: bool = False) -> None:
+        self._pattern = (
+            self._flashing(self.GREEN) if should_flash else self._solid(self.GREEN)
+        )
 
-    def not_in_range(self) -> None:
-        self._pattern = self._solid(self.RED)
-
-    def inactive(self) -> None:
-        self._pattern = self._solid(self.WHITE)
-
-    def teleop_lights(self) -> None:
-        if not is_hub_active():
-            self.inactive()
-            return
-
-        if self.ballistics.in_range():
-            self.in_range()
-        else:
-            self.not_in_range()
+    def not_in_range(self, should_flash: bool = False) -> None:
+        self._pattern = (
+            self._flashing(self.RED) if should_flash else self._solid(self.RED)
+        )
 
     def execute(self) -> None:
         if not DriverStation.isTestEnabled():
-            should_flash = game.time_to_hub_active() < 5.0
-            if self.ballistics.in_range():
-                self.in_range(should_flash)
+            should_flash = time_to_hub_active() < 5.0 and not is_hub_active()
+
+            if not is_hub_active() or should_flash:
+                if self.ballistics.is_in_range_to_score():
+                    self.in_range(should_flash)
+                else:
+                    self.not_in_range(should_flash)
 
         self._candle.set_control(self._pattern)

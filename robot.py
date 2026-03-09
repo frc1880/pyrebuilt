@@ -12,7 +12,6 @@ from components.leds import Leds
 from components.shooter import Shooter
 from components.vision import Vision
 from utilities.scalers import map_exponential
-from components.leds import Leds
 
 
 class MyRobot(magicbot.MagicRobot):
@@ -81,7 +80,7 @@ class MyRobot(magicbot.MagicRobot):
 
         if self.gamepad.getRightBumper():
             if self.gamepad.getAButton():
-                self.leds.teleop_lights()
+                self.leds.execute()
             if self.gamepad.getBButton():
                 self.leds.in_range()
                 self.leds.intake()

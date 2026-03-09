@@ -5,6 +5,7 @@ from magicbot import feedback
 from wpimath.geometry import Pose2d
 
 from components.drivetrain import Drivetrain
+from utilities.game import is_in_alliance_zone
 from utilities.positions import hub_position
 
 Solution = namedtuple("Solution", ("flywheel_speed", "hood_angle"))
@@ -39,10 +40,6 @@ class Ballistics:
     def distance_to_hub(self) -> float:
         return self._distance_to_hub
 
-    @feedback
-    def in_range(self) -> bool:
-        return self._in_range
-
     def robot_pose(self) -> Pose2d:
         return self.drivetrain.current_pose()
 
@@ -51,6 +48,7 @@ class Ballistics:
         hub_pos = hub_position()
         return robot_pose.distance(hub_pos)
 
+    @feedback
     def is_in_range_to_score(self):
         """
         Returns True if current robot-to-hub distance is inside the table.
@@ -58,7 +56,9 @@ class Ballistics:
         d = self._distance_to_hub
 
         # Must be within table
-        if d < self.min_score_range or d > self.max_score_range:
+        if d < self.min_score_range or (
+            d > self.max_score_range and is_in_alliance_zone
+        ):
             return False
 
     def execute(self) -> None:
@@ -68,8 +68,7 @@ class Ballistics:
         # First calculate the distance to the target
 
         self._distance_to_hub = self.calc_hub_distance()
-
-        self._in_range = self.in_range()
+        self._in_range = self.is_in_range_to_score()
 
         speed = numpy.interp(self._distance_to_hub, self.ranges, self.flywheel_speeds)
         angle = numpy.interp(self._distance_to_hub, self.ranges, self.hood_angles)
