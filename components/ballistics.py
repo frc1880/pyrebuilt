@@ -37,9 +37,6 @@ class Ballistics:
         return self._solution
 
     @feedback
-    def distance_to_hub(self) -> float:
-        return self._distance_to_hub
-
     def robot_pose(self) -> Pose2d:
         return self.drivetrain.current_pose()
 
@@ -54,10 +51,13 @@ class Ballistics:
         Returns True if current robot-to-hub distance is inside the table.
         """
         d = self._distance_to_hub
+        pos = self.robot_pose()
 
-        # Must be within table
-        if d < self.min_score_range or (
-            d > self.max_score_range and is_in_alliance_zone
+        # Must be within table and in the alliance zone
+        if (
+            d < self.min_score_range
+            or d > self.max_score_range
+            or not is_in_alliance_zone(pos)
         ):
             return False
 
