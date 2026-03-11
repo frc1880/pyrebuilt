@@ -65,7 +65,7 @@ class Ballistics:
         distance_to_hub = self.drivetrain.pose().translation().distance(hub_position())
         self._in_range = (
             self.min_score_range < distance_to_hub < self.max_score_range
-            and is_in_alliance_zone(self.drivetrain.pose().translation())
+            and is_in_alliance_zone(self.drivetrain.pose())
         )
 
         speed = numpy.interp(distance_to_hub, self.ranges, self.flywheel_speeds)
