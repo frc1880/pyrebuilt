@@ -1,7 +1,7 @@
 from typing import NamedTuple
 
 import numpy
-from magicbot import feedback
+from magicbot import feedback, will_reset_to
 
 from components.drivetrain import Drivetrain
 from utilities.conversion import inch_to_metre
@@ -37,8 +37,13 @@ class Ballistics:
     flywheel_speeds = [43, 46, 47, 49, 53, 55, 58, 60]  # rev/s
     hood_angles = [70.0, 70, 65.0, 60.0, 60.0, 60.0, 60, 56]  # degrees from horizontal
 
+    _should_dump = will_reset_to(False)
+
     def __init__(self) -> None:
         self._solution = Solution(flywheel_speed=0.0, hood_angle=0.0)
+
+    def dump(self) -> None:
+        self._should_dump = True
 
     @feedback
     def solution(self) -> Solution:
@@ -51,7 +56,13 @@ class Ballistics:
         # First calculate the distance to the target
         distance_to_hub = self.drivetrain.pose().translation().distance(hub_position())
 
-        speed = numpy.interp(distance_to_hub, self.ranges, self.flywheel_speeds)
-        angle = numpy.interp(distance_to_hub, self.ranges, self.hood_angles)
+        if self._should_dump:
+            # Shoot across field to move fuel to our alliance zone
+            speed = 90.0
+            angle = 45.0
+        else:
+            # Proper shot into hub
+            speed = numpy.interp(distance_to_hub, self.ranges, self.flywheel_speeds)
+            angle = numpy.interp(distance_to_hub, self.ranges, self.hood_angles)
 
         self._solution = Solution(flywheel_speed=speed, hood_angle=angle)
