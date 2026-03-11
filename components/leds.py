@@ -33,7 +33,7 @@ class Leds:
         self._candle = CANdle(device_id=CandleId.LED, canbus=CanbusId.LEDS)
 
         # Default pattern
-        self._pattern = self._solid(self.WHITE)
+        self._pattern: SolidColor | StrobeAnimation = self._solid(self.WHITE)
 
     def _solid(self, color: RGBWColor) -> SolidColor:
         return SolidColor(self.led_start, self.led_end, color)
