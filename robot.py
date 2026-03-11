@@ -2,16 +2,25 @@ import math
 
 import magicbot
 import wpilib
-from wpimath.geometry import Rotation3d, Transform3d, Translation3d
+from wpimath.geometry import (
+    Rotation2d,
+    Rotation3d,
+    Transform2d,
+    Transform3d,
+    Translation2d,
+    Translation3d,
+)
 
 from autonomous.routines import AutoBase
 from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
+from components.leds import Leds
 from components.shooter import Shooter
 from components.vision import Vision
 from controllers.shooter import ShooterController
+from utilities import game
 from utilities.conversion import inch_to_metre
 from utilities.scalers import map_exponential
 
@@ -27,6 +36,7 @@ class MyRobot(magicbot.MagicRobot):
     intake: Intake
     shooter: Shooter
     indexer: Indexer
+    leds: Leds
 
     shooter_vision: Vision
     shooter_vision_camera_name = "shooter"
@@ -50,6 +60,30 @@ class MyRobot(magicbot.MagicRobot):
         # Variables used in test mode
         self._test_shooter_on = False
 
+    def _get_start_pose_error(self, selected_auto: AutoBase) -> Transform2d:
+        # Check that we are in the right spot to start
+        if selected_auto.starting_pose:
+            starting_pose = (
+                selected_auto.starting_pose
+                if game.is_blue()
+                else game.field_flip_pose2d(selected_auto.starting_pose)
+            )
+            error = self.drivetrain.pose() - starting_pose
+            # Clean up to add tolerances
+            if abs(error.rotation().radians()) < math.radians(10.0):
+                # Blank out the rotation if below the threshold
+                error = Transform2d(error.translation(), Rotation2d())
+            if abs(error.x) < 0.2:
+                # Blank out x error if below threshold
+                error = Transform2d(Translation2d(0.0, error.y), error.rotation())
+            if abs(error.y) < 0.2:
+                # Same for y
+                error = Transform2d(Translation2d(error.x, 0.0), error.rotation())
+            return error
+        else:
+            # Can start from anywhere
+            return Transform2d()
+
     def disabledInit(self) -> None:
         pass
 
@@ -57,14 +91,22 @@ class MyRobot(magicbot.MagicRobot):
         self.shooter_vision.execute()
         self.ballistics.execute()
 
-        # Indicate that we don't have an auto mode selected
-        selected_auto = self._automodes.chooser.getSelected()
-        if isinstance(selected_auto, AutoBase):
-            # Maybe check that we are in the right spot to start?
-            pass
+        # First check that one of our cameras has seen multitag
+        if not self.shooter_vision.is_initialized():
+            # TODO Add additional cameras once we add them to the robot
+            self.leds.missing_vision()
         else:
-            # No auto so set the lights
-            pass
+            # Indicate that we don't have an auto mode selected
+            selected_auto = self._automodes.chooser.getSelected()
+            if not isinstance(selected_auto, AutoBase):
+                # No auto so set the lights
+                self.leds.missing_auto()
+            else:
+                error = self._get_start_pose_error(selected_auto)
+                if error != Transform2d():
+                    self.leds.wrong_start(error)
+                else:
+                    self.leds.disabled()
 
     def teleopInit(self) -> None:
         pass
