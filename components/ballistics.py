@@ -5,6 +5,7 @@ from magicbot import feedback
 
 from components.drivetrain import Drivetrain
 from utilities.conversion import inch_to_metre
+from utilities.game import is_in_alliance_zone
 from utilities.positions import hub_position
 
 
@@ -37,12 +38,24 @@ class Ballistics:
     flywheel_speeds = [43, 46, 47, 49, 53, 55, 58, 60]  # rev/s
     hood_angles = [70.0, 70, 65.0, 60.0, 60.0, 60.0, 60, 56]  # degrees from horizontal
 
+    min_score_range = ranges[0]
+    max_score_range = ranges[-1]
+
     def __init__(self) -> None:
         self._solution = Solution(flywheel_speed=0.0, hood_angle=0.0)
+        self._distance_to_hub = 0.0
+        self._in_range = False
 
     @feedback
     def solution(self) -> Solution:
         return self._solution
+
+    @feedback
+    def is_within_range(self) -> bool:
+        """
+        Returns True if current robot-to-hub distance is inside the table.
+        """
+        return self._in_range
 
     def execute(self) -> None:
         """
@@ -50,6 +63,10 @@ class Ballistics:
         """
         # First calculate the distance to the target
         distance_to_hub = self.drivetrain.pose().translation().distance(hub_position())
+        self._in_range = (
+            self.min_score_range < distance_to_hub < self.max_score_range
+            and is_in_alliance_zone(self.drivetrain.pose().translation())
+        )
 
         speed = numpy.interp(distance_to_hub, self.ranges, self.flywheel_speeds)
         angle = numpy.interp(distance_to_hub, self.ranges, self.hood_angles)

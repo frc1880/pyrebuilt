@@ -8,6 +8,7 @@ from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
+from components.leds import Leds
 from components.shooter import Shooter
 from components.vision import Vision
 from controllers.shooter import ShooterController
@@ -26,6 +27,7 @@ class MyRobot(magicbot.MagicRobot):
     intake: Intake
     shooter: Shooter
     indexer: Indexer
+    leds: Leds
 
     shooter_vision: Vision
     shooter_vision_camera_name = "shooter"
@@ -84,6 +86,13 @@ class MyRobot(magicbot.MagicRobot):
         if self.gamepad.getYButton():
             self.indexer.feed()
 
+        if self.gamepad.getRightBumper():
+            if self.gamepad.getAButton():
+                self.leds.execute()
+            if self.gamepad.getBButton():
+                self.leds.in_range()
+                self.leds.intake()
+
         if self._test_shooter_on:
             self.shooter.shoot()
 
@@ -110,3 +119,4 @@ class MyRobot(magicbot.MagicRobot):
         self.shooter.execute()
         self.intake.execute()
         self.indexer.execute()
+        self.leds.execute()
