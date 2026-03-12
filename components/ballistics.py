@@ -43,7 +43,6 @@ class Ballistics:
 
     def __init__(self) -> None:
         self._solution = Solution(flywheel_speed=0.0, hood_angle=0.0)
-        self._distance_to_hub = 0.0
         self._in_range = False
 
     @feedback
