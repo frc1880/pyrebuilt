@@ -1,7 +1,7 @@
 from typing import NamedTuple
 
 import numpy
-from magicbot import feedback
+from magicbot import feedback, tunable
 
 from components.drivetrain import Drivetrain
 from utilities.conversion import inch_to_metre
@@ -23,6 +23,9 @@ class Ballistics:
     # We will need the drivebase so that we can get our current position
     drivetrain: Drivetrain
 
+    # We want to tune the latency of our motion compensation
+    latency = tunable(0.15)
+
     # Ranges measured from hub corner (so starting at 54inch) and to front bumper (add 18inch)
     ranges = [
         inch_to_metre(54 + 18),
@@ -37,6 +40,7 @@ class Ballistics:
 
     flywheel_speeds = [43, 46, 47, 49, 53, 55, 58, 60]  # rev/s
     hood_angles = [70.0, 70, 65.0, 60.0, 60.0, 60.0, 60, 56]  # degrees from horizontal
+    time_of_flight = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # seconds
 
     min_score_range = ranges[0]
     max_score_range = ranges[-1]
@@ -66,6 +70,8 @@ class Ballistics:
             self.min_score_range < distance_to_hub < self.max_score_range
             and is_in_alliance_zone(self.drivetrain.pose())
         )
+
+        self.drivetrain.velocity()
 
         speed = numpy.interp(distance_to_hub, self.ranges, self.flywheel_speeds)
         angle = numpy.interp(distance_to_hub, self.ranges, self.hood_angles)
