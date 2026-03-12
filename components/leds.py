@@ -44,9 +44,6 @@ class Leds:
     def intake(self) -> None:
         self._pattern = self._solid(self.BLUE)
 
-    def climb(self) -> None:
-        self._pattern = self._solid(self.YELLOW)
-
     def in_range(self, should_flash: bool = False) -> None:
         self._pattern = (
             self._flashing(self.GREEN) if should_flash else self._solid(self.GREEN)
