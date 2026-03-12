@@ -10,6 +10,7 @@ class CanbusId:
     INTAKE = CANBus("mechanism")
     SHOOTER = CANBus("mechanism")
     INDEXER = CANBus("mechanism")
+    LEDS = CANBus("rio")
 
 
 @enum.unique
@@ -70,3 +71,10 @@ class AnalogChannel(enum.IntEnum):
     """roboRIO Analog input channel number"""
 
     pass
+
+
+@enum.unique
+class CandleId(enum.IntEnum):
+    """CAN ID for CTRE CANdle devices"""
+
+    LED = 27
