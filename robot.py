@@ -88,9 +88,10 @@ class MyRobot(magicbot.MagicRobot):
 
         if self.gamepad.getRightBumper():
             if self.gamepad.getAButton():
-                self.leds.execute()
+                self.leds.not_in_range()
             if self.gamepad.getBButton():
                 self.leds.in_range()
+            if self.gamepad.getXButton():
                 self.leds.intake()
 
         if self._test_shooter_on:
