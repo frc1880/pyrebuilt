@@ -4,7 +4,7 @@ import wpilib
 from magicbot import feedback, tunable, will_reset_to
 from pathplannerlib.config import ModuleConfig, RobotConfig
 from phoenix6.swerve import requests
-from phoenix6.swerve.swerve_module import SwerveModule
+from phoenix6.swerve.swerve_module import ChassisSpeeds, SwerveModule
 from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.system.plant import DCMotor
@@ -126,6 +126,9 @@ class Drivetrain:
     @feedback
     def pose(self) -> Pose2d:
         return self._phoenix_swerve.get_state().pose
+
+    def velocity(self) -> ChassisSpeeds:
+        return self._phoenix_swerve.get_state().speeds
 
     def update_alliance(self) -> None:
         # Check whether our alliance has "changed"
