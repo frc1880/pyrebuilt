@@ -11,7 +11,7 @@ from wpimath.system.plant import DCMotor
 from wpimath.units import rotationsToRadians
 
 from ids import RioSerialNumber
-from utilities import game, positions
+from utilities import game
 from utilities.positions import TeamPoses
 
 
@@ -36,6 +36,7 @@ class Drivetrain:
             )
         self._heading_controller = PIDController(Kp=3, Ki=0, Kd=0)
         self._heading_controller.enableContinuousInput(-math.pi, math.pi)
+        self._heading_controller.setTolerance(math.radians(5.0))
         self._aligned = False
 
         tuner_constants = TunerConstants()
@@ -176,11 +177,8 @@ class Drivetrain:
     def set_control(self, request: requests.SwerveRequest) -> None:
         self._request = request
 
-    def track_hub(self) -> None:
-        robot_pose = self.get_state().pose
-        self._heading_controller.setSetpoint(
-            positions.shooter_to_hub(robot_pose).radians()
-        )
+    def track_heading(self, heading: float) -> None:
+        self._heading_controller.setSetpoint(heading)
         self._should_track_hub = True
 
     @feedback
