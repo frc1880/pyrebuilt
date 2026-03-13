@@ -4,14 +4,14 @@ import wpilib
 from magicbot import feedback, tunable, will_reset_to
 from pathplannerlib.config import ModuleConfig, RobotConfig
 from phoenix6.swerve import requests
-from phoenix6.swerve.swerve_module import SwerveModule
+from phoenix6.swerve.swerve_module import ChassisSpeeds, SwerveModule
 from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.system.plant import DCMotor
 from wpimath.units import rotationsToRadians
 
 from ids import RioSerialNumber
-from utilities import game, positions
+from utilities import game
 from utilities.positions import TeamPoses
 
 
@@ -36,6 +36,7 @@ class Drivetrain:
             )
         self._heading_controller = PIDController(Kp=3, Ki=0, Kd=0)
         self._heading_controller.enableContinuousInput(-math.pi, math.pi)
+        self._heading_controller.setTolerance(math.radians(5.0))
         self._aligned = False
 
         tuner_constants = TunerConstants()
@@ -126,6 +127,18 @@ class Drivetrain:
     def pose(self) -> Pose2d:
         return self._phoenix_swerve.get_state().pose
 
+    @feedback
+    def velocity_robot(self) -> ChassisSpeeds:
+        return self._phoenix_swerve.get_state().speeds
+
+    @feedback
+    def velocity_field(self) -> ChassisSpeeds:
+        pose = self.pose()
+        robot_vel = self.velocity_robot()
+        return ChassisSpeeds.fromRobotRelativeSpeeds(
+            robot_vel.vx, robot_vel.vy, robot_vel.omega, pose.rotation()
+        )
+
     def update_alliance(self) -> None:
         # Check whether our alliance has "changed"
         # If so, it means we have an update from the FMS and need to re-init the odom
@@ -173,11 +186,8 @@ class Drivetrain:
     def set_control(self, request: requests.SwerveRequest) -> None:
         self._request = request
 
-    def track_hub(self) -> None:
-        robot_pose = self.get_state().pose
-        self._heading_controller.setSetpoint(
-            positions.shooter_to_hub(robot_pose).radians()
-        )
+    def track_heading(self, heading: float) -> None:
+        self._heading_controller.setSetpoint(heading)
         self._should_track_hub = True
 
     @feedback
