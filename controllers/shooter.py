@@ -3,6 +3,7 @@ import math
 import wpilib
 from magicbot import StateMachine, state
 
+from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
@@ -11,6 +12,7 @@ from utilities import game, positions
 
 
 class ShooterController(StateMachine):
+    ballistics: Ballistics
     drivetrain: Drivetrain
     indexer: Indexer
     intake: Intake
@@ -20,7 +22,7 @@ class ShooterController(StateMachine):
         # If we are in our alliance zone, aim at the hub
         # Otherwise fire back at the alliance wall as a passing shot
         if positions.is_in_alliance_zone(self.drivetrain.pose()):
-            return positions.shooter_to_hub(self.drivetrain.pose()).radians()
+            return self.ballistics.solution().bearing
         else:
             return math.radians(-90.0) if game.is_red() else math.radians(90.0)
 
