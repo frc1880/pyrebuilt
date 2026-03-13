@@ -127,8 +127,17 @@ class Drivetrain:
     def pose(self) -> Pose2d:
         return self._phoenix_swerve.get_state().pose
 
-    def velocity(self) -> ChassisSpeeds:
+    @feedback
+    def velocity_robot(self) -> ChassisSpeeds:
         return self._phoenix_swerve.get_state().speeds
+
+    @feedback
+    def velocity_field(self) -> ChassisSpeeds:
+        pose = self.pose()
+        robot_vel = self.velocity_robot()
+        return ChassisSpeeds.fromRobotRelativeSpeeds(
+            robot_vel.vx, robot_vel.vy, robot_vel.omega, pose.rotation()
+        )
 
     def update_alliance(self) -> None:
         # Check whether our alliance has "changed"

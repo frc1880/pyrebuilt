@@ -96,10 +96,10 @@ class Ballistics:
 
         robot_pose = self.drivetrain.pose()
         robot_position = robot_pose.translation()
-        current_swerve_velocity = self.drivetrain.velocity()
+        robot_swerve_velocity = self.drivetrain.velocity_field()
         robot_velocity = Translation2d(
-            current_swerve_velocity.vx, current_swerve_velocity.vy
-        ).rotateBy(robot_pose.rotation())
+            robot_swerve_velocity.vx, robot_swerve_velocity.vy
+        )
         future_position = robot_position + (robot_velocity * self.latency)
 
         # Directions and distances to hub
