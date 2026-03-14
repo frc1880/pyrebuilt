@@ -8,6 +8,7 @@ from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.kinematics import ChassisSpeeds
 
 from components.drivetrain import Drivetrain
+from components.intake import Intake
 from controllers.shooter import ShooterController
 from utilities.game import is_blue
 from utilities.positions import shooter_to_hub
@@ -22,6 +23,7 @@ class AutoBase(AutonomousStateMachine):
     field: wpilib.Field2d
     drivetrain: Drivetrain
     shooter_controller: ShooterController
+    intake: Intake
 
     starting_pose: Pose2d | None = None
 
@@ -111,3 +113,117 @@ class Shoot(AutoBase):
     def shooting(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
+
+
+class GoldenShower(AutoBase):
+    """
+    Golden Shower will cross under the trench intake balls , go back to alliance zone shoot for a period of time to clear space for hopper. Go to outpost let human player drop balls
+    then shoot for remainder of auto.
+    """
+
+    MODE_NAME = "golden shower"
+
+    @state(first=True)
+    def start_to_wpt1(self, initial_call, state_tm) -> None:
+        if initial_call:
+            robot_pose = self.drivetrain.pose()
+            waypoints = [
+                robot_pose,
+                Pose2d(
+                    13.047081850533809, 7.354211150652431, Rotation2d.fromDegrees(0)
+                ),  # waypoint 1
+            ]
+            if not self.set_trajectory(waypoints, Rotation2d.fromDegrees(0)):
+                self.done()
+                return
+        self.follow_trajectory(state_tm)
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            self.intake.intake()  # deploy + spin intake at waypoint 1
+            self.next_state("collect_balls")
+
+    @state()
+    def collect_balls(self, initial_call, state_tm) -> None:
+        if initial_call:
+            self.intake.intake()  # Spin Intake
+            waypoints = [
+                Pose2d(
+                    13.047081850533809, 7.354211150652431, Rotation2d.fromDegrees(0)
+                ),  # waypoint 1
+                Pose2d(
+                    10.776892052194544,
+                    7.354211150652431,
+                    Rotation2d.fromDegrees(-98.6731740478798),
+                ),  # waypoint 2
+                Pose2d(
+                    9.001625148279953,
+                    6.8485290628707,
+                    Rotation2d.fromDegrees(-98.6731740478798),
+                ),  # waypoint 3
+            ]
+            if not self.set_trajectory(
+                waypoints, Rotation2d.fromDegrees(-98.6731740478798)
+            ):
+                self.done()
+                return
+        self.intake.intake()
+        self.follow_trajectory(state_tm)
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            #   self.intake.stopMotor() i think we need to make a stop motor function ?
+            self.next_state("alliance_shoot")
+
+    @state()
+    def alliance_shoot(self, initial_call, state_tm) -> None:
+        if initial_call:
+            waypoints = [
+                Pose2d(
+                    9.001625148279953,
+                    6.8485290628707,
+                    Rotation2d.fromDegrees(-98.6731740478798),
+                ),  # waypoint 3
+                Pose2d(
+                    8.743404507710558, 4.49226571767497, Rotation2d.fromDegrees(-45)
+                ),  # waypoint 4
+                Pose2d(
+                    9.733250296559907,
+                    7.354211150652431,
+                    Rotation2d.fromDegrees(1.6006720103111123),
+                ),  # waypoint 5
+                Pose2d(
+                    11.788256227758007, 7.354211150652431, Rotation2d.fromDegrees(0)
+                ),  # waypoint 6 (Shoot)
+            ]
+            if not self.set_trajectory(waypoints, Rotation2d.fromDegrees(0)):
+                self.done()
+                return
+        self.follow_trajectory(state_tm)
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            self.next_state("shooting")
+
+    @timed_state(duration=3.0)
+    def shooting(self) -> None:
+        self.shooter_controller.engage()
+
+    @state()
+    def outpost_shoot(self, initial_call, state_tm) -> None:
+        if initial_call:
+            waypoints = [
+                Pose2d(
+                    11.788256227758007, 7.354211150652431, Rotation2d.fromDegrees(0)
+                ),  # waypoint 6
+                Pose2d(
+                    15.155883748517201, 6.127663107947805, Rotation2d.fromDegrees(-45)
+                ),  # waypoint 7
+                Pose2d(
+                    16.04889679715303, 7.354211150652431, Rotation2d.fromDegrees(-90)
+                ),  # waypoint 8
+            ]
+            if not self.set_trajectory(waypoints, Rotation2d.fromDegrees(-90)):
+                self.done()
+                return
+        self.follow_trajectory(state_tm)
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            self.done()
