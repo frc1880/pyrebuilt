@@ -128,3 +128,6 @@ requires = [
 ]
 robotpy_version = "2026.2.1"
 components = ["apriltag"]
+
+[tool.robotpy.pyfrc]
+isolated = false
