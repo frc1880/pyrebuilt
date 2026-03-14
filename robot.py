@@ -70,7 +70,9 @@ class MyRobot(magicbot.MagicRobot):
         )
         self.drivetrain.drive_field(vx, vy, vz)
 
-        if self.gamepad.getAButton():
+        if self.gamepad.getLeftBumper():
+            self.intake.retract()
+        elif self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
         if self.gamepad.getRightTriggerAxis() > 0.5:
             self.shooter_controller.engage()
@@ -79,12 +81,14 @@ class MyRobot(magicbot.MagicRobot):
         self._test_shooter_on = False
 
     def testPeriodic(self) -> None:
-        if self.gamepad.getAButton():
-            self.intake.intake()
         if self.gamepad.getXButtonPressed():
             self._test_shooter_on = not self._test_shooter_on
         if self.gamepad.getYButton():
             self.indexer.feed()
+        if self.gamepad.getPOV() == 0:
+            self.intake.intake()
+        if self.gamepad.getPOV() == 180:
+            self.intake.retract()
 
         if self.gamepad.getRightBumper():
             if self.gamepad.getAButton():
