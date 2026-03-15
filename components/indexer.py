@@ -6,7 +6,7 @@ import ids
 
 
 class Indexer:
-    indexer_speed_rotation = tunable(0.5)
+    indexer_speed_rotation = tunable(1.0)
 
     def __init__(self) -> None:
         self._should_feed = False
