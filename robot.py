@@ -40,6 +40,26 @@ class MyRobot(magicbot.MagicRobot):
         ),
         Rotation3d(0, math.radians(-20), math.radians(90)),
     )
+    white_vision: Vision
+    white_vision_camera_name = "white"
+    white_vision_transform = Transform3d(
+        Translation3d(
+            inch_to_metre(-26.0 / 2 + 0.633),
+            inch_to_metre(-28.0 / 2 + 7.748819),
+            inch_to_metre(7.471),
+        ),
+        Rotation3d(0, math.radians(-30), math.radians(180)),
+    )
+    blue_vision: Vision
+    blue_vision_camera_name = "blue"
+    blue_vision_transform = Transform3d(
+        Translation3d(
+            inch_to_metre(-26.0 / 2 + 8.251),
+            inch_to_metre(-28.0 / 2 + 0.633),
+            inch_to_metre(7.471),
+        ),
+        Rotation3d(0, math.radians(-30), math.radians(-90)),
+    )
 
     def createObjects(self) -> None:
         self.gamepad = wpilib.XboxController(0)
