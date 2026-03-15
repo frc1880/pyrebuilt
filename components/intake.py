@@ -114,4 +114,3 @@ class Intake:
             self._roller_motor.set(self.intake_speed)
         else:
             self._roller_motor.stopMotor()
-        self._should_spin = False
