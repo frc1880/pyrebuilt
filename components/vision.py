@@ -1,7 +1,7 @@
 import math
 
 import wpilib
-from magicbot import feedback
+from magicbot import feedback, tunable
 from phoenix6.utils import fpga_to_current_time
 from photonlibpy import PhotonCamera, PhotonPoseEstimator
 from photonlibpy.targeting.photonTrackedTarget import PhotonTrackedTarget
@@ -19,6 +19,7 @@ class Vision:
     # We need to access the drivetrain to add measurements
     drivetrain: Drivetrain
     field: wpilib.Field2d
+    use_single_tag = tunable(False)
 
     def __init__(self, camera_name: str, transform: Transform3d) -> None:
         # Instantiate the camera/photonvision
@@ -59,7 +60,7 @@ class Vision:
                 )
                 self._has_seen_multitag = True
                 continue
-            if not self._has_seen_multitag:
+            if not self._has_seen_multitag or not self.use_single_tag:
                 # Don't fuse single tags until multitag has given us a proper heading
                 continue
             # We don't have multitag result, so try single tag
