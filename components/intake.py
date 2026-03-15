@@ -6,7 +6,7 @@ import ids
 
 
 class Intake:
-    intake_speed = tunable(0.5)
+    intake_speed = tunable(0.4)
 
     deployed_position = tunable(-7.0)
 
