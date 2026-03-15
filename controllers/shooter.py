@@ -3,6 +3,7 @@ from magicbot import StateMachine, state
 from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
+from utilities import game
 
 
 class ShooterController(StateMachine):
@@ -27,6 +28,7 @@ class ShooterController(StateMachine):
         if (
             not self.drivetrain.is_aligned_with_hub()
             or not self.ballistics.is_within_range()
+            or not game.is_hub_active()
         ):
             self.next_state_now("aligning")
         else:
