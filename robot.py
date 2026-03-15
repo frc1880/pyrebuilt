@@ -83,14 +83,14 @@ class MyRobot(magicbot.MagicRobot):
     def testPeriodic(self) -> None:
         if self.gamepad.getXButtonPressed():
             self._test_shooter_on = not self._test_shooter_on
-        if self.gamepad.getYButton():
+        if self.gamepad.getRightTriggerAxis() > 0.5 and self._test_shooter_on:
             self.indexer.feed()
-        if self.gamepad.getPOV() == 0:
+        if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
-        if self.gamepad.getPOV() == 180:
+        if self.gamepad.getLeftBumper():
             self.intake.retract()
 
-        if self.gamepad.getRightBumper():
+        if self.gamepad.getBackButton():
             if self.gamepad.getAButton():
                 self.leds.not_in_range()
             if self.gamepad.getBButton():
@@ -101,7 +101,7 @@ class MyRobot(magicbot.MagicRobot):
         if self._test_shooter_on:
             self.shooter.shoot()
 
-        if self.gamepad.getLeftBumper():
+        if self.gamepad.getRightBumper():
             speed_scaling = 0.25
             vx = (
                 -map_exponential(self.gamepad.getLeftY(), 1.5)
