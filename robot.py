@@ -109,11 +109,17 @@ class MyRobot(magicbot.MagicRobot):
 
     def disabledPeriodic(self) -> None:
         self.shooter_vision.execute()
+        self.white_vision.execute()
+        self.blue_vision.execute()
         self.ballistics.execute()
+        self.leds.execute()
 
         # First check that one of our cameras has seen multitag
-        if not self.shooter_vision.is_initialized():
-            # TODO Add additional cameras once we add them to the robot
+        if not (
+            self.shooter_vision.is_initialized()
+            or self.blue_vision.is_initialized()
+            or self.white_vision.is_initialized()
+        ):
             self.leds.missing_vision()
         else:
             # Indicate that we don't have an auto mode selected
@@ -160,13 +166,12 @@ class MyRobot(magicbot.MagicRobot):
         if self.gamepad.getLeftBumper():
             self.intake.retract()
 
-        if self.gamepad.getBackButton():
-            if self.gamepad.getAButton():
-                self.leds.not_in_range()
-            if self.gamepad.getBButton():
-                self.leds.in_range()
-            if self.gamepad.getXButton():
-                self.leds.intake()
+        if self.gamepad.getPOV() == 0:
+            self.leds.not_in_range()
+        if self.gamepad.getPOV() == 180:
+            self.leds.in_range()
+        if self.gamepad.getPOV() == 90:
+            self.leds.intake()
 
         if self._test_shooter_on:
             self.shooter.shoot()
