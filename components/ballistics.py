@@ -37,14 +37,14 @@ class Ballistics:
 
     # Ranges measured from hub corner (so starting at 54inch) and to front bumper (add 18inch)
     samples = [
-        Sample(inch_to_metre(54 + 18), 70.0, 43.0, 1.0),
-        Sample(inch_to_metre(74 + 18), 70.0, 46.0, 1.0),
-        Sample(inch_to_metre(94 + 18), 65.0, 47.0, 1.0),
-        Sample(inch_to_metre(114 + 18), 60.0, 49.0, 1.0),
-        Sample(inch_to_metre(134 + 18), 60.0, 53.0, 1.0),
-        Sample(inch_to_metre(154 + 18), 60.0, 55.0, 1.0),
-        Sample(inch_to_metre(174 + 18), 60.0, 58.0, 1.0),
-        Sample(inch_to_metre(194 + 18), 56.0, 60.0, 1.0),
+        Sample(inch_to_metre(54 + 18), 70.0, 43.0, 7.16 - 6.26),
+        Sample(inch_to_metre(74 + 18), 70.0, 46.0, 1.75 - 0.77),
+        Sample(inch_to_metre(94 + 18), 65.0, 47.0, 2.60 - 1.68),
+        Sample(inch_to_metre(114 + 18), 60.0, 49.0, 2.79 - 1.86),
+        Sample(inch_to_metre(134 + 18), 60.0, 53.0, 1.88 - 0.81),
+        Sample(inch_to_metre(154 + 18), 60.0, 55.0, 2.04 - 0.91),
+        Sample(inch_to_metre(174 + 18), 60.0, 58.0, 3.71 - 2.46),
+        Sample(inch_to_metre(194 + 18), 56.0, 60.0, 2.34 - 1.05),
     ]
 
     # Split the samples out to make interpolating easier
@@ -58,10 +58,10 @@ class Ballistics:
     max_score_range = ranges[-1]
 
     def __init__(self) -> None:
-        for pre, post in zip(
-            self.horizontal_velocities, self.horizontal_velocities[1:]
+        for pre, post, range in zip(
+            self.horizontal_velocities, self.horizontal_velocities[1:], self.ranges
         ):
-            assert pre <= post
+            assert pre <= post, f"{range}: {pre} {post}"
         self._solution = Solution(flywheel_speed=0.0, hood_angle=0.0, bearing=0.0)
         self._in_range = False
 
