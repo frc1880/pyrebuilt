@@ -23,6 +23,8 @@ class AutoBase(AutonomousStateMachine):
     drivetrain: Drivetrain
     shooter_controller: ShooterController
 
+    starting_pose: Pose2d | None = None
+
     def setup(self) -> None:
         # All the things that are the same in each routine...
         self._constraints = PathConstraints(
