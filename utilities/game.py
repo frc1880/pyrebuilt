@@ -32,7 +32,7 @@ def is_in_alliance_zone(robot_pose: Pose2d) -> bool:
 
 
 def is_hub_active() -> bool:
-    return time_to_hub_active() == 0
+    return time_to_hub_active() <= 1
 
 
 def _time_to_hub_active_with_args(
