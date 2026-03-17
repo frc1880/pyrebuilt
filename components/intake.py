@@ -6,7 +6,7 @@ import ids
 
 
 class Intake:
-    intake_speed = tunable(0.5)
+    intake_speed = tunable(0.4)
 
     deployed_position = tunable(-7.0)
 
@@ -114,4 +114,3 @@ class Intake:
             self._roller_motor.set(self.intake_speed)
         else:
             self._roller_motor.stopMotor()
-        self._should_spin = False

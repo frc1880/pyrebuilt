@@ -95,10 +95,11 @@ class Leds:
         if not (DriverStation.isTestEnabled() or DriverStation.isDisabled()):
             should_flash = time_to_hub_active() < 5.0 and not is_hub_active()
 
-            if not is_hub_active() or should_flash:
+            if is_hub_active() or should_flash:
                 if self.ballistics.is_within_range():
                     self.in_range(should_flash)
                 else:
                     self.not_in_range(should_flash)
-
+        if isinstance(self._pattern, SolidColor):
+            self._candle.clear_all_animations()
         self._candle.set_control(self._pattern)
