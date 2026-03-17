@@ -2,7 +2,12 @@ import math
 
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 
-from utilities.game import field_flip_pose2d, field_flip_translation2d, is_blue
+from utilities.game import (
+    apriltag_layout,
+    field_flip_pose2d,
+    field_flip_translation2d,
+    is_blue,
+)
 
 
 class TeamPoses:
@@ -15,6 +20,11 @@ class HubPosition:
         182.11 * 25.4 / 1000, 158.84 * 25.4 / 1000
     )  # converted from inches on the field drawings
     RED = field_flip_translation2d(BLUE)
+
+
+class AllianceZone:
+    BLUE = 158.06 * 0.0254
+    RED = apriltag_layout.getFieldLength() - BLUE
 
 
 def hub_position() -> Translation2d:
@@ -40,3 +50,13 @@ def shooter_to_hub(robot_pose: Pose2d) -> Rotation2d:
     )  # Shooter is at rear of robot facing on the +ve y axis
 
     return Rotation2d(desired_heading)
+
+
+def is_in_alliance_zone(robot_pose: Pose2d) -> bool:
+    # Returns True if in alliance zone.
+    robot_x = robot_pose.translation().x
+
+    if is_blue():
+        return robot_x <= AllianceZone.BLUE
+    else:
+        return robot_x >= AllianceZone.RED

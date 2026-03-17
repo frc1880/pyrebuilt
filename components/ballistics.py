@@ -1,12 +1,12 @@
 from typing import NamedTuple
 
 import numpy
-from magicbot import feedback
+from magicbot import feedback, will_reset_to
 
 from components.drivetrain import Drivetrain
 from utilities.conversion import inch_to_metre
-from utilities.game import is_in_alliance_zone
-from utilities.positions import hub_position
+from utilities.game import is_red
+from utilities.positions import AllianceZone, hub_position, is_in_alliance_zone
 
 
 class Solution(NamedTuple):
@@ -35,11 +35,22 @@ class Ballistics:
         inch_to_metre(194 + 18),
     ]  # metres
 
-    flywheel_speeds = [43, 46, 47, 49, 53, 55, 58, 60]  # rev/s
-    hood_angles = [70.0, 70, 65.0, 60.0, 60.0, 60.0, 60, 56]  # degrees from horizontal
+    flywheel_speeds = [43.0, 46.0, 47.0, 49.0, 53.0, 55.0, 58.0, 60.0]  # rev/s
+    hood_angles = [
+        70.0,
+        70.0,
+        65.0,
+        60.0,
+        60.0,
+        60.0,
+        60.0,
+        56.0,
+    ]  # degrees from horizontal
 
     min_score_range = ranges[0]
     max_score_range = ranges[-1]
+
+    should_pass = will_reset_to(False)
 
     def __init__(self) -> None:
         self._solution = Solution(flywheel_speed=0.0, hood_angle=0.0)
@@ -60,14 +71,36 @@ class Ballistics:
         """
         Calculate the required speed and angle and store it in the _solution variable.
         """
-        # First calculate the distance to the target
-        distance_to_hub = self.drivetrain.pose().translation().distance(hub_position())
-        self._in_range = (
-            self.min_score_range < distance_to_hub < self.max_score_range
-            and is_in_alliance_zone(self.drivetrain.pose())
-        )
+        pose = self.drivetrain.pose()
+        if self.should_pass:
+            range = (
+                abs(pose.translation().x - AllianceZone.RED)
+                if is_red()
+                else abs(pose.translation().x - AllianceZone.BLUE)
+            )
+            # Augment the range data for longer shots
+            if range > self.ranges[-1]:
+                delta = range - self.ranges[-1]
+                self._solution = Solution(self.flywheel_speeds[-1] + delta * 3.0, 45.0)
+            else:
+                speed = numpy.interp(range, self.ranges, self.flywheel_speeds)
+                angle = numpy.interp(range, self.ranges, self.hood_angles)
 
-        speed = numpy.interp(distance_to_hub, self.ranges, self.flywheel_speeds)
-        angle = numpy.interp(distance_to_hub, self.ranges, self.hood_angles)
+                self._solution = Solution(flywheel_speed=speed, hood_angle=angle)
+        else:
+            # First calculate the distance to the target
+            distance_to_hub = pose.translation().distance(hub_position())
+            self._in_range = (
+                self.min_score_range < distance_to_hub < self.max_score_range
+                and is_in_alliance_zone(pose)
+            )
 
-        self._solution = Solution(flywheel_speed=speed, hood_angle=angle)
+            # Keep things ticking over but don't power right up in the neutral zone
+            speed = (
+                numpy.interp(distance_to_hub, self.ranges, self.flywheel_speeds)
+                if is_in_alliance_zone(pose)
+                else numpy.float64(self.flywheel_speeds[0])
+            )
+            angle = numpy.interp(distance_to_hub, self.ranges, self.hood_angles)
+
+            self._solution = Solution(flywheel_speed=speed, hood_angle=angle)
