@@ -16,7 +16,7 @@ class ShooterController(StateMachine):
     def _heading(self) -> float:
         # If we are in our alliance zone, aim at the hub
         # Otherwise fire back at the alliance wall as a passing shot
-        if game.is_in_alliance_zone(self.drivetrain.pose()):
+        if positions.is_in_alliance_zone(self.drivetrain.pose()):
             return positions.shooter_to_hub(self.drivetrain.pose()).radians()
         else:
             return math.radians(-90.0) if game.is_red() else math.radians(90.0)
@@ -45,4 +45,6 @@ class ShooterController(StateMachine):
             self.next_state_now("aligning")
         else:
             # We are still aligned, so keep shooting
+            if not positions.is_in_alliance_zone(self.drivetrain.pose()):
+                self.ballistics.should_pass = True
             self.indexer.feed()

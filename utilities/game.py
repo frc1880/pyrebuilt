@@ -1,6 +1,5 @@
 import robotpy_apriltag
 import wpilib
-from magicbot import feedback
 from wpilib import DriverStation
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 
@@ -16,19 +15,6 @@ def is_red() -> bool:
 apriltag_layout = robotpy_apriltag.AprilTagFieldLayout.loadField(
     robotpy_apriltag.AprilTagField.k2026RebuiltWelded
 )
-
-
-@feedback
-def is_in_alliance_zone(robot_pose: Pose2d) -> bool:
-    # Returns True if in alliance zone.
-    field_length = apriltag_layout.getFieldLength()
-    alliance_zone_depth = 158.06 * 0.0254
-    robot_x = robot_pose.translation().x
-
-    if is_blue():
-        return robot_x <= alliance_zone_depth
-    else:
-        return robot_x >= field_length - alliance_zone_depth
 
 
 def is_hub_active() -> bool:
