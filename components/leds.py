@@ -100,5 +100,6 @@ class Leds:
                     self.in_range(should_flash)
                 else:
                     self.not_in_range(should_flash)
-
+        if isinstance(self._pattern, SolidColor):
+            self._candle.clear_all_animations()
         self._candle.set_control(self._pattern)
