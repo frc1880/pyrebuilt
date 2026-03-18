@@ -1,5 +1,5 @@
 import phoenix6
-from magicbot import feedback, tunable
+from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
 
 import ids
@@ -9,9 +9,11 @@ class Intake:
     intake_speed = tunable(0.4)
 
     deployed_position = tunable(-7.0)
+    carry_position = tunable(0.0)
+    _should_spin = will_reset_to(False)
+    _should_deploy = will_reset_to(False)
 
     def __init__(self) -> None:
-        self._should_spin = False
         self._roller_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.INTAKE_ROLLER_MOTOR, ids.CanbusId.INTAKE
         )
@@ -64,13 +66,8 @@ class Intake:
         return self._deploy_motor.get_position().value
 
     def intake(self) -> None:
+        self._should_deploy = True
         self._should_spin = True
-        self._desired_intake_position = self.deployed_position
-
-    def retract(self) -> None:
-        self._desired_intake_position = 0.0
-        # We will stop spinning when the intake is fully retracted
-        # so don't do it here
 
     def execute(self) -> None:
         if not self._initialized:
@@ -78,7 +75,7 @@ class Intake:
             # Check to see if we are still moving/current spike
             # If we are stopped, reset the encoder value and put the motor in closed loop mode
             # TODO Is this output too small?
-            self._deploy_motor.set_control(controls.DutyCycleOut(0.25))
+            self._deploy_motor.set_control(controls.DutyCycleOut(-0.15))
 
             current = self._deploy_motor.get_stator_current().value
             angle = self._deploy_motor.get_position().value
@@ -94,6 +91,12 @@ class Intake:
             else:
                 self._prev_intake_angle = angle
                 return  # we can't intake until we are ready
+
+        # while intake go to set position
+        if self._should_deploy:
+            self._desired_intake_position = self.deployed_position
+        else:
+            self._desired_intake_position = self.carry_position
 
         # Only use the motion profile if we are away from the setpoint
         if (

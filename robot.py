@@ -146,9 +146,7 @@ class MyRobot(magicbot.MagicRobot):
         )
         self.drivetrain.drive_field(vx, vy, vz)
 
-        if self.gamepad.getLeftBumper():
-            self.intake.retract()
-        elif self.gamepad.getLeftTriggerAxis() > 0.5:
+        if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
         if self.gamepad.getRightTriggerAxis() > 0.5:
             self.shooter_controller.engage()
@@ -163,8 +161,6 @@ class MyRobot(magicbot.MagicRobot):
             self.indexer.feed()
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
-        if self.gamepad.getLeftBumper():
-            self.intake.retract()
 
         if self.gamepad.getPOV() == 0:
             self.leds.not_in_range()
