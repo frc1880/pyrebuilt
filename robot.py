@@ -167,7 +167,9 @@ class MyRobot(magicbot.MagicRobot):
         if self.gamepad.getPOV() == 180:
             self.leds.in_range()
         if self.gamepad.getPOV() == 90:
-            self.leds.intake()
+            self.leds.not_in_range(True)
+        if self.gamepad.getPOV() == 270:
+            self.leds.in_range(True)
 
         if self._test_shooter_on:
             self.shooter.shoot()
