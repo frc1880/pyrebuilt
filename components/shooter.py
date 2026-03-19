@@ -19,8 +19,8 @@ class Shooter:
     HOOD_MIN_ANGLE = 36.0  # degrees from horizontal
     HOOD_MAX_ANGLE = 70.0
 
-    # The hood is driven by a 40T:12T belt and pulleys, which then drives a 200T sector gear with a 20T spur gear
-    GEAR_RATIO = 40.0 / 12.0 * 200.0 / 20.0
+    # The hood is driven by a 42T:12T belt and pulleys, which then drives a 200T sector gear with a 20T spur gear
+    GEAR_RATIO = 42.0 / 12.0 * 200.0 / 20.0
 
     def __init__(self) -> None:
         self._should_shoot = False
@@ -92,26 +92,29 @@ class Shooter:
 
     def execute(self) -> None:
         if not self._initialized:
-            # Drive the motor very slowly towards the hard stop
-            # Check to see if we are still moving/current spike
-            # If we are stopped, reset the encoder value and put the motor in closed loop mode
-            # TODO Is this output too small?
-            self._hood_motor.set_control(controls.DutyCycleOut(0.1))
+            # # Drive the motor very slowly towards the hard stop
+            # # Check to see if we are still moving/current spike
+            # # If we are stopped, reset the encoder value and put the motor in closed loop mode
+            # # TODO Is this output too small?
+            # self._hood_motor.set_control(controls.DutyCycleOut(0.1))
 
-            angle = self.hood_angle()
-            current = self.hood_current()
+            # angle = self.hood_angle()
+            # current = self.hood_current()
 
-            # TODO Check 1 degree threshold is okay
-            # TODO Maybe use current as well - we expect a spike when stalled, but it will also spike on start
-            # TODO Check 2A current threshold is okay
-            if abs(angle - self._prev_hood_angle) < 0.25 and current > 6.0:
-                self._hood_motor.set_position(
-                    self.HOOD_MAX_ANGLE / 360.0 * self.GEAR_RATIO
-                )  # max angle is the high, lob shot
-                self._initialized = True
-            else:
-                self._prev_hood_angle = angle
-                return  # we can't shoot until we are ready
+            # # TODO Check 1 degree threshold is okay
+            # # TODO Maybe use current as well - we expect a spike when stalled, but it will also spike on start
+            # # TODO Check 2A current threshold is okay
+            # if abs(angle - self._prev_hood_angle) < 0.25 and current > 6.0:
+            #     self._hood_motor.set_position(
+            #         self.HOOD_MAX_ANGLE / 360.0 * self.GEAR_RATIO
+            #     )  # max angle is the high, lob shot
+            #     self._initialized = True
+            # else:
+            #     self._prev_hood_angle = angle
+            #     return  # we can't shoot until we are ready
+            self._hood_motor.set_position(self.HOOD_MAX_ANGLE / 360.0 * self.GEAR_RATIO)
+            self._initialized = True
+            return
 
         # Always run except in test mode
         if DriverStation.isTestEnabled():
