@@ -31,21 +31,21 @@ class Intake:
             0.25 * 0.0
         )  # Add this voltage output to overcome static friction
         slot0_configs.k_v = (
-            6.72  # A velocity target of 1 rps results in this voltage output
+            6.72 * 0.15  # A velocity target of 1 rps results in this voltage output
         )
         slot0_configs.k_a = (
-            0.04 * 0.1  # An acceleration of 1 rps/s requires this voltage output
+            0.04  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 20.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 15.0  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
-            0.12  # A velocity error of 1 rps results in this voltage output
+            0.12 * 0.5  # A velocity error of 1 rps results in this voltage output
         )
 
         motion_magic_configs = talon_fx_configs.motion_magic
-        motion_magic_configs.motion_magic_cruise_velocity = 10.0
-        motion_magic_configs.motion_magic_expo_k_a = 0.1 * 10
-        motion_magic_configs.motion_magic_expo_k_v = 0.12 * 10
+        motion_magic_configs.motion_magic_cruise_velocity = 1000.0
+        motion_magic_configs.motion_magic_expo_k_a = 0.1 * 1
+        motion_magic_configs.motion_magic_expo_k_v = 0.12 * 0.5
 
         self._deploy_motor.configurator.apply(talon_fx_configs)
 
@@ -116,7 +116,7 @@ class Intake:
             > 0.25
         ):
             # Compensate for gravity
-            ff_volts = -1.0 * math.sin(
+            ff_volts = -0.5 * math.sin(
                 self.position() / self.deployed_position * math.pi / 2.0
             )
             self._deploy_motor.set_control(
