@@ -162,7 +162,8 @@ class MyRobot(magicbot.MagicRobot):
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
 
-        if self.gamepad.getRightBumper():
+        if self.gamepad.getLeftBumper():
+            self.leds.disabled()
             if self.gamepad.getPOV() == 0:
                 self.leds.wrong_start(Transform2d(-1, 0, Rotation2d()))
             if self.gamepad.getPOV() == 180:
