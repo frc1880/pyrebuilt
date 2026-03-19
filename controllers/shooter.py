@@ -5,6 +5,7 @@ from magicbot import StateMachine, state
 from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
+from components.intake import Intake
 from utilities import game, positions
 
 
@@ -12,6 +13,7 @@ class ShooterController(StateMachine):
     ballistics: Ballistics
     drivetrain: Drivetrain
     indexer: Indexer
+    intake: Intake
 
     def _heading(self) -> float:
         # If we are in our alliance zone, aim at the hub
@@ -48,3 +50,4 @@ class ShooterController(StateMachine):
             if not positions.is_in_alliance_zone(self.drivetrain.pose()):
                 self.ballistics.should_pass = True
             self.indexer.feed()
+            self.intake.spin()
