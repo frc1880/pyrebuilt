@@ -1,9 +1,10 @@
 from enum import Enum, auto
 
+from magicbot import feedback
 from phoenix6.controls.color_flow_animation import ColorFlowAnimation
+from phoenix6.controls.single_fade_animation import SingleFadeAnimation
 from phoenix6.controls.solid_color import SolidColor
 from phoenix6.controls.strobe_animation import StrobeAnimation
-from phoenix6.controls.twinkle_animation import TwinkleAnimation
 from phoenix6.hardware.candle import CANdle
 from phoenix6.signals.rgbw_color import RGBWColor
 from wpilib import DriverStation
@@ -40,16 +41,16 @@ class Leds:
     ballistics: Ballistics
 
     # Colours
-    RED = RGBWColor(255, 0, 0, 0)
-    GREEN = RGBWColor(0, 255, 0, 0)
-    YELLOW = RGBWColor(255, 255, 0, 0)
-    BLUE = RGBWColor(0, 0, 255, 0)
-    WHITE = RGBWColor(0, 0, 0, 255)
-    ORANGE = RGBWColor(255, 165, 0, 0)
+    RED = RGBWColor(255, 0, 0)
+    GREEN = RGBWColor(0, 255, 0)
+    YELLOW = RGBWColor(255, 255, 0)
+    BLUE = RGBWColor(0, 0, 255)
+    WHITE = RGBWColor(255, 255, 255)
+    ORANGE = RGBWColor(255, 165, 0)
 
     led_start: int = 0
     led_end: int = 37
-    segments = [0, 7, 22, 37, 52, 67]
+    segments = [0, 7, 14, 21, 29, 35]
     brightness: float = 1.0
 
     def __init__(self) -> None:
@@ -98,6 +99,10 @@ class Leds:
 
     def disabled(self) -> None:
         self._pattern = Pattern.DISABLED
+
+    @feedback
+    def pattern(self) -> str:
+        return self._pattern.name
 
     def execute(self) -> None:
         if not (DriverStation.isTestEnabled() or DriverStation.isDisabled()):
@@ -181,10 +186,10 @@ class Leds:
                         end = self.segments[idx + 2]
                         mid = int((start + end) / 2)
                         self._candle.set_control(
-                            TwinkleAnimation(start, mid, idx * 2, color=self.BLUE)
+                            SingleFadeAnimation(start, mid, idx * 2, color=self.BLUE)
                         )
                         self._candle.set_control(
-                            TwinkleAnimation(mid, end, idx * 2 + 1, color=self.WHITE)
+                            SingleFadeAnimation(mid, end, idx * 2 + 1, color=self.WHITE)
                         )
                 case Pattern.IN_RANGE:
                     self._candle.set_control(
