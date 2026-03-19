@@ -1,7 +1,9 @@
 from enum import Enum, auto
 
+from phoenix6.controls.color_flow_animation import ColorFlowAnimation
 from phoenix6.controls.solid_color import SolidColor
 from phoenix6.controls.strobe_animation import StrobeAnimation
+from phoenix6.controls.twinkle_animation import TwinkleAnimation
 from phoenix6.hardware.candle import CANdle
 from phoenix6.signals.rgbw_color import RGBWColor
 from wpilib import DriverStation
@@ -47,6 +49,7 @@ class Leds:
 
     led_start: int = 0
     led_end: int = 37
+    segments = [0, 7, 22, 37, 52, 67]
     brightness: float = 1.0
 
     def __init__(self) -> None:
@@ -55,12 +58,6 @@ class Leds:
         # Default pattern
         self._pattern = Pattern.DISABLED
         self._previous_pattern = Pattern.OFF
-
-    def _solid(self, color: RGBWColor) -> SolidColor:
-        return SolidColor(self.led_start, self.led_end, color)
-
-    def _flashing(self, color: RGBWColor) -> StrobeAnimation:
-        return StrobeAnimation(self.led_start, self.led_end, 0, color)
 
     def in_range(self, should_flash: bool = False) -> None:
         self._pattern = Pattern.IN_RANGE_FLASH if should_flash else Pattern.IN_RANGE
@@ -125,31 +122,92 @@ class Leds:
             self._candle.clear_all_animations()
             match self._pattern:
                 case Pattern.NO_VISION:
-                    pass
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[0], self.segments[-1], color=self.BLUE
+                        )
+                    )
                 case Pattern.NO_AUTO:
-                    pass
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[0], self.segments[-1], color=self.ORANGE
+                        )
+                    )
                 case Pattern.ROTATE_CW:
-                    pass
+                    self._candle.set_control(
+                        ColorFlowAnimation(
+                            self.segments[1], self.segments[-1], color=self.YELLOW
+                        )
+                    )
                 case Pattern.ROTATE_CCW:
-                    pass
+                    self._candle.set_control(
+                        ColorFlowAnimation(
+                            self.segments[-1], self.segments[1], color=self.YELLOW
+                        )
+                    )
                 case Pattern.MOVE_FORWARD:
-                    pass
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[1], self.segments[3], color=self.YELLOW
+                        )
+                    )
                 case Pattern.MOVE_BACKWARD:
-                    pass
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[3], self.segments[5], color=self.YELLOW
+                        )
+                    )
                 case Pattern.MOVE_LEFT:
-                    pass
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[2], self.segments[4], color=self.YELLOW
+                        )
+                    )
+
                 case Pattern.MOVE_RIGHT:
-                    pass
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[1], self.segments[2], color=self.YELLOW
+                        )
+                    )
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[3], self.segments[4], 1, color=self.YELLOW
+                        )
+                    )
                 case Pattern.DISABLED:
-                    pass
+                    for idx in range(4):
+                        start = self.segments[idx + 1]
+                        end = self.segments[idx + 2]
+                        mid = int((start + end) / 2)
+                        self._candle.set_control(
+                            TwinkleAnimation(start, mid, idx * 2, color=self.BLUE)
+                        )
+                        self._candle.set_control(
+                            TwinkleAnimation(mid, end, idx * 2 + 1, color=self.WHITE)
+                        )
                 case Pattern.IN_RANGE:
-                    pass
+                    self._candle.set_control(
+                        SolidColor(
+                            self.segments[0], self.segments[-1], color=self.GREEN
+                        )
+                    )
                 case Pattern.IN_RANGE_FLASH:
-                    pass
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[0], self.segments[-1], color=self.GREEN
+                        )
+                    )
                 case Pattern.NOT_IN_RANGE:
-                    pass
+                    self._candle.set_control(
+                        SolidColor(self.segments[0], self.segments[-1], color=self.RED)
+                    )
                 case Pattern.NOT_IN_RANGE_FLASH:
-                    pass
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[0], self.segments[-1], color=self.RED
+                        )
+                    )
                 case Pattern.OFF:
                     pass
 
