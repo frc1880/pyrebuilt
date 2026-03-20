@@ -162,12 +162,24 @@ class MyRobot(magicbot.MagicRobot):
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
 
-        if self.gamepad.getPOV() == 0:
-            self.leds.not_in_range()
-        if self.gamepad.getPOV() == 180:
-            self.leds.in_range()
-        if self.gamepad.getPOV() == 90:
-            self.leds.intake()
+        if self.gamepad.getLeftBumper():
+            self.leds.disabled()
+            if self.gamepad.getPOV() == 0:
+                self.leds.wrong_start(Transform2d(-1, 0, Rotation2d()))
+            if self.gamepad.getPOV() == 180:
+                self.leds.wrong_start(Transform2d(1, 0, Rotation2d()))
+            if self.gamepad.getPOV() == 90:
+                self.leds.wrong_start(Transform2d(0, 1, Rotation2d()))
+            if self.gamepad.getPOV() == 270:
+                self.leds.wrong_start(Transform2d(0, -1, Rotation2d()))
+            if self.gamepad.getAButton():
+                self.leds.in_range()
+            if self.gamepad.getBButton():
+                self.leds.in_range(True)
+            if self.gamepad.getXButton():
+                self.leds.not_in_range()
+            if self.gamepad.getYButton():
+                self.leds.not_in_range(True)
 
         if self._test_shooter_on:
             self.shooter.shoot()

@@ -36,10 +36,10 @@ class Intake:
         slot0_configs.k_a = (
             0.04  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 15.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 30.0  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
-            0.12 * 0.5  # A velocity error of 1 rps results in this voltage output
+            0.12  # A velocity error of 1 rps results in this voltage output
         )
 
         motion_magic_configs = talon_fx_configs.motion_magic
@@ -77,6 +77,9 @@ class Intake:
         self._should_deploy = True
         self._should_spin = True
 
+    def spin(self) -> None:
+        self._should_spin = True
+
     def execute(self) -> None:
         if not self._initialized:
             # Drive the motor very slowly towards the hard stop
@@ -109,14 +112,11 @@ class Intake:
 
         # Only use the motion profile if we are away from the setpoint
         if (
-            True
-            and abs(
-                self._desired_intake_position - self._deploy_motor.get_position().value
-            )
-            > 0.25
-        ):
+            self._desired_intake_position == self.carry_position
+            and self._deploy_motor.get_position().value < self.carry_position
+        ) or self._desired_intake_position != self.carry_position:
             # Compensate for gravity
-            ff_volts = -0.5 * math.sin(
+            ff_volts = -1.0 * math.sin(
                 self.position() / self.deployed_position * math.pi / 2.0
             )
             self._deploy_motor.set_control(
