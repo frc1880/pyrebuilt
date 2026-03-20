@@ -90,7 +90,7 @@ class MyRobot(magicbot.MagicRobot):
             )
             error = self.drivetrain.pose() - starting_pose
             # Clean up to add tolerances
-            if abs(error.rotation().radians()) < math.radians(10.0):
+            if abs(error.rotation().radians()) < math.radians(20.0):
                 # Blank out the rotation if below the threshold
                 error = Transform2d(error.translation(), Rotation2d())
             if abs(error.x) < 0.2:
