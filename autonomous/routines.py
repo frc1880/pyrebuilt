@@ -155,18 +155,18 @@ class GobblerRight(AutoBase):
             # Create a trajectory to the shooting position
             assert self.starting_pose
             p1 = Pose2d(
-                self.starting_pose.x + 3.0,
+                self.starting_pose.x + 2.5,
                 self.starting_pose.y,
                 Rotation2d.fromDegrees(0.0),
             )
             p2 = Pose2d(
-                self.starting_pose.x + 4.2,
+                self.starting_pose.x + 4.1,
                 self.starting_pose.y + 1.0,
                 Rotation2d.fromDegrees(90.0),
             )
             p3 = Pose2d(
-                self.starting_pose.x + 4.2,
-                self.starting_pose.y + 3.0,
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 2.5,
                 Rotation2d.fromDegrees(90.0),
             )
 
@@ -192,18 +192,18 @@ class GobblerRight(AutoBase):
             # Create a trajectory to the shooting position
             assert self.starting_pose
             p1 = Pose2d(
-                self.starting_pose.x + 3.0,
+                self.starting_pose.x + 2.5,
                 self.starting_pose.y,
                 Rotation2d.fromDegrees(180.0),
             )
             p2 = Pose2d(
-                self.starting_pose.x + 4.2,
+                self.starting_pose.x + 4.1,
                 self.starting_pose.y + 1.0,
                 Rotation2d.fromDegrees(-90.0),
             )
             p3 = Pose2d(
-                self.starting_pose.x + 4.2,
-                self.starting_pose.y + 3.0,
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 2.5,
                 Rotation2d.fromDegrees(-90.0),
             )
             sp = Pose2d(
