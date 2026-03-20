@@ -13,6 +13,7 @@ class Intake:
     deployed_position = tunable(-20.5)
     carry_position = tunable(-7.0)
     _should_spin = will_reset_to(False)
+    _should_feed = will_reset_to(False)
     _should_deploy = will_reset_to(False)
 
     def __init__(self) -> None:
@@ -82,6 +83,9 @@ class Intake:
     def spin(self) -> None:
         self._should_spin = True
 
+    def feed(self) -> None:
+        self._should_feed = True
+
     def execute(self) -> None:
         if not self._initialized:
             # Drive the motor very slowly towards the hard stop
@@ -135,5 +139,7 @@ class Intake:
         if self._should_spin:
             # Spin the intake motor
             self._roller_motor.set(self.intake_speed)
+        elif self._should_feed:
+            self._roller_motor.set(0.3)
         else:
             self._roller_motor.stopMotor()
