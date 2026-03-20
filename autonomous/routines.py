@@ -75,7 +75,7 @@ class AutoBase(AutonomousStateMachine):
 
         return self._trajectory is not None
 
-    def follow_trajectory(self, state_tm) -> None:
+    def follow_trajectory(self, state_tm: float) -> None:
         target_state = self._trajectory.sample(state_tm)
         target_speeds = self._controller.calculateRobotRelativeSpeeds(
             self.drivetrain.pose(), target_state
@@ -84,7 +84,7 @@ class AutoBase(AutonomousStateMachine):
             target_speeds.vx, target_speeds.vy, target_speeds.omega
         )
 
-    def is_trajectory_expired(self, state_tm) -> bool:
+    def is_trajectory_expired(self, state_tm: float) -> bool:
         return state_tm > self._trajectory.getTotalTimeSeconds()
 
 
@@ -96,7 +96,7 @@ class Shoot(AutoBase):
     MODE_NAME = "Shoot"
 
     @state(first=True)
-    def driving_to_shoot(self, initial_call, state_tm) -> None:
+    def driving_to_shoot(self, initial_call: bool, state_tm: float) -> None:
         if initial_call:
             # Create a trajectory to the shooting position
             robot_pose = self.drivetrain.pose()
