@@ -1,5 +1,6 @@
 import math
 
+import wpilib
 from magicbot import StateMachine, state
 
 from components.ballistics import Ballistics
@@ -26,6 +27,9 @@ class ShooterController(StateMachine):
     def _can_shoot(self) -> bool:
         # We can shoot if we are in our zone and the hub is active,
         # or we are outside our zone at any time
+        if wpilib.DriverStation.isAutonomousEnabled():
+            # Always shoot in auto
+            return True
         in_zone = positions.is_in_alliance_zone(self.drivetrain.pose())
         return (game.is_hub_active() and in_zone) or not in_zone
 
