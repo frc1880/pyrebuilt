@@ -38,6 +38,19 @@ class AutoBase(AutonomousStateMachine):
             rotation_constants=PIDConstants(kP=5.0),
         )
 
+    def get_starting_pose(self) -> Pose2d | None:
+        return self.starting_pose
+
+    def on_enable(self) -> None:
+        # configure defaults for pose in sim
+
+        # Setup starting position in the simulator
+        starting_pose = self.get_starting_pose()
+        if wpilib.RobotBase.isSimulation() and starting_pose is not None:
+            self.drivetrain.set_pose(starting_pose)
+
+        super().on_enable()
+
     def set_trajectory(
         self, waypoints: list[Pose2d], goal_rotation: Rotation2d
     ) -> bool:
