@@ -150,6 +150,8 @@ class MyRobot(magicbot.MagicRobot):
             self.intake.intake()
         if self.gamepad.getRightTriggerAxis() > 0.5:
             self.shooter_controller.engage()
+        elif self.gamepad.getAButton():
+            self.indexer.backdrive()
 
     def testInit(self) -> None:
         self._test_shooter_on = False
