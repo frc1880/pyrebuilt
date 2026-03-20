@@ -7,6 +7,7 @@ from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
+from components.shooter import Shooter
 from utilities import game, positions
 
 
@@ -15,6 +16,7 @@ class ShooterController(StateMachine):
     drivetrain: Drivetrain
     indexer: Indexer
     intake: Intake
+    shooter: Shooter
 
     def _heading(self) -> float:
         # If we are in our alliance zone, aim at the hub
@@ -39,6 +41,7 @@ class ShooterController(StateMachine):
             return
         # Point at the target
         self.drivetrain.track_heading(self._heading())
+        self.shooter.shoot()
         if self.drivetrain.is_aligned():
             self.next_state("shooting")
 

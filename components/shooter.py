@@ -6,10 +6,13 @@ from wpilib import DriverStation
 
 import ids
 from components.ballistics import Ballistics
+from components.drivetrain import Drivetrain
+from utilities.positions import is_in_alliance_zone
 
 
 class Shooter:
     ballistics: Ballistics
+    drivetrain: Drivetrain
 
     speed = tunable(25.0)
     desired_hood_angle = tunable(70.0)
@@ -67,8 +70,14 @@ class Shooter:
             .with_k_v(0.1213)
             .with_k_a(0.024026)
         )
+        # current_cfg = (
+        #     configs.CurrentLimitsConfigs()
+        #     .with_stator_current_limit(30.0)
+        #     .with_stator_current_limit_enable(True)
+        # )
         self._shooter_motor.configurator.apply(
             configs.TalonFXConfiguration().with_slot0(flywheel_gains_cfg)
+            # .with_current_limits(current_cfg)
         )
 
     def shoot(self) -> None:
@@ -127,7 +136,9 @@ class Shooter:
             solution = self.ballistics.solution()
             desired_hood_angle = solution.hood_angle
             desired_speed = solution.flywheel_speed
-            should_spin = True
+            should_spin = (
+                is_in_alliance_zone(self.drivetrain.pose()) or self._should_shoot
+            )
 
         # Update hood setpoint even if not shooting
         desired_hood_rotation = (
