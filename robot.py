@@ -114,11 +114,11 @@ class MyRobot(magicbot.MagicRobot):
         self.ballistics.execute()
         self.leds.execute()
 
-        # First check that one of our cameras has seen multitag
+        # First check that one of our cameras has seen multitag in the last 2 seconds
         if not (
-            self.shooter_vision.is_initialized()
-            or self.blue_vision.is_initialized()
-            or self.white_vision.is_initialized()
+            self.shooter_vision.alive()
+            or self.blue_vision.alive()
+            or self.white_vision.alive()
         ):
             self.leds.missing_vision()
         else:
