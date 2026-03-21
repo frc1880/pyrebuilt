@@ -149,7 +149,7 @@ class Shooter:
             desired_hood_angle = (
                 solution.hood_angle
                 if in_alliance
-                else 45.0
+                else 40.0
                 if self._should_shoot
                 else self.HOOD_MAX_ANGLE - 1.0
             )
