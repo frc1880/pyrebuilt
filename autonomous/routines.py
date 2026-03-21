@@ -207,7 +207,7 @@ class ShootGobblerRight(AutoBase):
                 Rotation2d.fromDegrees(-90.0),
             )
             sp = Pose2d(
-                self.starting_pose.x + 0.5,
+                self.starting_pose.x + 0.0,
                 self.starting_pose.y,
                 Rotation2d.fromDegrees(180.0),
             )
@@ -249,7 +249,7 @@ class ShootGobblerRight(AutoBase):
                 Rotation2d.fromDegrees(90.0),
             )
             sp = Pose2d(
-                self.starting_pose.x + 0.5,
+                self.starting_pose.x + 0.0,
                 self.starting_pose.y,
                 Rotation2d.fromDegrees(0.0),
             )
@@ -291,7 +291,7 @@ class ShootGobblerRight(AutoBase):
                 Rotation2d.fromDegrees(-90.0),
             )
             sp = Pose2d(
-                self.starting_pose.x + 0.5,
+                self.starting_pose.x + 0.0,
                 self.starting_pose.y,
                 Rotation2d.fromDegrees(180.0),
             )
