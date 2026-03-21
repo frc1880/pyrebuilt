@@ -56,5 +56,6 @@ class ShooterController(StateMachine):
             # We are still aligned, so keep shooting
             if not positions.is_in_alliance_zone(self.drivetrain.pose()):
                 self.ballistics.should_pass = True
-            self.indexer.feed()
-            self.intake.spin()
+            if self.shooter.at_speed():
+                self.indexer.feed()
+                self.intake.spin()

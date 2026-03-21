@@ -99,6 +99,14 @@ class Shooter:
     def setpoint(self) -> float:
         return self.desired_hood_angle / 360.0 * self.GEAR_RATIO
 
+    @feedback
+    def current_speed(self) -> float:
+        return self._shooter_motor.get_velocity().value
+
+    @feedback
+    def at_speed(self) -> bool:
+        return abs(self._shooter_motor.get_velocity().value - self.speed) < 1
+
     def execute(self) -> None:
         if not self._initialized:
             # # Drive the motor very slowly towards the hard stop
@@ -136,6 +144,7 @@ class Shooter:
             solution = self.ballistics.solution()
             desired_hood_angle = solution.hood_angle
             desired_speed = solution.flywheel_speed
+            self.speed = desired_speed
             should_spin = (
                 is_in_alliance_zone(self.drivetrain.pose()) or self._should_shoot
             )
@@ -154,7 +163,7 @@ class Shooter:
             # for teams that have problems with Krakens in follower mode with FOC on
             # For now, we run without FOC enabled
             self._shooter_motor.set_control(
-                controls.VelocityVoltage(-desired_speed, enable_foc=True)
+                controls.VelocityVoltage(-desired_speed, enable_foc=False)
             )
         else:
             self._shooter_motor.stopMotor()
