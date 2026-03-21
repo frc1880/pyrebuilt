@@ -107,7 +107,7 @@ class Shooter:
 
     @feedback
     def at_speed(self) -> bool:
-        return abs(self._shooter_motor.get_velocity().value - self.speed) < 1
+        return abs(abs(self._shooter_motor.get_velocity().value) - abs(self.speed)) < 5
 
     def execute(self) -> None:
         if not self._initialized:
