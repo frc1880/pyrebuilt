@@ -7,6 +7,7 @@ import ids
 
 class Indexer:
     indexer_speed_rotation = tunable(1.0)
+    backdrive_speed = tunable(-0.5)
     _should_feed = will_reset_to(False)
     _should_backdrive = will_reset_to(False)
 
@@ -37,7 +38,7 @@ class Indexer:
             self._injector_motor.set(1.0)
         elif self._should_backdrive:
             self._injector_motor.set(-1.0)
-            self._indexer_rotation_motor.set(-0.25)
+            self._indexer_rotation_motor.set(-abs(self.backdrive_speed))
         else:
             self._indexer_rotation_motor.stopMotor()
             self._injector_motor.stopMotor()
