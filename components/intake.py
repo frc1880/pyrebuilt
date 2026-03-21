@@ -10,9 +10,10 @@ import ids
 class Intake:
     intake_speed = tunable(1.0)
 
-    deployed_position = tunable(-21.0)
+    deployed_position = tunable(-20.5)
     carry_position = tunable(-7.0)
     _should_spin = will_reset_to(False)
+    _should_feed = will_reset_to(False)
     _should_deploy = will_reset_to(False)
 
     def __init__(self) -> None:
@@ -36,16 +37,18 @@ class Intake:
         slot0_configs.k_a = (
             0.04  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 30.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 10.0  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
-            0.12  # A velocity error of 1 rps results in this voltage output
+            0.12 * 0.01  # A velocity error of 1 rps results in this voltage output
         )
 
         motion_magic_configs = talon_fx_configs.motion_magic
         motion_magic_configs.motion_magic_cruise_velocity = 1000.0
         motion_magic_configs.motion_magic_expo_k_a = 0.1 * 1
         motion_magic_configs.motion_magic_expo_k_v = 0.12 * 0.5
+
+        talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
 
         self._deploy_motor.configurator.apply(talon_fx_configs)
 
@@ -79,6 +82,9 @@ class Intake:
 
     def spin(self) -> None:
         self._should_spin = True
+
+    def feed(self) -> None:
+        self._should_feed = True
 
     def execute(self) -> None:
         if not self._initialized:
@@ -114,9 +120,12 @@ class Intake:
         if (
             self._desired_intake_position == self.carry_position
             and self._deploy_motor.get_position().value < self.carry_position
-        ) or self._desired_intake_position != self.carry_position:
+        ) or (
+            self._desired_intake_position == self.deployed_position
+            and self._deploy_motor.get_position().value > self.deployed_position
+        ):
             # Compensate for gravity
-            ff_volts = -1.0 * math.sin(
+            ff_volts = -0.0 * math.sin(
                 self.position() / self.deployed_position * math.pi / 2.0
             )
             self._deploy_motor.set_control(
@@ -130,5 +139,7 @@ class Intake:
         if self._should_spin:
             # Spin the intake motor
             self._roller_motor.set(self.intake_speed)
+        elif self._should_feed:
+            self._roller_motor.set(0.3)
         else:
             self._roller_motor.stopMotor()

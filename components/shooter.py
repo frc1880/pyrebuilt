@@ -6,10 +6,13 @@ from wpilib import DriverStation
 
 import ids
 from components.ballistics import Ballistics
+from components.drivetrain import Drivetrain
+from utilities.positions import is_in_alliance_zone
 
 
 class Shooter:
     ballistics: Ballistics
+    drivetrain: Drivetrain
 
     speed = tunable(25.0)
     desired_hood_angle = tunable(70.0)
@@ -67,8 +70,14 @@ class Shooter:
             .with_k_v(0.1213)
             .with_k_a(0.024026)
         )
+        # current_cfg = (
+        #     configs.CurrentLimitsConfigs()
+        #     .with_stator_current_limit(30.0)
+        #     .with_stator_current_limit_enable(True)
+        # )
         self._shooter_motor.configurator.apply(
             configs.TalonFXConfiguration().with_slot0(flywheel_gains_cfg)
+            # .with_current_limits(current_cfg)
         )
 
     def shoot(self) -> None:
@@ -89,6 +98,14 @@ class Shooter:
     @feedback
     def setpoint(self) -> float:
         return self.desired_hood_angle / 360.0 * self.GEAR_RATIO
+
+    @feedback
+    def current_speed(self) -> float:
+        return self._shooter_motor.get_velocity().value
+
+    @feedback
+    def at_speed(self) -> bool:
+        return abs(self._shooter_motor.get_velocity().value - self.speed) < 1
 
     def execute(self) -> None:
         if not self._initialized:
@@ -124,10 +141,20 @@ class Shooter:
             should_spin = self._should_shoot
         else:
             # Teleop or auto, so always set to what ballistics says
+            in_alliance = is_in_alliance_zone(self.drivetrain.pose())
             solution = self.ballistics.solution()
-            desired_hood_angle = solution.hood_angle
-            desired_speed = solution.flywheel_speed
-            should_spin = True
+            # Use the same flat shot for ferrying
+            desired_hood_angle = (
+                solution.hood_angle
+                if in_alliance
+                else 45.0
+                if self._should_shoot
+                else 70.0
+            )
+            desired_speed = solution.flywheel_speed if in_alliance else 75.0
+            self.speed = desired_speed
+            self.desired_hood_angle = desired_hood_angle
+            should_spin = in_alliance or self._should_shoot
 
         # Update hood setpoint even if not shooting
         desired_hood_rotation = (
@@ -143,7 +170,7 @@ class Shooter:
             # for teams that have problems with Krakens in follower mode with FOC on
             # For now, we run without FOC enabled
             self._shooter_motor.set_control(
-                controls.VelocityVoltage(-desired_speed, enable_foc=True)
+                controls.VelocityVoltage(-desired_speed, enable_foc=False)
             )
         else:
             self._shooter_motor.stopMotor()

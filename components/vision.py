@@ -29,6 +29,7 @@ class Vision:
         self._targets: list[PhotonTrackedTarget] = []
 
         self._has_seen_multitag = False
+        self._last_multitag = wpilib.Timer.getFPGATimestamp()
 
     def setup(self) -> None:
         self._field_obj = self.field.getObject(self.camera.getName() + "_vision")
@@ -38,6 +39,10 @@ class Vision:
         ids = [target.fiducialId for target in self._targets]
         ids.sort()
         return ids
+
+    @feedback
+    def alive(self) -> bool:
+        return wpilib.Timer.getFPGATimestamp() - self._last_multitag < 2.0
 
     def is_initialized(self) -> bool:
         return self._has_seen_multitag
@@ -59,6 +64,7 @@ class Vision:
                     (0.05, 0.05, math.radians(3)),
                 )
                 self._has_seen_multitag = True
+                self._last_multitag = wpilib.Timer.getFPGATimestamp()
                 continue
             if not self._has_seen_multitag or not self.use_single_tag:
                 # Don't fuse single tags until multitag has given us a proper heading

@@ -49,16 +49,16 @@ class MyRobot(magicbot.MagicRobot):
         ),
         Rotation3d(0, math.radians(-20), math.radians(90)),
     )
-    white_vision: Vision
-    white_vision_camera_name = "white"
-    white_vision_transform = Transform3d(
-        Translation3d(
-            inch_to_metre(-26.0 / 2 + 0.633),
-            inch_to_metre(-28.0 / 2 + 7.748819),
-            inch_to_metre(7.471),
-        ),
-        Rotation3d(0, math.radians(-30), math.radians(180)),
-    )
+    # white_vision: Vision
+    # white_vision_camera_name = "white"
+    # white_vision_transform = Transform3d(
+    #     Translation3d(
+    #         inch_to_metre(-26.0 / 2 + 0.633),
+    #         inch_to_metre(-28.0 / 2 + 7.748819),
+    #         inch_to_metre(7.471),
+    #     ),
+    #     Rotation3d(0, math.radians(-30), math.radians(180)),
+    # )
     blue_vision: Vision
     blue_vision_camera_name = "blue"
     blue_vision_transform = Transform3d(
@@ -90,7 +90,7 @@ class MyRobot(magicbot.MagicRobot):
             )
             error = self.drivetrain.pose() - starting_pose
             # Clean up to add tolerances
-            if abs(error.rotation().radians()) < math.radians(10.0):
+            if abs(error.rotation().radians()) < math.radians(20.0):
                 # Blank out the rotation if below the threshold
                 error = Transform2d(error.translation(), Rotation2d())
             if abs(error.x) < 0.2:
@@ -109,16 +109,15 @@ class MyRobot(magicbot.MagicRobot):
 
     def disabledPeriodic(self) -> None:
         self.shooter_vision.execute()
-        self.white_vision.execute()
+        # self.white_vision.execute()
         self.blue_vision.execute()
         self.ballistics.execute()
         self.leds.execute()
 
-        # First check that one of our cameras has seen multitag
+        # First check that one of our cameras has seen multitag in the last 2 seconds
         if not (
-            self.shooter_vision.is_initialized()
-            or self.blue_vision.is_initialized()
-            or self.white_vision.is_initialized()
+            self.shooter_vision.alive() or self.blue_vision.alive()
+            # or self.white_vision.alive()
         ):
             self.leds.missing_vision()
         else:
@@ -150,6 +149,8 @@ class MyRobot(magicbot.MagicRobot):
             self.intake.intake()
         if self.gamepad.getRightTriggerAxis() > 0.5:
             self.shooter_controller.engage()
+        elif self.gamepad.getAButton():
+            self.indexer.backdrive()
 
     def testInit(self) -> None:
         self._test_shooter_on = False
@@ -208,3 +209,5 @@ class MyRobot(magicbot.MagicRobot):
         self.intake.execute()
         self.indexer.execute()
         self.leds.execute()
+        self.shooter_vision.execute()
+        self.blue_vision.execute()
