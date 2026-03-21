@@ -141,13 +141,20 @@ class Shooter:
             should_spin = self._should_shoot
         else:
             # Teleop or auto, so always set to what ballistics says
+            in_alliance = is_in_alliance_zone(self.drivetrain.pose())
             solution = self.ballistics.solution()
-            desired_hood_angle = solution.hood_angle
-            desired_speed = solution.flywheel_speed
-            self.speed = desired_speed
-            should_spin = (
-                is_in_alliance_zone(self.drivetrain.pose()) or self._should_shoot
+            # Use the same flat shot for ferrying
+            desired_hood_angle = (
+                solution.hood_angle
+                if in_alliance
+                else 45.0
+                if self._should_shoot
+                else 70.0
             )
+            desired_speed = solution.flywheel_speed if in_alliance else 75.0
+            self.speed = desired_speed
+            self.desired_hood_angle = desired_hood_angle
+            should_spin = in_alliance or self._should_shoot
 
         # Update hood setpoint even if not shooting
         desired_hood_rotation = (

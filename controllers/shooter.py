@@ -3,7 +3,6 @@ import math
 import wpilib
 from magicbot import StateMachine, state
 
-from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
@@ -12,7 +11,6 @@ from utilities import game, positions
 
 
 class ShooterController(StateMachine):
-    ballistics: Ballistics
     drivetrain: Drivetrain
     indexer: Indexer
     intake: Intake
@@ -50,12 +48,11 @@ class ShooterController(StateMachine):
         # Check to see that we are still aligned with the goal
         # This is important if we are being defended
         self.drivetrain.track_heading(self._heading())
+        self.shooter.shoot()
         if not (self._can_shoot() and self.drivetrain.is_aligned()):
             self.next_state_now("aligning")
         else:
             # We are still aligned, so keep shooting
-            if not positions.is_in_alliance_zone(self.drivetrain.pose()):
-                self.ballistics.should_pass = True
             if self.shooter.at_speed():
                 self.indexer.feed()
                 self.intake.spin()
