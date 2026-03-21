@@ -139,8 +139,8 @@ class Shoot(AutoBase):
         self.shooter_controller.engage()
 
 
-class GobblerRight(AutoBase):
-    MODE_NAME = "Gobbler Right"
+class ShootGobblerRight(AutoBase):
+    MODE_NAME = "Shoot + Gobbler Right"
 
     starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(0.0))
 
@@ -311,3 +311,11 @@ class GobblerRight(AutoBase):
     def spraying2(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
+
+
+class GobblerRight(ShootGobblerRight):
+    MODE_NAME = "Gobbler only - Right"
+
+    @state(first=True)
+    def shooting(self) -> None:
+        self.next_state_now("collect")
