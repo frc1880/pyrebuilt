@@ -26,8 +26,6 @@ class Shooter:
     GEAR_RATIO = 42.0 / 12.0 * 200.0 / 20.0
 
     def __init__(self) -> None:
-        self._should_shoot = False
-
         self._shooter_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.SHOOTER_FLYWHEEL_MOTOR, ids.CanbusId.SHOOTER
         )
@@ -153,7 +151,7 @@ class Shooter:
                 if in_alliance
                 else 45.0
                 if self._should_shoot
-                else 70.0
+                else self.HOOD_MAX_ANGLE - 1.0
             )
             desired_speed = solution.flywheel_speed if in_alliance else 75.0
             self.speed = desired_speed
@@ -186,5 +184,3 @@ class Shooter:
                 ids.TalonId.SHOOTER_FLYWHEEL_MOTOR, signals.MotorAlignmentValue.OPPOSED
             )
         )
-
-        self._should_shoot = False
