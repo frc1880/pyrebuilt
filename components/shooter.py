@@ -70,14 +70,18 @@ class Shooter:
             .with_k_v(0.1213)
             .with_k_a(0.024026)
         )
-        # current_cfg = (
-        #     configs.CurrentLimitsConfigs()
-        #     .with_stator_current_limit(30.0)
-        #     .with_stator_current_limit_enable(True)
-        # )
+        current_cfg = (
+            configs.CurrentLimitsConfigs()
+            .with_stator_current_limit(30.0)
+            .with_stator_current_limit_enable(True)
+        )
         self._shooter_motor.configurator.apply(
-            configs.TalonFXConfiguration().with_slot0(flywheel_gains_cfg)
-            # .with_current_limits(current_cfg)
+            configs.TalonFXConfiguration()
+            .with_slot0(flywheel_gains_cfg)
+            .with_current_limits(current_cfg)
+        )
+        self._shooter_follower_motor.configurator.apply(
+            configs.TalonFXConfiguration().with_current_limits(current_cfg)
         )
 
     def shoot(self) -> None:
