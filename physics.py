@@ -52,8 +52,8 @@ class PhysicsEngine:
         self.shooter_camera.setMaxSightRange(5.0)
         self.blue_camera = PhotonCameraSim(robot.blue_vision.camera, properties)  # type: ignore
         self.blue_camera.setMaxSightRange(5.0)
-        self.white_camera = PhotonCameraSim(robot.white_vision.camera, properties)  # type: ignore
-        self.white_camera.setMaxSightRange(5.0)
+        # self.white_camera = PhotonCameraSim(robot.white_vision.camera, properties)  # type: ignore
+        # self.white_camera.setMaxSightRange(5.0)
         self.vision_sim.addCamera(
             self.shooter_camera,
             self.robot.shooter_vision_transform,
@@ -62,10 +62,10 @@ class PhysicsEngine:
             self.blue_camera,
             self.robot.blue_vision_transform,
         )
-        self.vision_sim.addCamera(
-            self.white_camera,
-            self.robot.white_vision_transform,
-        )
+        # self.vision_sim.addCamera(
+        #     self.white_camera,
+        #     self.robot.white_vision_transform,
+        # )
 
     def update_sim(self, now: float, tm_diff: float) -> None:
         if isinstance(self.robot, SysIdRobot):
