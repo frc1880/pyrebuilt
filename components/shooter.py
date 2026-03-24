@@ -51,8 +51,13 @@ class Shooter:
         hood_pid_cfg.k_p = 4.0  # 1 rev error will output 1V
         hood_pid_cfg.k_i = 0.0
         hood_pid_cfg.k_d = 0.0
+        current_cfg = configs.CurrentLimitsConfigs()
+        current_cfg.stator_current_limit = 5.0
+        current_cfg.stator_current_limit_enable = True
         self._hood_motor.configurator.apply(
-            configs.TalonFXConfiguration().with_slot0(hood_pid_cfg)
+            configs.TalonFXConfiguration()
+            .with_slot0(hood_pid_cfg)
+            .with_current_limits(current_cfg)
         )
 
         # Variables used for zeroing against hard stop
@@ -162,7 +167,7 @@ class Shooter:
             desired_speed = solution.flywheel_speed if in_alliance else 75.0
             self.speed = desired_speed
             self.desired_hood_angle = desired_hood_angle
-            should_spin = in_alliance or self._should_shoot
+            should_spin = self._should_shoot
 
         # Update hood setpoint even if not shooting
         desired_hood_rotation = (
