@@ -3,6 +3,7 @@ import math
 import magicbot
 import wpilib
 from wpimath.geometry import (
+    Pose2d,
     Rotation2d,
     Rotation3d,
     Transform2d,
@@ -20,7 +21,7 @@ from components.leds import Leds
 from components.shooter import Shooter
 from components.vision import Vision
 from controllers.shooter import ShooterController
-from utilities import game
+from utilities import game, positions
 from utilities.conversion import inch_to_metre
 from utilities.scalers import map_exponential
 
@@ -151,6 +152,14 @@ class MyRobot(magicbot.MagicRobot):
             self.shooter_controller.engage()
         elif self.gamepad.getAButton():
             self.indexer.backdrive()
+        if self.gamepad.getXButton():
+            home_pose = Pose2d(
+                182.11 * 25.4 / 1000 - 1.25, 158.84 * 25.4 / 1000, Rotation2d()
+            )
+            home_pose = (
+                positions.field_flip_pose2d(home_pose) if game.is_red() else home_pose
+            )
+            self.drivetrain.set_pose(home_pose)
 
     def testInit(self) -> None:
         self._test_shooter_on = False
