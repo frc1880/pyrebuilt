@@ -262,9 +262,12 @@ class ShootGobblerRight(AutoBase):
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory(state_tm)
-        sp = self.get_starting_pose()
-        assert sp
-        if self.drivetrain.pose().translation().distance(sp.translation()) > 1.0:
+        starting_pose = self.get_starting_pose()
+        assert starting_pose
+        if (
+            self.drivetrain.pose().translation().distance(starting_pose.translation())
+            > 1.0
+        ):
             self.intake.intake()
         if self.is_trajectory_expired(state_tm):
             self.drivetrain.stop()
