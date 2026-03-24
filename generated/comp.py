@@ -62,12 +62,18 @@ class TunerConstants:
 
     # Initial configs for the drive and steer motors and the azimuth encoder; these cannot be null.
     # Some configs will be overwritten; check the `with_*_initial_configs()` API documentation.
-    _drive_initial_configs = configs.TalonFXConfiguration()
+    _drive_initial_configs = configs.TalonFXConfiguration().with_current_limits(
+        configs.CurrentLimitsConfigs()
+        # Swerve azimuth does not require much torque output, so we can set a relatively low
+        # stator current limit to help avoid brownouts without impacting performance.
+        .with_stator_current_limit(30.0)
+        .with_stator_current_limit_enable(True)
+    )
     _steer_initial_configs = configs.TalonFXConfiguration().with_current_limits(
         configs.CurrentLimitsConfigs()
         # Swerve azimuth does not require much torque output, so we can set a relatively low
         # stator current limit to help avoid brownouts without impacting performance.
-        .with_stator_current_limit(40.0)
+        .with_stator_current_limit(30.0)
         .with_stator_current_limit_enable(True)
     )
     _encoder_initial_configs = configs.CANcoderConfiguration()
@@ -163,7 +169,7 @@ class TunerConstants:
     _back_left_drive_motor_id = 7
     _back_left_steer_motor_id = 2
     _back_left_encoder_id = 1
-    _back_left_encoder_offset: units.rotation = -0.492431640625
+    _back_left_encoder_offset: units.rotation = -0.217041015625
     _back_left_steer_motor_inverted = False
     _back_left_encoder_inverted = False
 
