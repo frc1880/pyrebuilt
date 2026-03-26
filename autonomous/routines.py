@@ -8,9 +8,10 @@ from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.kinematics import ChassisSpeeds
 
 from components.drivetrain import Drivetrain
+from components.intake import Intake
 from controllers.shooter import ShooterController
-from utilities.game import is_blue
-from utilities.positions import shooter_to_hub
+from utilities.game import is_blue, is_red
+from utilities.positions import field_flip_pose2d, shooter_to_hub
 
 
 class AutoBase(AutonomousStateMachine):
@@ -21,6 +22,7 @@ class AutoBase(AutonomousStateMachine):
 
     field: wpilib.Field2d
     drivetrain: Drivetrain
+    intake: Intake
     shooter_controller: ShooterController
 
     starting_pose: Pose2d | None = None
@@ -28,8 +30,8 @@ class AutoBase(AutonomousStateMachine):
     def setup(self) -> None:
         # All the things that are the same in each routine...
         self._constraints = PathConstraints(
-            maxVelocityMps=3.0,
-            maxAccelerationMpsSq=3.0,
+            maxVelocityMps=3.5,
+            maxAccelerationMpsSq=6.0,
             maxAngularVelocityRps=2.0 * math.pi,
             maxAngularAccelerationRpsSq=4.0 * math.pi,
         )
@@ -38,8 +40,29 @@ class AutoBase(AutonomousStateMachine):
             rotation_constants=PIDConstants(kP=5.0),
         )
 
+    def get_starting_pose(self) -> Pose2d | None:
+        if self.starting_pose is None:
+            return None
+        return (
+            self.starting_pose if is_blue() else field_flip_pose2d(self.starting_pose)
+        )
+
+    def on_enable(self) -> None:
+        # configure defaults for pose in sim
+
+        # Setup starting position in the simulator
+        starting_pose = self.get_starting_pose()
+        if wpilib.RobotBase.isSimulation() and starting_pose is not None:
+            self.drivetrain.set_pose(starting_pose)
+
+        super().on_enable()
+
     def set_trajectory(
-        self, waypoints: list[Pose2d], goal_rotation: Rotation2d
+        self,
+        waypoints: list[Pose2d],
+        goal_rotation: Rotation2d,
+        field_flip: bool = False,
+        mirror: bool = False,
     ) -> bool:
         pp_waypoints = PathPlannerPath.waypointsFromPoses(waypoints)
         pp_path = PathPlannerPath(
@@ -51,7 +74,10 @@ class AutoBase(AutonomousStateMachine):
                 rotation=goal_rotation,
             ),
         )
-        pp_path.preventFlipping = True
+        if field_flip:
+            pp_path = pp_path.flipPath()
+        if mirror:
+            pp_path = pp_path.mirrorPath()
         self._trajectory = pp_path.generateTrajectory(
             starting_speeds=ChassisSpeeds(),
             starting_rotation=self.drivetrain.pose().rotation(),
@@ -62,7 +88,7 @@ class AutoBase(AutonomousStateMachine):
 
         return self._trajectory is not None
 
-    def follow_trajectory(self, state_tm) -> None:
+    def follow_trajectory(self, state_tm: float) -> None:
         target_state = self._trajectory.sample(state_tm)
         target_speeds = self._controller.calculateRobotRelativeSpeeds(
             self.drivetrain.pose(), target_state
@@ -71,7 +97,7 @@ class AutoBase(AutonomousStateMachine):
             target_speeds.vx, target_speeds.vy, target_speeds.omega
         )
 
-    def is_trajectory_expired(self, state_tm) -> bool:
+    def is_trajectory_expired(self, state_tm: float) -> bool:
         return state_tm > self._trajectory.getTotalTimeSeconds()
 
 
@@ -83,11 +109,11 @@ class Shoot(AutoBase):
     MODE_NAME = "Shoot"
 
     @state(first=True)
-    def driving_to_shoot(self, initial_call, state_tm) -> None:
+    def driving_to_shoot(self, initial_call: bool, state_tm: float) -> None:
         if initial_call:
             # Create a trajectory to the shooting position
             robot_pose = self.drivetrain.pose()
-            delta_x = -1.0 if is_blue() else 1.0
+            delta_x = -0.5 if is_blue() else 0.5
             path_heading = (
                 Rotation2d.fromDegrees(180.0)
                 if is_blue()
@@ -111,3 +137,188 @@ class Shoot(AutoBase):
     def shooting(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
+
+
+class ShootGobblerRight(AutoBase):
+    MODE_NAME = "Shoot + Gobbler Right"
+
+    starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(0.0))
+
+    @timed_state(first=True, duration=2.5, next_state="collect")
+    def shooting(self) -> None:
+        # Shoot for a fixed period of time
+        self.shooter_controller.engage()
+
+    @state
+    def collect(self, initial_call: bool, state_tm: float) -> None:
+        if initial_call:
+            # Create a trajectory to the shooting position
+            assert self.starting_pose
+            p1 = Pose2d(
+                self.starting_pose.x + 2.5,
+                self.starting_pose.y,
+                Rotation2d.fromDegrees(0.0),
+            )
+            p2 = Pose2d(
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 1.0,
+                Rotation2d.fromDegrees(90.0),
+            )
+            p3 = Pose2d(
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 1.75,
+                Rotation2d.fromDegrees(90.0),
+            )
+
+            waypoints = [self.starting_pose, p1, p2, p3]
+
+            self.set_trajectory(
+                waypoints, Rotation2d.fromDegrees(90.0), field_flip=is_red()
+            )
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory(state_tm)
+        sp = self.get_starting_pose()
+        assert sp
+        if self.drivetrain.pose().translation().distance(sp.translation()) > 1.0:
+            self.intake.intake()
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            self.next_state("returning")
+
+    @state
+    def returning(self, initial_call: bool, state_tm: float) -> None:
+        if initial_call:
+            # Create a trajectory to the shooting position
+            assert self.starting_pose
+            p1 = Pose2d(
+                self.starting_pose.x + 2.5,
+                self.starting_pose.y,
+                Rotation2d.fromDegrees(180.0),
+            )
+            p2 = Pose2d(
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 1.0,
+                Rotation2d.fromDegrees(-90.0),
+            )
+            p3 = Pose2d(
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 1.75,
+                Rotation2d.fromDegrees(-90.0),
+            )
+            sp = Pose2d(
+                self.starting_pose.x + 0.0,
+                self.starting_pose.y,
+                Rotation2d.fromDegrees(180.0),
+            )
+            waypoints = [p3, p2, p1, sp]
+
+            self.set_trajectory(
+                waypoints, Rotation2d.fromDegrees(0.0), field_flip=is_red()
+            )
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory(state_tm)
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            self.next_state("spraying")
+
+    @timed_state(duration=4, next_state="collect2")
+    def spraying(self) -> None:
+        # Shoot for a fixed period of time
+        self.shooter_controller.engage()
+
+    @state
+    def collect2(self, initial_call: bool, state_tm: float) -> None:
+        if initial_call:
+            # Create a trajectory to the shooting position
+            assert self.starting_pose
+            p1 = Pose2d(
+                self.starting_pose.x + 2.5,
+                self.starting_pose.y,
+                Rotation2d.fromDegrees(0.0),
+            )
+            p2 = Pose2d(
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 1.5,
+                Rotation2d.fromDegrees(90.0),
+            )
+            p3 = Pose2d(
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 2.5,
+                Rotation2d.fromDegrees(90.0),
+            )
+            sp = Pose2d(
+                self.starting_pose.x + 0.0,
+                self.starting_pose.y,
+                Rotation2d.fromDegrees(0.0),
+            )
+
+            waypoints = [sp, p1, p2, p3]
+
+            self.set_trajectory(
+                waypoints, Rotation2d.fromDegrees(90.0), field_flip=is_red()
+            )
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory(state_tm)
+        starting_pose = self.get_starting_pose()
+        assert starting_pose
+        if (
+            self.drivetrain.pose().translation().distance(starting_pose.translation())
+            > 1.0
+        ):
+            self.intake.intake()
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            self.next_state("returning2")
+
+    @state
+    def returning2(self, initial_call: bool, state_tm: float) -> None:
+        if initial_call:
+            # Create a trajectory to the shooting position
+            assert self.starting_pose
+            p1 = Pose2d(
+                self.starting_pose.x + 2.5,
+                self.starting_pose.y,
+                Rotation2d.fromDegrees(180.0),
+            )
+            p2 = Pose2d(
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 1.5,
+                Rotation2d.fromDegrees(-90.0),
+            )
+            p3 = Pose2d(
+                self.starting_pose.x + 4.1,
+                self.starting_pose.y + 2.5,
+                Rotation2d.fromDegrees(-90.0),
+            )
+            sp = Pose2d(
+                self.starting_pose.x + 0.0,
+                self.starting_pose.y,
+                Rotation2d.fromDegrees(180.0),
+            )
+            waypoints = [p3, p2, p1, sp]
+
+            self.set_trajectory(
+                waypoints, Rotation2d.fromDegrees(0.0), field_flip=is_red()
+            )
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory(state_tm)
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            self.next_state("spraying2")
+
+    @timed_state(duration=5.0)
+    def spraying2(self) -> None:
+        # Shoot for a fixed period of time
+        self.shooter_controller.engage()
+
+
+class GobblerRight(ShootGobblerRight):
+    MODE_NAME = "Gobbler only - Right"
+
+    @state(first=True)
+    def shooting(self) -> None:
+        self.next_state_now("collect")

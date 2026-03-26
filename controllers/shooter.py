@@ -1,19 +1,20 @@
 import math
 
+import wpilib
 from magicbot import StateMachine, state
 
-from components.ballistics import Ballistics
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
+from components.shooter import Shooter
 from utilities import game, positions
 
 
 class ShooterController(StateMachine):
-    ballistics: Ballistics
     drivetrain: Drivetrain
     indexer: Indexer
     intake: Intake
+    shooter: Shooter
 
     def _heading(self) -> float:
         # If we are in our alliance zone, aim at the hub
@@ -26,6 +27,9 @@ class ShooterController(StateMachine):
     def _can_shoot(self) -> bool:
         # We can shoot if we are in our zone and the hub is active,
         # or we are outside our zone at any time
+        if wpilib.DriverStation.isAutonomousEnabled():
+            # Always shoot in auto
+            return True
         in_zone = positions.is_in_alliance_zone(self.drivetrain.pose())
         return (game.is_hub_active() and in_zone) or not in_zone
 
@@ -35,6 +39,7 @@ class ShooterController(StateMachine):
             return
         # Point at the target
         self.drivetrain.track_heading(self._heading())
+        self.shooter.shoot()
         if self.drivetrain.is_aligned():
             self.next_state("shooting")
 
@@ -43,11 +48,11 @@ class ShooterController(StateMachine):
         # Check to see that we are still aligned with the goal
         # This is important if we are being defended
         self.drivetrain.track_heading(self._heading())
+        self.shooter.shoot()
         if not (self._can_shoot() and self.drivetrain.is_aligned()):
             self.next_state_now("aligning")
         else:
             # We are still aligned, so keep shooting
-            if not positions.is_in_alliance_zone(self.drivetrain.pose()):
-                self.ballistics.should_pass = True
-            self.indexer.feed()
-            self.intake.spin()
+            if self.shooter.at_speed():
+                self.indexer.feed()
+                self.intake.spin()

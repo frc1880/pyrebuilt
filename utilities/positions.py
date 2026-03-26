@@ -11,7 +11,7 @@ from utilities.game import (
 
 
 class TeamPoses:
-    BLUE_TEST_POSE = Pose2d(3.5, 5.0, math.radians(180.0))
+    BLUE_TEST_POSE = Pose2d(3.6, 0.75, math.radians(0.0))
     RED_TEST_POSE = field_flip_pose2d(BLUE_TEST_POSE)
 
 
