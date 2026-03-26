@@ -49,7 +49,7 @@ def shooter_to_hub(robot_pose: Pose2d) -> Rotation2d:
         - math.pi / 2.0
     )  # Shooter is at rear of robot facing on the +ve y axis
 
-    return Rotation2d(desired_heading)
+    return Rotation2d(desired_heading-math.pi/2)
 
 
 def is_in_alliance_zone(robot_pose: Pose2d) -> bool:
