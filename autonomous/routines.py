@@ -99,6 +99,18 @@ class AutoBase(AutonomousStateMachine):
 
     def is_trajectory_expired(self, state_tm: float) -> bool:
         return state_tm > self._trajectory.getTotalTimeSeconds()
+    def turn_to_rotation(self, target: Rotation2d) -> bool:
+        current = self.drivetrain.pose().rotation()
+
+        error = (target - current).radians()
+        error = math.atan2(math.sin(error), math.cos(error))
+
+        kP = 8
+        omega = kP * error
+
+        self.drivetrain.drive_robot(0.0, 0.0, omega)
+
+        return abs(error) < math.radians(3)
 
 
 class Shoot(AutoBase):
@@ -144,11 +156,25 @@ class ShootGobblerRight(AutoBase):
 
     starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(0.0))
 
-    @timed_state(first=True, duration=2.5, next_state="collect")
+    @timed_state(first=True, duration=2.5, next_state="turning_collect")
     def shooting(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
+    @state
+    def turning_collect(self, initial_call: bool) -> None:
+        target_heading = Rotation2d.fromDegrees(-180.0)
 
+        if self.turn_to_rotation(target_heading):
+            self.drivetrain.stop()
+            self.next_state("collect")
+    @state
+    def turning_collect2(self, initial_call: bool) -> None:
+        target_heading = Rotation2d.fromDegrees(-180.0)
+
+        if self.turn_to_rotation(target_heading):
+            self.drivetrain.stop()
+            self.next_state("collect2")
+           
     @state
     def collect(self, initial_call: bool, state_tm: float) -> None:
         if initial_call:
@@ -223,7 +249,7 @@ class ShootGobblerRight(AutoBase):
             self.drivetrain.stop()
             self.next_state("spraying")
 
-    @timed_state(duration=4, next_state="collect2")
+    @timed_state(duration=4, next_state="turning_collect2")
     def spraying(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
@@ -239,12 +265,12 @@ class ShootGobblerRight(AutoBase):
                 Rotation2d.fromDegrees(0.0),
             )
             p2 = Pose2d(
-                self.starting_pose.x + 4.1,
+                self.starting_pose.x + 3,
                 self.starting_pose.y + 1.5,
                 Rotation2d.fromDegrees(90.0),
             )
             p3 = Pose2d(
-                self.starting_pose.x + 4.1,
+                self.starting_pose.x + 3,
                 self.starting_pose.y + 2.5,
                 Rotation2d.fromDegrees(90.0),
             )
@@ -284,12 +310,12 @@ class ShootGobblerRight(AutoBase):
                 Rotation2d.fromDegrees(180.0),
             )
             p2 = Pose2d(
-                self.starting_pose.x + 4.1,
+                self.starting_pose.x + 3,
                 self.starting_pose.y + 1.5,
                 Rotation2d.fromDegrees(-90.0),
             )
             p3 = Pose2d(
-                self.starting_pose.x + 4.1,
+                self.starting_pose.x + 3,
                 self.starting_pose.y + 2.5,
                 Rotation2d.fromDegrees(-90.0),
             )
