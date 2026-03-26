@@ -342,7 +342,6 @@ class ShootGobblerRight(AutoBase):
         if self.is_trajectory_expired(state_tm):
             self.drivetrain.stop()
             self.next_state("spraying2")
-
     @timed_state(duration=5.0)
     def spraying2(self) -> None:
         # Shoot for a fixed period of time
