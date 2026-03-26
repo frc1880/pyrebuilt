@@ -99,6 +99,7 @@ class AutoBase(AutonomousStateMachine):
 
     def is_trajectory_expired(self, state_tm: float) -> bool:
         return state_tm > self._trajectory.getTotalTimeSeconds()
+
     def turn_to_rotation(self, target: Rotation2d) -> bool:
         current = self.drivetrain.pose().rotation()
 
@@ -160,6 +161,7 @@ class ShootGobblerRight(AutoBase):
     def shooting(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
+
     @state
     def turning_collect(self, initial_call: bool) -> None:
         target_heading = Rotation2d.fromDegrees(-180.0)
@@ -167,6 +169,7 @@ class ShootGobblerRight(AutoBase):
         if self.turn_to_rotation(target_heading):
             self.drivetrain.stop()
             self.next_state("collect")
+
     @state
     def turning_collect2(self, initial_call: bool) -> None:
         target_heading = Rotation2d.fromDegrees(-180.0)
@@ -174,6 +177,7 @@ class ShootGobblerRight(AutoBase):
         if self.turn_to_rotation(target_heading):
             self.drivetrain.stop()
             self.next_state("collect2")
+
     @state
     def turning_return(self, initial_call: bool) -> None:
         target_heading = Rotation2d.fromDegrees(18.0)
@@ -181,7 +185,7 @@ class ShootGobblerRight(AutoBase):
         if self.turn_to_rotation(target_heading):
             self.drivetrain.stop()
             self.next_state("returning2")
-           
+
     @state
     def collect(self, initial_call: bool, state_tm: float) -> None:
         if initial_call:
@@ -342,6 +346,7 @@ class ShootGobblerRight(AutoBase):
         if self.is_trajectory_expired(state_tm):
             self.drivetrain.stop()
             self.next_state("spraying2")
+
     @timed_state(duration=5.0)
     def spraying2(self) -> None:
         # Shoot for a fixed period of time
