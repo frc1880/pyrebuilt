@@ -174,6 +174,13 @@ class ShootGobblerRight(AutoBase):
         if self.turn_to_rotation(target_heading):
             self.drivetrain.stop()
             self.next_state("collect2")
+    @state
+    def turning_return(self, initial_call: bool) -> None:
+        target_heading = Rotation2d.fromDegrees(18.0)
+
+        if self.turn_to_rotation(target_heading):
+            self.drivetrain.stop()
+            self.next_state("returning2")
            
     @state
     def collect(self, initial_call: bool, state_tm: float) -> None:
@@ -265,7 +272,7 @@ class ShootGobblerRight(AutoBase):
                 Rotation2d.fromDegrees(0.0),
             )
             p2 = Pose2d(
-                self.starting_pose.x + 3,
+                self.starting_pose.x + 4.1,
                 self.starting_pose.y + 1.5,
                 Rotation2d.fromDegrees(90.0),
             )
@@ -283,7 +290,7 @@ class ShootGobblerRight(AutoBase):
             waypoints = [sp, p1, p2, p3]
 
             self.set_trajectory(
-                waypoints, Rotation2d.fromDegrees(90.0), field_flip=is_red()
+                waypoints, Rotation2d.fromDegrees(180.0), field_flip=is_red()
             )
 
         # Follow the trajectory until we are in shooting position
@@ -297,7 +304,7 @@ class ShootGobblerRight(AutoBase):
             self.intake.intake()
         if self.is_trajectory_expired(state_tm):
             self.drivetrain.stop()
-            self.next_state("returning2")
+            self.next_state("turning_return")
 
     @state
     def returning2(self, initial_call: bool, state_tm: float) -> None:
@@ -317,7 +324,7 @@ class ShootGobblerRight(AutoBase):
             p3 = Pose2d(
                 self.starting_pose.x + 3,
                 self.starting_pose.y + 2.5,
-                Rotation2d.fromDegrees(-90.0),
+                Rotation2d.fromDegrees(0.0),
             )
             sp = Pose2d(
                 self.starting_pose.x + 0.0,
