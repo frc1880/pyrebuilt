@@ -103,12 +103,9 @@ class AutoBase(AutonomousStateMachine):
     def turn_to_rotation(self, target: Rotation2d, field_flip: bool) -> bool:
         if not field_flip:
             target = Rotation2d(math.pi - target.radians())
-
-        self.drivetrain.track_heading(target.degrees())
-        return (
-            self.drivetrain._heading_controller.getSetpoint() == target.degrees()
-            and self.drivetrain._heading_controller.atSetpoint()
-        )
+        self.drivetrain.track_heading(target.radians())
+        self.drivetrain.execute()
+        return self.drivetrain.is_aligned()
 
 
 class Shoot(AutoBase):
@@ -161,7 +158,7 @@ class ShootGobblerRight(AutoBase):
 
     @state
     def turning_collect(self, initial_call: bool) -> None:
-        target_heading = Rotation2d.fromDegrees(-160.0)
+        target_heading = Rotation2d.fromDegrees(-170.0)
 
         if self.turn_to_rotation(target_heading, field_flip=is_red()):
             self.drivetrain.stop()
@@ -169,7 +166,7 @@ class ShootGobblerRight(AutoBase):
 
     @state
     def turning_collect2(self, initial_call: bool) -> None:
-        target_heading = Rotation2d.fromDegrees(-160.0)
+        target_heading = Rotation2d.fromDegrees(-170.0)
 
         if self.turn_to_rotation(target_heading, field_flip=is_red()):
             self.drivetrain.stop()
