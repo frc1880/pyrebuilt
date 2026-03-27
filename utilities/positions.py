@@ -44,9 +44,9 @@ def shooter_to_hub(robot_pose: Pose2d) -> Rotation2d:
     hub = hub_position()
     # The desired heading is for the shooter where it is now, and it will move as we rotate
     # This will still converge because we keep updating the setpoint as the shooter moves around
-    desired_heading = math.atan2(
-        hub.y - shooter_position.y, hub.x - shooter_position.x
-    )  # Shooter is at rear of robot facing on the +ve y axis
+    desired_heading = (
+        math.atan2(hub.y - shooter_position.y, hub.x - shooter_position.x) - math.pi
+    )  # Shooter is at rear of robot facing on the -ve y axis
 
     return Rotation2d(desired_heading)
 
