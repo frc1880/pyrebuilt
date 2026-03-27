@@ -100,16 +100,6 @@ class AutoBase(AutonomousStateMachine):
     def is_trajectory_expired(self, state_tm: float) -> bool:
         return state_tm > self._trajectory.getTotalTimeSeconds()
 
-    def turn_to_rotation(self, target: Rotation2d, field_flip: bool) -> bool:
-        if not field_flip:
-            target = Rotation2d(math.pi - target.radians())
-
-        self.drivetrain.track_heading(target.degrees())
-        return (
-            self.drivetrain._heading_controller.getSetpoint() == target.degrees()
-            and self.drivetrain._heading_controller.atSetpoint()
-        )
-
 
 class Shoot(AutoBase):
     """
@@ -154,34 +144,10 @@ class ShootGobblerRight(AutoBase):
 
     starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(0.0))
 
-    @timed_state(first=True, duration=2.5, next_state="turning_collect")
+    @timed_state(first=True, duration=2.5, next_state="collect")
     def shooting(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-
-    @state
-    def turning_collect(self, initial_call: bool) -> None:
-        target_heading = Rotation2d.fromDegrees(-160.0)
-
-        if self.turn_to_rotation(target_heading, field_flip=is_red()):
-            self.drivetrain.stop()
-            self.next_state("collect")
-
-    @state
-    def turning_collect2(self, initial_call: bool) -> None:
-        target_heading = Rotation2d.fromDegrees(-160.0)
-
-        if self.turn_to_rotation(target_heading, field_flip=is_red()):
-            self.drivetrain.stop()
-            self.next_state("collect2")
-
-    @state
-    def turning_return(self, initial_call: bool) -> None:
-        target_heading = Rotation2d.fromDegrees(18.0)
-
-        if self.turn_to_rotation(target_heading, field_flip=is_red()):
-            self.drivetrain.stop()
-            self.next_state("returning2")
 
     @state
     def collect(self, initial_call: bool, state_tm: float) -> None:
@@ -257,7 +223,7 @@ class ShootGobblerRight(AutoBase):
             self.drivetrain.stop()
             self.next_state("spraying")
 
-    @timed_state(duration=4, next_state="turning_collect2")
+    @timed_state(duration=4, next_state="collect2")
     def spraying(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
@@ -278,7 +244,7 @@ class ShootGobblerRight(AutoBase):
                 Rotation2d.fromDegrees(90.0),
             )
             p3 = Pose2d(
-                self.starting_pose.x + 3,
+                self.starting_pose.x + 4.1,
                 self.starting_pose.y + 2.5,
                 Rotation2d.fromDegrees(90.0),
             )
@@ -291,7 +257,7 @@ class ShootGobblerRight(AutoBase):
             waypoints = [sp, p1, p2, p3]
 
             self.set_trajectory(
-                waypoints, Rotation2d.fromDegrees(180.0), field_flip=is_red()
+                waypoints, Rotation2d.fromDegrees(90.0), field_flip=is_red()
             )
 
         # Follow the trajectory until we are in shooting position
@@ -305,7 +271,7 @@ class ShootGobblerRight(AutoBase):
             self.intake.intake()
         if self.is_trajectory_expired(state_tm):
             self.drivetrain.stop()
-            self.next_state("turning_return")
+            self.next_state("returning2")
 
     @state
     def returning2(self, initial_call: bool, state_tm: float) -> None:
@@ -318,14 +284,14 @@ class ShootGobblerRight(AutoBase):
                 Rotation2d.fromDegrees(180.0),
             )
             p2 = Pose2d(
-                self.starting_pose.x + 3,
+                self.starting_pose.x + 4.1,
                 self.starting_pose.y + 1.5,
                 Rotation2d.fromDegrees(-90.0),
             )
             p3 = Pose2d(
-                self.starting_pose.x + 3,
+                self.starting_pose.x + 4.1,
                 self.starting_pose.y + 2.5,
-                Rotation2d.fromDegrees(0.0),
+                Rotation2d.fromDegrees(-90.0),
             )
             sp = Pose2d(
                 self.starting_pose.x + 0.0,
