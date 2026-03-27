@@ -100,15 +100,6 @@ class AutoBase(AutonomousStateMachine):
     def is_trajectory_expired(self, state_tm: float) -> bool:
         return state_tm > self._trajectory.getTotalTimeSeconds()
 
-    def turn_to_rotation(
-        self, target: Rotation2d, field_flip: bool, initial_call: bool
-    ) -> bool:
-        _target = target
-        if not field_flip:
-            _target = Rotation2d(math.pi - target.radians())
-        self.drivetrain.track_heading(_target.radians())
-        return self.drivetrain.is_aligned() and not initial_call
-
 
 class Shoot(AutoBase):
     """
@@ -161,30 +152,30 @@ class ShootGobblerRight(AutoBase):
     @state
     def turning_collect(self, initial_call: bool) -> None:
         target_heading = Rotation2d.fromDegrees(-170.0)
-
-        if self.turn_to_rotation(
-            target_heading, field_flip=is_red(), initial_call=initial_call
-        ):
+        if not is_red():
+            target_heading = Rotation2d(math.pi - target_heading.radians())
+        self.drivetrain.track_heading(target_heading.radians())
+        if self.drivetrain.is_aligned() and not initial_call:
             self.drivetrain.stop()
             self.next_state("collect")
 
     @state
     def turning_collect2(self, initial_call: bool) -> None:
         target_heading = Rotation2d.fromDegrees(-170.0)
-
-        if self.turn_to_rotation(
-            target_heading, field_flip=is_red(), initial_call=initial_call
-        ):
+        if not is_red():
+            target_heading = Rotation2d(math.pi - target_heading.radians())
+        self.drivetrain.track_heading(target_heading.radians())
+        if self.drivetrain.is_aligned() and not initial_call:
             self.drivetrain.stop()
             self.next_state("collect2")
 
     @state
     def turning_return(self, initial_call: bool) -> None:
         target_heading = Rotation2d.fromDegrees(18.0)
-
-        if self.turn_to_rotation(
-            target_heading, field_flip=is_red(), initial_call=initial_call
-        ):
+        if not is_red():
+            target_heading = Rotation2d(math.pi - target_heading.radians())
+        self.drivetrain.track_heading(target_heading.radians())
+        if self.drivetrain.is_aligned() and not initial_call:
             self.drivetrain.stop()
             self.next_state("returning2")
 
