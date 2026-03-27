@@ -100,18 +100,15 @@ class AutoBase(AutonomousStateMachine):
     def is_trajectory_expired(self, state_tm: float) -> bool:
         return state_tm > self._trajectory.getTotalTimeSeconds()
 
-    def turn_to_rotation(self, target: Rotation2d) -> bool:
-        current = self.drivetrain.pose().rotation()
+    def turn_to_rotation(self, target: Rotation2d, field_flip: bool) -> bool:
+        if not field_flip:
+            target = Rotation2d(math.pi - target.radians())
 
-        error = (target - current).radians()
-        error = math.atan2(math.sin(error), math.cos(error))
-
-        kP = 8
-        omega = kP * error
-
-        self.drivetrain.drive_robot(0.0, 0.0, omega)
-
-        return abs(error) < math.radians(3)
+        self.drivetrain.track_heading(target.degrees())
+        return (
+            self.drivetrain._heading_controller.getSetpoint() == target.degrees()
+            and self.drivetrain._heading_controller.atSetpoint()
+        )
 
 
 class Shoot(AutoBase):
@@ -164,17 +161,17 @@ class ShootGobblerRight(AutoBase):
 
     @state
     def turning_collect(self, initial_call: bool) -> None:
-        target_heading = Rotation2d.fromDegrees(-180.0)
+        target_heading = Rotation2d.fromDegrees(-160.0)
 
-        if self.turn_to_rotation(target_heading):
+        if self.turn_to_rotation(target_heading, field_flip=is_red()):
             self.drivetrain.stop()
             self.next_state("collect")
 
     @state
     def turning_collect2(self, initial_call: bool) -> None:
-        target_heading = Rotation2d.fromDegrees(-180.0)
+        target_heading = Rotation2d.fromDegrees(-160.0)
 
-        if self.turn_to_rotation(target_heading):
+        if self.turn_to_rotation(target_heading, field_flip=is_red()):
             self.drivetrain.stop()
             self.next_state("collect2")
 
@@ -182,7 +179,7 @@ class ShootGobblerRight(AutoBase):
     def turning_return(self, initial_call: bool) -> None:
         target_heading = Rotation2d.fromDegrees(18.0)
 
-        if self.turn_to_rotation(target_heading):
+        if self.turn_to_rotation(target_heading, field_flip=is_red()):
             self.drivetrain.stop()
             self.next_state("returning2")
 
