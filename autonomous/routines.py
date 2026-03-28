@@ -3,7 +3,12 @@ import math
 import wpilib
 from magicbot import AutonomousStateMachine, state, timed_state
 from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
-from pathplannerlib.path import GoalEndState, PathConstraints, PathPlannerPath
+from pathplannerlib.path import (
+    GoalEndState,
+    PathConstraints,
+    PathPlannerPath,
+    RotationTarget,
+)
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.kinematics import ChassisSpeeds
 
@@ -61,10 +66,14 @@ class AutoBase(AutonomousStateMachine):
         self,
         waypoints: list[Pose2d],
         goal_rotation: Rotation2d,
+        holonomic_rotations: list[RotationTarget] | None = None,
         field_flip: bool = False,
         mirror: bool = False,
     ) -> bool:
         pp_waypoints = PathPlannerPath.waypointsFromPoses(waypoints)
+        if holonomic_rotations is None:
+            # done this way because Ruff doesn't want mutables as default arguments
+            holonomic_rotations = []
         pp_path = PathPlannerPath(
             waypoints=pp_waypoints,
             constraints=self._constraints,
@@ -73,6 +82,7 @@ class AutoBase(AutonomousStateMachine):
                 velocity=0.0,
                 rotation=goal_rotation,
             ),
+            holonomic_rotations=holonomic_rotations,
         )
         if field_flip:
             pp_path = pp_path.flipPath()
@@ -203,7 +213,9 @@ class ShootGobblerRight(AutoBase):
             waypoints = [self.starting_pose, p1, p2, p3]
 
             self.set_trajectory(
-                waypoints, Rotation2d.fromDegrees(90.0), field_flip=is_red()
+                waypoints,
+                Rotation2d.fromDegrees(90.0),
+                field_flip=is_red(),
             )
 
         # Follow the trajectory until we are in shooting position
