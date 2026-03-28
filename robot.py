@@ -44,29 +44,29 @@ class MyRobot(magicbot.MagicRobot):
     # Offsets are measured from the robot corner in CAD, hence the calcs below
     shooter_vision_transform = Transform3d(
         Translation3d(
-            inch_to_metre(-26.0 / 2 + 4.751181),
-            inch_to_metre(28.0 / 2 - 0.795),
-            inch_to_metre(13.887533),
+            inch_to_metre(-26.0 / 2 + 0.224),
+            inch_to_metre(-28.0 / 2 + 6.614),
+            inch_to_metre(13.943),
         ),
-        Rotation3d(0, math.radians(-20), math.radians(90)),
+        Rotation3d(0, math.radians(-25), math.radians(180)),
     )
-    # white_vision: Vision
-    # white_vision_camera_name = "white"
-    # white_vision_transform = Transform3d(
-    #     Translation3d(
-    #         inch_to_metre(-26.0 / 2 + 0.633),
-    #         inch_to_metre(-28.0 / 2 + 7.748819),
-    #         inch_to_metre(7.471),
-    #     ),
-    #     Rotation3d(0, math.radians(-30), math.radians(180)),
-    # )
-    blue_vision: Vision
-    blue_vision_camera_name = "blue"
-    blue_vision_transform = Transform3d(
+    red_vision: Vision
+    red_vision_camera_name = "red"
+    red_vision_transform = Transform3d(
         Translation3d(
-            inch_to_metre(-26.0 / 2 + 8.251),
-            inch_to_metre(-28.0 / 2 + 0.633),
-            inch_to_metre(7.471),
+            inch_to_metre(-26.0 / 2 + 5.123),
+            inch_to_metre(28.0 / 2 - 1.039),
+            inch_to_metre(6.932),
+        ),
+        Rotation3d(0, math.radians(-30), math.radians(90)),
+    )
+    green_vision: Vision
+    green_vision_camera_name = "green"
+    green_vision_transform = Transform3d(
+        Translation3d(
+            inch_to_metre(-26.0 / 2 + 5.123),
+            -inch_to_metre(28.0 / 2 - 1.039),
+            inch_to_metre(6.932),
         ),
         Rotation3d(0, math.radians(-30), math.radians(-90)),
     )
@@ -105,21 +105,29 @@ class MyRobot(magicbot.MagicRobot):
             # Can start from anywhere
             return Transform2d()
 
+    def _update_vision(self) -> None:
+        self.shooter_vision.execute()
+        self.red_vision.execute()
+        self.green_vision.execute()
+
+    def is_vision_alive(self) -> bool:
+        self._update_vision()  # Run in case we forget to do it in a mode that needs it
+        return (
+            self.shooter_vision.alive()
+            or self.red_vision.alive()
+            or self.green_vision.alive()
+        )
+
     def disabledInit(self) -> None:
         pass
 
     def disabledPeriodic(self) -> None:
-        self.shooter_vision.execute()
-        # self.white_vision.execute()
-        self.blue_vision.execute()
+        self._update_vision()
         self.ballistics.execute()
         self.leds.execute()
 
         # First check that one of our cameras has seen multitag in the last 2 seconds
-        if not (
-            self.shooter_vision.alive() or self.blue_vision.alive()
-            # or self.white_vision.alive()
-        ):
+        if not self.is_vision_alive():
             self.leds.missing_vision()
         else:
             # Indicate that we don't have an auto mode selected
@@ -218,5 +226,4 @@ class MyRobot(magicbot.MagicRobot):
         self.intake.execute()
         self.indexer.execute()
         self.leds.execute()
-        self.shooter_vision.execute()
-        self.blue_vision.execute()
+        self._update_vision()
