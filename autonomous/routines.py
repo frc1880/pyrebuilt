@@ -15,8 +15,14 @@ from wpimath.kinematics import ChassisSpeeds
 from components.drivetrain import Drivetrain
 from components.intake import Intake
 from controllers.shooter import ShooterController
-from utilities.game import is_blue, is_red
-from utilities.positions import field_flip_pose2d, shooter_to_hub
+from utilities.game import (
+    field_flip_pose2d,
+    field_mirror_pose2d,
+    field_mirror_translation2d,
+    is_blue,
+    is_red,
+)
+from utilities.positions import shooter_to_hub
 
 
 class AutoBase(AutonomousStateMachine):
@@ -31,6 +37,7 @@ class AutoBase(AutonomousStateMachine):
     shooter_controller: ShooterController
 
     blue_starting_pose: Pose2d | None = None
+    mirror: bool = False
 
     def setup(self) -> None:
         # All the things that are the same in each routine...
@@ -49,11 +56,12 @@ class AutoBase(AutonomousStateMachine):
     def starting_pose(self) -> Pose2d | None:
         if self.blue_starting_pose is None:
             return None
-        return (
+        alliance_pose = (
             self.blue_starting_pose
             if is_blue()
             else field_flip_pose2d(self.blue_starting_pose)
         )
+        return alliance_pose if not self.mirror else field_mirror_pose2d(alliance_pose)
 
     def on_enable(self) -> None:
         # configure defaults for pose in sim
@@ -152,7 +160,7 @@ class Shoot(AutoBase):
 
 
 class ShootGobblerRight(AutoBase):
-    MODE_NAME = "Shoot + Gobbler Right"
+    MODE_NAME = "Shoot + Gobbler - Right"
 
     blue_starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(0.0))
 
@@ -186,9 +194,12 @@ class ShootGobblerRight(AutoBase):
                 if is_blue()
                 else field_flip_pose2d(self.drivetrain.pose())
             )
-            initial_pose = Pose2d(
-                current_blue_pose.translation(), Rotation2d.fromDegrees(0.0)
+            translation = (
+                current_blue_pose.translation()
+                if not self.mirror
+                else field_mirror_translation2d(current_blue_pose.translation())
             )
+            initial_pose = Pose2d(translation, Rotation2d.fromDegrees(0.0))
             p1 = Pose2d(
                 self.blue_starting_pose.x + 2.5,
                 self.blue_starting_pose.y,
@@ -223,6 +234,7 @@ class ShootGobblerRight(AutoBase):
                 waypoints,
                 Rotation2d.fromDegrees(90.0),
                 field_flip=is_red(),
+                mirror=self.mirror,
             )
 
         # Follow the trajectory until we are in shooting position
@@ -250,9 +262,12 @@ class ShootGobblerRight(AutoBase):
                 if is_blue()
                 else field_flip_pose2d(self.drivetrain.pose())
             )
-            initial_pose = Pose2d(
-                current_blue_pose.translation(), Rotation2d.fromDegrees(-90.0)
+            translation = (
+                current_blue_pose.translation()
+                if not self.mirror
+                else field_mirror_translation2d(current_blue_pose.translation())
             )
+            initial_pose = Pose2d(translation, Rotation2d.fromDegrees(-90.0))
             p1 = Pose2d(
                 self.blue_starting_pose.x + 2.5,
                 self.blue_starting_pose.y,
@@ -279,7 +294,10 @@ class ShootGobblerRight(AutoBase):
             waypoints = [initial_pose, p2, p1, sp]
 
             self.set_trajectory(
-                waypoints, Rotation2d.fromDegrees(0.0), field_flip=is_red()
+                waypoints,
+                Rotation2d.fromDegrees(0.0),
+                field_flip=is_red(),
+                mirror=self.mirror,
             )
 
             # Increment cycle counter because we finish a cycle after this move
@@ -303,3 +321,15 @@ class GobblerRight(ShootGobblerRight):
     @state(first=True)
     def shooting(self) -> None:
         self.next_state_now("collect")
+
+
+class ShootGobblerLeft(ShootGobblerRight):
+    MODE_NAME = "Shoot + Gobbler - Left"
+
+    mirror = True
+
+
+class GobblerLeft(GobblerRight):
+    MODE_NAME = "Gobbler only - Left"
+
+    mirror = True
