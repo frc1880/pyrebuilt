@@ -64,10 +64,6 @@ class Shooter:
             .with_current_limits(current_cfg)
         )
 
-        # Variables used for zeroing against hard stop
-        self._initialized = False
-        self._prev_hood_angle = 999.0
-
         # Example of closed loop mode once we have run sysid
         flywheel_gains_cfg = (
             configs.Slot0Configs()
@@ -92,21 +88,14 @@ class Shooter:
             configs.TalonFXConfiguration().with_current_limits(current_cfg)
         )
         self._last_shot_time = Timer.getFPGATimestamp()
+        self._initialized = False
 
     def shoot(self) -> None:
         self._should_shoot = True
 
     @feedback
-    def is_initialized(self) -> bool:
-        return self._initialized
-
-    @feedback
     def hood_angle(self) -> float:
         return self._hood_motor.get_position().value * 360.0 / self.GEAR_RATIO
-
-    @feedback
-    def hood_current(self) -> float:
-        return self._hood_motor.get_stator_current().value
 
     @feedback
     def setpoint(self) -> float:
@@ -126,26 +115,6 @@ class Shooter:
 
     def execute(self) -> None:
         if not self._initialized:
-            # # Drive the motor very slowly towards the hard stop
-            # # Check to see if we are still moving/current spike
-            # # If we are stopped, reset the encoder value and put the motor in closed loop mode
-            # # TODO Is this output too small?
-            # self._hood_motor.set_control(controls.DutyCycleOut(0.1))
-
-            # angle = self.hood_angle()
-            # current = self.hood_current()
-
-            # # TODO Check 1 degree threshold is okay
-            # # TODO Maybe use current as well - we expect a spike when stalled, but it will also spike on start
-            # # TODO Check 2A current threshold is okay
-            # if abs(angle - self._prev_hood_angle) < 0.25 and current > 6.0:
-            #     self._hood_motor.set_position(
-            #         self.HOOD_MAX_ANGLE / 360.0 * self.GEAR_RATIO
-            #     )  # max angle is the high, lob shot
-            #     self._initialized = True
-            # else:
-            #     self._prev_hood_angle = angle
-            #     return  # we can't shoot until we are ready
             self._hood_motor.set_position(self.HOOD_MAX_ANGLE / 360.0 * self.GEAR_RATIO)
             self._initialized = True
             return
