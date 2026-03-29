@@ -23,8 +23,8 @@ class Shooter:
     HOOD_MIN_ANGLE = 36.0  # degrees from horizontal
     HOOD_MAX_ANGLE = 70.0
 
-    # The hood is driven by a 42T:12T belt and pulleys, which then drives a 200T sector gear with a 20T spur gear
-    GEAR_RATIO = 42.0 / 12.0 * 200.0 / 20.0
+    # The hood is driven by a 24T:12T belt and pulleys, which then drives a 205T sector gear with a 24T spur gear
+    GEAR_RATIO = 24.0 / 12.0 * 205.0 / 24.0
 
     def __init__(self) -> None:
         self._shooter_motor = phoenix6.hardware.TalonFX(
