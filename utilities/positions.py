@@ -36,17 +36,12 @@ def hub_position() -> Translation2d:
 
 
 def shooter_to_hub(robot_pose: Pose2d) -> Rotation2d:
-    dx = -8.225 * 0.0254  # shooter offset in CAD
-    dy = 8.527 * 0.0254
-    sin = robot_pose.rotation().sin()
-    cos = robot_pose.rotation().cos()
-    shooter_offset_in_world = Translation2d(cos * dx - sin * dy, sin * dx + cos * dy)
-    shooter_position = robot_pose.translation() + shooter_offset_in_world
     hub = hub_position()
-    # The desired heading is for the shooter where it is now, and it will move as we rotate
-    # This will still converge because we keep updating the setpoint as the shooter moves around
     desired_heading = (
-        math.atan2(hub.y - shooter_position.y, hub.x - shooter_position.x) - math.pi
+        math.atan2(
+            hub.y - robot_pose.translation().y, hub.x - robot_pose.translation().x
+        )
+        - math.pi
     )  # Shooter is at rear of robot facing on the -ve x axis
 
     return Rotation2d(desired_heading)
