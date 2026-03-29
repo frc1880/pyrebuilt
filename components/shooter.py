@@ -2,7 +2,7 @@ import numpy
 import phoenix6
 from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
-from wpilib import DriverStation, Timer
+from wpilib import DriverStation
 
 import ids
 from components.ballistics import Ballistics
@@ -87,7 +87,6 @@ class Shooter:
         self._shooter_follower_motor.configurator.apply(
             configs.TalonFXConfiguration().with_current_limits(current_cfg)
         )
-        self._last_shot_time = Timer.getFPGATimestamp()
         self._initialized = False
 
     def shoot(self) -> None:
@@ -108,10 +107,6 @@ class Shooter:
     @feedback
     def at_speed(self) -> bool:
         return abs(abs(self._shooter_motor.get_velocity().value) - abs(self.speed)) < 5
-
-    @feedback
-    def time_since_last_shot(self) -> float:
-        return Timer.getFPGATimestamp() - self._last_shot_time
 
     def execute(self) -> None:
         if not self._initialized:
@@ -168,5 +163,3 @@ class Shooter:
                 ids.TalonId.SHOOTER_FLYWHEEL_MOTOR, signals.MotorAlignmentValue.OPPOSED
             )
         )
-        if self._shooter_motor.get_stator_current().value > self.shot_current_threshold:
-            self._last_shot_time = Timer.getFPGATimestamp()
