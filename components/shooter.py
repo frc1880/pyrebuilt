@@ -76,7 +76,7 @@ class Shooter:
         )
         current_cfg = (
             configs.CurrentLimitsConfigs()
-            .with_stator_current_limit(30.0)
+            .with_stator_current_limit(80.0)
             .with_stator_current_limit_enable(True)
         )
         self._shooter_motor.configurator.apply(
@@ -105,8 +105,12 @@ class Shooter:
         return self._shooter_motor.get_velocity().value
 
     @feedback
+    def shooter_motor_current(self) -> float:
+        return self._shooter_motor.get_supply_current().value
+
+    @feedback
     def at_speed(self) -> bool:
-        return abs(abs(self._shooter_motor.get_velocity().value) - abs(self.speed)) < 5
+        return abs(self._shooter_motor.get_velocity().value - self.speed) < 5
 
     def execute(self) -> None:
         if not self._initialized:
@@ -151,7 +155,7 @@ class Shooter:
             # for teams that have problems with Krakens in follower mode with FOC on
             # For now, we run without FOC enabled
             self._shooter_motor.set_control(
-                controls.VelocityVoltage(-desired_speed, enable_foc=False)
+                controls.VelocityVoltage(desired_speed, enable_foc=False)
             )
         else:
             self._shooter_motor.stopMotor()
