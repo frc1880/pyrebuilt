@@ -1,6 +1,7 @@
 import math
 
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
+from wpimath.units import inchesToMeters
 
 from utilities.game import (
     apriltag_layout,
@@ -17,13 +18,13 @@ class TeamPoses:
 
 class HubPosition:
     BLUE = Translation2d(
-        182.11 * 25.4 / 1000, 158.84 * 25.4 / 1000
+        inchesToMeters(182.11), inchesToMeters(158.84)
     )  # converted from inches on the field drawings
     RED = field_flip_translation2d(BLUE)
 
 
 class AllianceZone:
-    BLUE = 158.06 * 0.0254
+    BLUE = inchesToMeters(158.06)
     RED = apriltag_layout.getFieldLength() - BLUE
 
 

@@ -11,6 +11,7 @@ from wpimath.geometry import (
     Translation2d,
     Translation3d,
 )
+from wpimath.units import inchesToMeters
 
 from autonomous.routines import AutoBase
 from components.ballistics import Ballistics
@@ -22,7 +23,6 @@ from components.shooter import Shooter
 from components.vision import Vision
 from controllers.shooter import ShooterController
 from utilities import game, positions
-from utilities.conversion import inch_to_metre
 from utilities.scalers import map_exponential
 
 
@@ -44,9 +44,9 @@ class MyRobot(magicbot.MagicRobot):
     # Offsets are measured from the robot corner in CAD, hence the calcs below
     shooter_vision_transform = Transform3d(
         Translation3d(
-            inch_to_metre(-26.0 / 2 + 0.224),
-            inch_to_metre(-28.0 / 2 + 6.614),
-            inch_to_metre(13.943),
+            inchesToMeters(-26.0 / 2 + 0.224),
+            inchesToMeters(-28.0 / 2 + 6.614),
+            inchesToMeters(13.943),
         ),
         Rotation3d(0, math.radians(-25), math.radians(180)),
     )
@@ -54,9 +54,9 @@ class MyRobot(magicbot.MagicRobot):
     red_vision_camera_name = "red"
     red_vision_transform = Transform3d(
         Translation3d(
-            inch_to_metre(-26.0 / 2 + 5.123),
-            inch_to_metre(28.0 / 2 - 1.039),
-            inch_to_metre(6.932),
+            inchesToMeters(-26.0 / 2 + 5.123),
+            inchesToMeters(28.0 / 2 - 1.039),
+            inchesToMeters(6.932),
         ),
         Rotation3d(0, math.radians(-30), math.radians(90)),
     )
@@ -64,9 +64,9 @@ class MyRobot(magicbot.MagicRobot):
     green_vision_camera_name = "green"
     green_vision_transform = Transform3d(
         Translation3d(
-            inch_to_metre(-26.0 / 2 + 5.123),
-            -inch_to_metre(28.0 / 2 - 1.039),
-            inch_to_metre(6.932),
+            inchesToMeters(-26.0 / 2 + 5.123),
+            -inchesToMeters(28.0 / 2 - 1.039),
+            inchesToMeters(6.932),
         ),
         Rotation3d(0, math.radians(-30), math.radians(-90)),
     )

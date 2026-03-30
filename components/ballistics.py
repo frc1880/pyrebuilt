@@ -2,9 +2,9 @@ from typing import NamedTuple
 
 import numpy
 from magicbot import feedback
+from wpimath.units import inchesToMeters
 
 from components.drivetrain import Drivetrain
-from utilities.conversion import inch_to_metre
 from utilities.positions import hub_position, is_in_alliance_zone
 
 
@@ -24,14 +24,14 @@ class Ballistics:
 
     # Ranges measured from hub corner (so starting at 54inch) and to front bumper (add 18inch)
     ranges = [
-        inch_to_metre(54 + 18),
-        inch_to_metre(74 + 18),
-        inch_to_metre(94 + 18),
-        inch_to_metre(114 + 18),
-        inch_to_metre(134 + 18),
-        inch_to_metre(154 + 18),
-        inch_to_metre(174 + 18),
-        inch_to_metre(194 + 18),
+        inchesToMeters(54 + 18),
+        inchesToMeters(74 + 18),
+        inchesToMeters(94 + 18),
+        inchesToMeters(114 + 18),
+        inchesToMeters(134 + 18),
+        inchesToMeters(154 + 18),
+        inchesToMeters(174 + 18),
+        inchesToMeters(194 + 18),
     ]  # metres
 
     flywheel_speeds = [43.0, 46.0, 47.0, 49.0, 53.0, 55.0, 58.0, 60.0]  # rev/s
