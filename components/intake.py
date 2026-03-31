@@ -1,5 +1,3 @@
-import math
-
 import phoenix6
 from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
@@ -10,8 +8,10 @@ import ids
 class Intake:
     intake_speed = tunable(1.0)
 
-    deployed_position = tunable(-20.5)
-    carry_position = tunable(-7.0)
+    # All positions are in mechanism rotations
+    deployed_position = 0.0
+    carry_position = tunable(0.25)
+    start_position = tunable(0.3)
     _should_spin = will_reset_to(False)
     _should_feed = will_reset_to(False)
     _should_deploy = will_reset_to(False)
@@ -23,38 +23,42 @@ class Intake:
         self._deploy_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.INTAKE_DEPLOY_MOTOR, ids.CanbusId.INTAKE
         )
+        self._deploy_follower_motor = phoenix6.hardware.TalonFX(
+            ids.TalonId.INTAKE_DEPLOY_FOLLOWER_MOTOR, ids.CanbusId.INTAKE
+        )
 
         talon_fx_configs = configs.TalonFXConfiguration()
 
         slot0_configs = talon_fx_configs.slot0
         # TODO tune these values
-        slot0_configs.k_s = (
-            0.25 * 0.0
-        )  # Add this voltage output to overcome static friction
+        slot0_configs.k_g = 0.0
         slot0_configs.k_v = (
-            6.72 * 0.15  # A velocity target of 1 rps results in this voltage output
+            0.0  # A velocity target of 1 rps results in this voltage output
         )
         slot0_configs.k_a = (
-            0.04  # An acceleration of 1 rps/s requires this voltage output
+            0.0  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 10.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 0.0  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
-            0.12 * 0.01  # A velocity error of 1 rps results in this voltage output
+            0.0  # A velocity error of 1 rps results in this voltage output
         )
+        slot0_configs.gravity_type = signals.GravityTypeValue.ARM_COSINE
+        slot0_configs.gravity_arm_position_offset = 0.0
 
         motion_magic_configs = talon_fx_configs.motion_magic
-        motion_magic_configs.motion_magic_cruise_velocity = 1000.0
-        motion_magic_configs.motion_magic_expo_k_a = 0.1 * 1
-        motion_magic_configs.motion_magic_expo_k_v = 0.12 * 0.5
+        motion_magic_configs.motion_magic_cruise_velocity = 0.0
+        motion_magic_configs.motion_magic_expo_k_a = 0.0
+        motion_magic_configs.motion_magic_expo_k_v = 0.0
 
         talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
+        # Chain sprockets are 24:12 after a 15:1 maxplanetary gearbox reduction
+        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 24.0 / 12.0 * 15.0 / 1.0
 
         self._deploy_motor.configurator.apply(talon_fx_configs)
 
         # Variables used for zeroing against hard stop
         self._desired_intake_position = 0.0
-        self._prev_intake_angle = 0.0
         self._initialized = False
 
         reverse_cfg = configs.MotorOutputConfigs()
@@ -88,27 +92,10 @@ class Intake:
 
     def execute(self) -> None:
         if not self._initialized:
-            # Drive the motor very slowly towards the hard stop
-            # Check to see if we are still moving/current spike
-            # If we are stopped, reset the encoder value and put the motor in closed loop mode
-            # TODO Is this output too small?
-            self._deploy_motor.set_control(controls.DutyCycleOut(0.15))
-
-            current = self._deploy_motor.get_stator_current().value
-            angle = self._deploy_motor.get_position().value
-
-            # TODO Check 1 degree threshold is okay
-            # TODO Maybe use current as well - we expect a spike when stalled, but it will also spike on start
-            # TODO Check 4A current threshold is okay
-            if abs(angle - self._prev_intake_angle) < 0.05 and current > 10.0:
-                self._deploy_motor.stopMotor()
-                self._deploy_motor.set_position(0.0)
-                self._desired_intake_position = 0.0
-                self._initialized = True
-                return
-            else:
-                self._prev_intake_angle = angle
-                return  # we can't intake until we are ready
+            self._deploy_motor.set_position(self.start_position)
+            self._desired_intake_position = self.start_position
+            self._initialized = True
+            return
 
         # while intake go to set position
         if self._should_deploy:
@@ -116,25 +103,14 @@ class Intake:
         else:
             self._desired_intake_position = self.carry_position
 
-        # Only use the motion profile if we are away from the setpoint
-        if (
-            self._desired_intake_position == self.carry_position
-            and self._deploy_motor.get_position().value < self.carry_position
-        ) or (
-            self._desired_intake_position == self.deployed_position
-            and self._deploy_motor.get_position().value > self.deployed_position
-        ):
-            # Compensate for gravity
-            ff_volts = -0.0 * math.sin(
-                self.position() / self.deployed_position * math.pi / 2.0
+        self._deploy_motor.set_control(
+            controls.MotionMagicExpoTorqueCurrentFOC(self._desired_intake_position)
+        )
+        self._deploy_follower_motor.set_control(
+            controls.Follower(
+                ids.TalonId.INTAKE_DEPLOY_MOTOR, signals.MotorAlignmentValue.OPPOSED
             )
-            self._deploy_motor.set_control(
-                controls.MotionMagicExpoVoltage(
-                    self._desired_intake_position, feed_forward=ff_volts
-                )
-            )
-        else:
-            self._deploy_motor.stopMotor()
+        )
 
         if self._should_spin:
             # Spin the intake motor
