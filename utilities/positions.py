@@ -51,7 +51,10 @@ def is_in_alliance_zone(robot_pose: Pose2d) -> bool:
     # Returns True if in alliance zone.
     robot_x = robot_pose.translation().x
 
+    # We are in the zone if our bumpers cross the line, so add half the drivetrain length (as it is the shortest dimension) plus the bumper width
+    # See rule G408
+    bumper_offset = inchesToMeters(26.0 / 2 + 4.0)
     if is_blue():
-        return robot_x <= AllianceZone.BLUE
+        return robot_x <= AllianceZone.BLUE + bumper_offset
     else:
-        return robot_x >= AllianceZone.RED
+        return robot_x >= AllianceZone.RED - bumper_offset

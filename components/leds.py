@@ -2,6 +2,7 @@ from enum import Enum, auto
 
 from magicbot import feedback
 from phoenix6.controls.color_flow_animation import ColorFlowAnimation
+from phoenix6.controls.rainbow_animation import RainbowAnimation
 from phoenix6.controls.single_fade_animation import SingleFadeAnimation
 from phoenix6.controls.solid_color import SolidColor
 from phoenix6.controls.strobe_animation import StrobeAnimation
@@ -12,7 +13,7 @@ from wpimath.geometry import Transform2d
 
 from components.ballistics import Ballistics
 from ids import CanbusId, CandleId
-from utilities.game import is_hub_active, time_to_hub_active
+from utilities.game import is_auto_winner, is_hub_active, shift_info
 
 
 class Pattern(Enum):
@@ -27,8 +28,12 @@ class Pattern(Enum):
     DISABLED = auto()
     IN_RANGE = auto()
     IN_RANGE_FLASH = auto()
+    IN_RANGE_FAST_FLASH = auto()
+    IN_RANGE_PULSE = auto()
     NOT_IN_RANGE = auto()
     NOT_IN_RANGE_FLASH = auto()
+    NOT_IN_RANGE_FAST_FLASH = auto()
+    NOT_IN_RANGE_PULSE = auto()
     OFF = auto()
 
 
@@ -106,16 +111,35 @@ class Leds:
 
     def execute(self) -> None:
         if not (DriverStation.isTestEnabled() or DriverStation.isDisabled()):
-            should_flash = time_to_hub_active() < 5.0 and not is_hub_active()
+            info = shift_info()
+            match_time = DriverStation.getMatchTime()
+            should_flash = not is_hub_active() and info.time_remaining < 5.0
+            # Don't fast flash if it is the end of shift 4 and we are active
+            in_shift_4 = 30.0 <= match_time <= 55.0
+            should_fast_flash = (
+                is_hub_active() and info.time_remaining < 5.0 and not in_shift_4
+            )
+            should_pulse = not is_auto_winner() and match_time > 130.0
 
             if is_hub_active() or should_flash:
                 if self.ballistics.is_within_range():
+                    # Pulse takes priority so we don't show "shift end" when it is still active
                     self._pattern = (
-                        Pattern.IN_RANGE_FLASH if should_flash else Pattern.IN_RANGE
+                        Pattern.IN_RANGE_PULSE
+                        if should_pulse
+                        else Pattern.IN_RANGE_FAST_FLASH
+                        if should_fast_flash
+                        else Pattern.IN_RANGE_FLASH
+                        if should_flash
+                        else Pattern.IN_RANGE
                     )
                 else:
                     self._pattern = (
-                        Pattern.NOT_IN_RANGE_FLASH
+                        Pattern.NOT_IN_RANGE_PULSE
+                        if should_pulse
+                        else Pattern.NOT_IN_RANGE_FAST_FLASH
+                        if should_fast_flash
+                        else Pattern.NOT_IN_RANGE_FLASH
                         if should_flash
                         else Pattern.NOT_IN_RANGE
                     )
@@ -181,16 +205,9 @@ class Leds:
                         )
                     )
                 case Pattern.DISABLED:
-                    for idx in range(4):
-                        start = self.segments[idx + 1]
-                        end = self.segments[idx + 2]
-                        mid = int((start + end) / 2)
-                        self._candle.set_control(
-                            SingleFadeAnimation(start, mid, idx * 2, color=self.BLUE)
-                        )
-                        self._candle.set_control(
-                            SingleFadeAnimation(mid, end, idx * 2 + 1, color=self.WHITE)
-                        )
+                    self._candle.set_control(
+                        RainbowAnimation(self.segments[0], self.segments[-1])
+                    )
                 case Pattern.IN_RANGE:
                     self._candle.set_control(
                         SolidColor(
@@ -203,6 +220,21 @@ class Leds:
                             self.segments[0], self.segments[-1], color=self.GREEN
                         )
                     )
+                case Pattern.IN_RANGE_FAST_FLASH:
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[0],
+                            self.segments[-1],
+                            color=self.GREEN,
+                            frame_rate=8.0,
+                        )
+                    )
+                case Pattern.IN_RANGE_PULSE:
+                    self._candle.set_control(
+                        SingleFadeAnimation(
+                            self.segments[0], self.segments[-1], color=self.GREEN
+                        )
+                    )
                 case Pattern.NOT_IN_RANGE:
                     self._candle.set_control(
                         SolidColor(self.segments[0], self.segments[-1], color=self.RED)
@@ -210,6 +242,21 @@ class Leds:
                 case Pattern.NOT_IN_RANGE_FLASH:
                     self._candle.set_control(
                         StrobeAnimation(
+                            self.segments[0], self.segments[-1], color=self.RED
+                        )
+                    )
+                case Pattern.NOT_IN_RANGE_FAST_FLASH:
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[0],
+                            self.segments[-1],
+                            color=self.RED,
+                            frame_rate=8.0,
+                        )
+                    )
+                case Pattern.NOT_IN_RANGE_PULSE:
+                    self._candle.set_control(
+                        SingleFadeAnimation(
                             self.segments[0], self.segments[-1], color=self.RED
                         )
                     )
