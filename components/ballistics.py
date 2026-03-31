@@ -1,9 +1,9 @@
 from typing import NamedTuple
 
 import numpy
-from wpimath.units import inchesToMeters
 from magicbot import feedback, tunable
 from wpimath.geometry import Rotation2d, Translation2d
+from wpimath.units import inchesToMeters
 
 from components.drivetrain import Drivetrain
 from utilities.positions import hub_position, is_in_alliance_zone
