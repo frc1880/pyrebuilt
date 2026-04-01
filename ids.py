@@ -35,6 +35,7 @@ class CancoderId(enum.IntEnum):
     """CAN ID for CTRE CANcoder."""
 
     HOOD = 29
+    INTAKE = 49
 
 
 @enum.unique

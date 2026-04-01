@@ -52,14 +52,27 @@ class Intake:
         motion_magic_configs.motion_magic_expo_k_v = 0.0
 
         talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
-        # Chain sprockets are 24:12 after a 15:1 maxplanetary gearbox reduction
-        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 24.0 / 12.0 * 15.0 / 1.0
-
+        # Chain sprockets are 24:12 after a (3*9):1 maxplanetary gearbox reduction
+        talon_fx_configs.feedback.rotor_to_sensor_ratio = 24.0 / 12.0 * 27.0 / 1.0
+        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 1.0
+        talon_fx_configs.feedback.feedback_sensor_source = (
+            signals.FeedbackSensorSourceValue.FUSED_CANCODER
+        )
+        talon_fx_configs.feedback.feedback_remote_sensor_id = ids.CancoderId.INTAKE
         self._deploy_motor.configurator.apply(talon_fx_configs)
+
+        cc_cfg = configs.CANcoderConfiguration()
+        cc_cfg.magnet_sensor.sensor_direction = (
+            signals.SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
+        )
+        cc_cfg.magnet_sensor.magnet_offset = 0.0
+        self._cancoder = phoenix6.hardware.CANcoder(
+            ids.CancoderId.INTAKE, ids.CanbusId.INTAKE
+        )
+        self._cancoder.configurator.apply(cc_cfg)
 
         # Variables used for zeroing against hard stop
         self._desired_intake_position = 0.0
-        self._initialized = False
 
         reverse_cfg = configs.MotorOutputConfigs()
         reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
@@ -69,12 +82,12 @@ class Intake:
         )
 
     @feedback
-    def initialized(self) -> bool:
-        return self._initialized
-
-    @feedback
     def position(self) -> float:
         return self._deploy_motor.get_position().value
+
+    @feedback
+    def cancoder_position(self) -> float:
+        return self._cancoder.get_position().value
 
     @feedback
     def setpoint(self) -> float:
@@ -91,11 +104,14 @@ class Intake:
         self._should_feed = True
 
     def execute(self) -> None:
-        if not self._initialized:
-            self._deploy_motor.set_position(self.start_position)
-            self._desired_intake_position = self.start_position
-            self._initialized = True
-            return
+        #######
+        # TESTING
+        #######
+        if self._should_deploy:
+            self._deploy_motor.set_control(controls.DutyCycleOut(0.05))
+        else:
+            self._deploy_motor.stopMotor()
+        return
 
         # while intake go to set position
         if self._should_deploy:
