@@ -15,16 +15,12 @@ class Shooter:
     drivetrain: Drivetrain
 
     speed = tunable(25.0)
-    shot_current_threshold = tunable(10.0)
     desired_hood_angle = tunable(70.0)
     _should_shoot = will_reset_to(False)
 
     # TODO check these values
     HOOD_MIN_ANGLE = 36.0  # degrees from horizontal
     HOOD_MAX_ANGLE = 70.0
-
-    # The hood is driven by a 24T:12T belt and pulleys, which then drives a 205T sector gear with a 24T spur gear
-    GEAR_RATIO = 24.0 / 12.0 * 205.0 / 24.0
 
     def __init__(self) -> None:
         self._shooter_motor = phoenix6.hardware.TalonFX(
@@ -46,23 +42,47 @@ class Shooter:
         self._hood_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.SHOOTER_HOOD_MOTOR, ids.CanbusId.SHOOTER
         )
-        hood_pid_cfg = configs.Slot0Configs()
+
+        # Hood
+        talon_fx_configs = configs.TalonFXConfiguration()
+        hood_pid_cfg = talon_fx_configs.slot0
         # TODO tune these values
         hood_pid_cfg.k_p = 4.0  # 1 rev error will output 1V
         hood_pid_cfg.k_i = 0.0
         hood_pid_cfg.k_d = 0.0
-        current_cfg = configs.CurrentLimitsConfigs()
+
+        current_cfg = talon_fx_configs.current_limits
         current_cfg.stator_current_limit = 40.0
         current_cfg.stator_current_limit_enable = True
         current_cfg.supply_current_limit = 20.0
         current_cfg.supply_current_limit_enable = True
         current_cfg.supply_current_lower_limit = 5.0
         current_cfg.supply_current_lower_time = 1.0
-        self._hood_motor.configurator.apply(
-            configs.TalonFXConfiguration()
-            .with_slot0(hood_pid_cfg)
-            .with_current_limits(current_cfg)
+
+        feedback_cfg = talon_fx_configs.feedback
+        feedback_cfg.feedback_remote_sensor_id = ids.CancoderId.HOOD
+        feedback_cfg.feedback_sensor_source = (
+            signals.FeedbackSensorSourceValue.SYNC_CANCODER
         )
+        # The hood is driven by a 24T:12T belt and pulleys, which then drives a 205T sector gear with a 24T spur gear
+        feedback_cfg.sensor_to_mechanism_ratio = (
+            205.0 / 24.0
+        ) / 360.0  # scale to degrees
+        feedback_cfg.rotor_to_sensor_ratio = 24.0 / 12.0
+
+        self._hood_motor.configurator.apply(
+            talon_fx_configs.with_current_limits(current_cfg)
+        )
+
+        self._cancoder = phoenix6.hardware.CANcoder(
+            ids.CancoderId.HOOD, ids.CanbusId.SHOOTER
+        )
+        cc_cfg = configs.CANcoderConfiguration()
+        cc_cfg.magnet_sensor.sensor_direction = (
+            signals.SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
+        )
+        cc_cfg.magnet_sensor.magnet_offset = 0.0
+        self._cancoder.configurator.apply(cc_cfg)
 
         # Example of closed loop mode once we have run sysid
         flywheel_gains_cfg = (
@@ -94,11 +114,14 @@ class Shooter:
 
     @feedback
     def hood_angle(self) -> float:
-        return self._hood_motor.get_position().value * 360.0 / self.GEAR_RATIO
+        return self._hood_motor.get_position().value
+
+    def hood_cancoder_position(self) -> float:
+        return self._cancoder.get_position().value
 
     @feedback
     def setpoint(self) -> float:
-        return self.desired_hood_angle / 360.0 * self.GEAR_RATIO
+        return self.desired_hood_angle
 
     @feedback
     def current_speed(self) -> float:
@@ -113,11 +136,6 @@ class Shooter:
         return abs(self._shooter_motor.get_velocity().value - self.speed) < 5
 
     def execute(self) -> None:
-        if not self._initialized:
-            self._hood_motor.set_position(self.HOOD_MAX_ANGLE / 360.0 * self.GEAR_RATIO)
-            self._initialized = True
-            return
-
         # Always run except in test mode
         if DriverStation.isTestEnabled():
             # Get values from dashboard
@@ -125,6 +143,7 @@ class Shooter:
             desired_speed = self.speed
             should_spin = self._should_shoot
         else:
+            return
             # Teleop or auto, so always set to what ballistics says
             in_alliance = is_in_alliance_zone(self.drivetrain.pose())
             solution = self.ballistics.solution()
@@ -141,13 +160,19 @@ class Shooter:
             self.desired_hood_angle = desired_hood_angle
             should_spin = self._should_shoot
 
+        if self._should_shoot:
+            self._hood_motor.set_control(controls.DutyCycleOut(-0.05))
+        else:
+            self._hood_motor.stopMotor()
+        return
+
         # Update hood setpoint even if not shooting
-        desired_hood_rotation = (
-            numpy.clip(desired_hood_angle, self.HOOD_MIN_ANGLE, self.HOOD_MAX_ANGLE)
-            / 360.0
-            * self.GEAR_RATIO
+        desired_hood_angle = numpy.clip(
+            desired_hood_angle, self.HOOD_MIN_ANGLE, self.HOOD_MAX_ANGLE
         )
-        self._hood_motor.set_control(controls.PositionVoltage(desired_hood_rotation))
+        self._hood_motor.set_control(
+            controls.PositionTorqueCurrentFOC(desired_hood_angle)
+        )
 
         if should_spin:
             # spin shooter motor

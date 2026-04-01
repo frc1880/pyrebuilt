@@ -33,7 +33,7 @@ class TalonId(enum.IntEnum):
 class CancoderId(enum.IntEnum):
     """CAN ID for CTRE CANcoder."""
 
-    pass
+    HOOD = 29
 
 
 @enum.unique
