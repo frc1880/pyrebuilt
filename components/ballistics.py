@@ -33,6 +33,7 @@ class Ballistics:
 
     # We want to tune the latency of our motion compensation
     latency = tunable(0.15)
+    should_compensate = tunable(False)
 
     # Ranges measured from hub corner (so starting at 54inch) and to front bumper (add 18inch)
     samples = [
@@ -63,6 +64,7 @@ class Ballistics:
             assert pre <= post
         self._solution = Solution(flywheel_speed=0.0, hood_angle=0.0, bearing=0.0)
         self._in_range = False
+        self._center_to_shooter_distance = 0.15  # metres measured from CAD
 
     def _tof(self, distance: float) -> float:
         return numpy.interp(distance, self.ranges, self.time_of_flight)
@@ -92,41 +94,60 @@ class Ballistics:
         """
         Calculate the required speed and angle and store it in the _solution variable.
         """
-        # We are compensating for motion, so we need to project forward to account for latency first
-
         robot_pose = self.drivetrain.pose()
         robot_position = robot_pose.translation()
-        robot_swerve_velocity = self.drivetrain.velocity_field()
-        robot_velocity = Translation2d(
-            robot_swerve_velocity.vx, robot_swerve_velocity.vy
-        )
-        future_position = robot_position + (robot_velocity * self.latency)
+        if self.should_compensate:
+            # We are compensating for motion, so we need to project forward to account for latency first
+            robot_swerve_velocity = self.drivetrain.velocity_field()
+            robot_velocity = Translation2d(
+                robot_swerve_velocity.vx, robot_swerve_velocity.vy
+            )
+            future_position = robot_position + (robot_velocity * self.latency)
 
-        # Directions and distances to hub
-        robot_to_hub = hub_position() - future_position
-        distance_to_hub = robot_to_hub.norm()
-        direction_to_hub = robot_to_hub / distance_to_hub
+            # Directions and distances to hub
+            robot_to_hub = hub_position() - future_position
+            distance_center_to_hub = robot_to_hub.norm()
+            distance_shooter_to_hub = (
+                distance_center_to_hub - self._center_to_shooter_distance
+            )
+            direction_to_hub = robot_to_hub / distance_center_to_hub
 
-        # Baseline (non-compensated)
-        tof = self._tof(distance_to_hub)
-        baseline_speed = distance_to_hub / tof
+            # Baseline (non-compensated)
+            tof = self._tof(distance_shooter_to_hub)
+            baseline_speed = distance_shooter_to_hub / tof
 
-        # Total velocity to get to hub
-        target_velocity = direction_to_hub * baseline_speed
-        # Remove robot velocity to get shot velocity
-        shot_velocity = target_velocity - robot_velocity
+            # Total velocity to get to hub
+            target_velocity = direction_to_hub * baseline_speed
+            # Remove robot velocity to get shot velocity
+            shot_velocity = target_velocity - robot_velocity
 
-        # Extract shot parameters
-        # Compensate for rotation of shooter in chassis
-        shot_heading = shot_velocity.angle().rotateBy(Rotation2d.fromDegrees(-90.0))
-        shot_speed = shot_velocity.norm()
+            # Extract shot parameters
+            # Compensate for rotation of shooter in chassis
+            shot_heading = shot_velocity.angle().rotateBy(
+                Rotation2d.fromDegrees(-180.0)
+            )
+            shot_speed = shot_velocity.norm()
 
-        # Interpolate based on time to get the shot speed/hood angle
-        self._solution = Solution(
-            self._speed(shot_speed), self._angle(shot_speed), shot_heading.radians()
-        )
+            # Interpolate based on time to get the shot speed/hood angle
+            self._solution = Solution(
+                self._speed(shot_speed), self._angle(shot_speed), shot_heading.radians()
+            )
+        else:
+            # Just do a straight lookup to the hub
+            center_to_hub = hub_position() - robot_position
+            distance_shooter_to_hub = (
+                center_to_hub.norm() - self._center_to_shooter_distance
+            )
+            speed = numpy.interp(
+                distance_shooter_to_hub, self.ranges, self.flywheel_speeds
+            )
+            angle = numpy.interp(distance_shooter_to_hub, self.ranges, self.hood_angles)
+            shot_heading = center_to_hub.angle().rotateBy(
+                Rotation2d.fromDegrees(-180.0)
+            )
+            self._solution = Solution(speed, angle, shot_heading.radians())
 
         self._in_range = (
-            self.min_score_range < distance_to_hub < self.max_score_range
+            self.min_score_range < distance_shooter_to_hub < self.max_score_range
             and is_in_alliance_zone(robot_pose)
         )
