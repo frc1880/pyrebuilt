@@ -226,6 +226,7 @@ class ShootGobblerRight(AutoBase):
                     Rotation2d.fromDegrees(180.0),
                 )
                 waypoints = [initial_pose, p1, p2, p3, p4]
+                targetRotations = [RotationTarget(2, Rotation2d.fromDegrees(90))]
             else:
                 p1 = Pose2d(
                     self.blue_starting_pose.x - 0.2,
