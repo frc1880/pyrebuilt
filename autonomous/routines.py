@@ -203,7 +203,7 @@ class ShootGobblerRight(AutoBase):
                 else field_mirror_translation2d(current_blue_pose.translation())
             )
             initial_pose = Pose2d(translation, Rotation2d.fromDegrees(0.0))
-
+            targetRotations = []
             if self._cycle_count == 0:
                 p1 = Pose2d(
                     self.blue_starting_pose.x + 2.5,
@@ -226,7 +226,6 @@ class ShootGobblerRight(AutoBase):
                     Rotation2d.fromDegrees(180.0),
                 )
                 waypoints = [initial_pose, p1, p2, p3, p4]
-                endingHeading = 180
             else:
                 p1 = Pose2d(
                     self.blue_starting_pose.x - 0.2,
@@ -254,13 +253,14 @@ class ShootGobblerRight(AutoBase):
                     Rotation2d.fromDegrees(180.0),
                 )
                 waypoints = [initial_pose, p1, p2, p4, p5]
-                endingHeading = 180
+                targetRotations = [RotationTarget(2, Rotation2d.fromDegrees(0))]
 
             self.set_trajectory(
                 waypoints,
-                Rotation2d.fromDegrees(endingHeading),
+                Rotation2d.fromDegrees(180),
                 field_flip=is_red(),
                 mirror=self.mirror,
+                holonomic_rotations=targetRotations,
             )
 
         # Follow the trajectory until we are in shooting position
