@@ -19,8 +19,8 @@ class Shooter:
     _should_shoot = will_reset_to(False)
 
     # TODO check these values
-    HOOD_MIN_ANGLE = 36.0  # degrees from horizontal
-    HOOD_MAX_ANGLE = 70.0
+    HOOD_MIN_ANGLE = -30.0  # degrees from horizontal
+    HOOD_MAX_ANGLE = 0.0
 
     def __init__(self) -> None:
         self._shooter_motor = phoenix6.hardware.TalonFX(
@@ -47,7 +47,7 @@ class Shooter:
         talon_fx_configs = configs.TalonFXConfiguration()
         hood_pid_cfg = talon_fx_configs.slot0
         # TODO tune these values
-        hood_pid_cfg.k_p = 4.0  # 1 rev error will output 1V
+        hood_pid_cfg.k_p = 0.0  # 1 rev error will output 1V
         hood_pid_cfg.k_i = 0.0
         hood_pid_cfg.k_d = 0.0
 
@@ -81,7 +81,7 @@ class Shooter:
         cc_cfg.magnet_sensor.sensor_direction = (
             signals.SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = 0.0
+        cc_cfg.magnet_sensor.magnet_offset = 0.158936
         self._cancoder.configurator.apply(cc_cfg)
 
         # Example of closed loop mode once we have run sysid
@@ -116,8 +116,13 @@ class Shooter:
     def hood_angle(self) -> float:
         return self._hood_motor.get_position().value
 
+    @feedback
     def hood_cancoder_position(self) -> float:
         return self._cancoder.get_position().value
+
+    @feedback
+    def hood_cancoder_absolute_position(self) -> float:
+        return self._cancoder.get_absolute_position().value
 
     @feedback
     def setpoint(self) -> float:
