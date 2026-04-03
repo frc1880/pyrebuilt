@@ -19,8 +19,8 @@ class Shooter:
     _should_shoot = will_reset_to(False)
 
     # TODO check these values
-    HOOD_MIN_ANGLE = -30.0  # degrees from horizontal
-    HOOD_MAX_ANGLE = 0.0
+    HOOD_MIN_ANGLE = 40.0  # degrees from horizontal
+    HOOD_MAX_ANGLE = 70.0
 
     def __init__(self) -> None:
         self._shooter_motor = phoenix6.hardware.TalonFX(
@@ -114,7 +114,7 @@ class Shooter:
 
     @feedback
     def hood_angle(self) -> float:
-        return self._hood_motor.get_position().value
+        return self._hood_motor.get_position().value + 70.0
 
     @feedback
     def hood_cancoder_position(self) -> float:
@@ -172,8 +172,9 @@ class Shooter:
         return
 
         # Update hood setpoint even if not shooting
-        desired_hood_angle = numpy.clip(
-            desired_hood_angle, self.HOOD_MIN_ANGLE, self.HOOD_MAX_ANGLE
+        desired_hood_angle = (
+            numpy.clip(desired_hood_angle, self.HOOD_MIN_ANGLE, self.HOOD_MAX_ANGLE)
+            - 70.0
         )
         self._hood_motor.set_control(
             controls.PositionTorqueCurrentFOC(desired_hood_angle)
