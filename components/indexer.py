@@ -25,7 +25,7 @@ class Indexer:
         self._injector_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.INDEXER_INJECTOR_MOTOR, ids.CanbusId.INDEXER
         )
-        self.canrange = hardware.CANrange(28, CANBus("rio"))
+        self.canrange = hardware.CANrange(ids.CanRangeId.INDEXER, CANBus("rio"))
 
         cfg = configs.CANrangeConfiguration()
         cfg.proximity_params.min_signal_strength_for_valid_measurement = 2500

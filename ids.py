@@ -78,3 +78,10 @@ class CandleId(enum.IntEnum):
     """CAN ID for CTRE CANdle devices"""
 
     LED = 27
+
+
+@enum.unique
+class CanRangeId(enum.IntEnum):
+    """CAN ID for CTRE CAN Range devices"""
+
+    INDEXER = 39
