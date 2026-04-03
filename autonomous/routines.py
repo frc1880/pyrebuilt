@@ -200,7 +200,7 @@ class ShootGobblerRight(AutoBase):
                 p2 = Pose2d(
                     self.blue_starting_pose.x + 4.1,
                     self.blue_starting_pose.y + 0.6,
-                    Rotation2d.fromDegrees(90.0),
+                    Rotation2d.fromDegrees(50.0),
                 )
                 p3 = Pose2d(
                     self.blue_starting_pose.x - 0.2,
@@ -222,16 +222,25 @@ class ShootGobblerRight(AutoBase):
                 )
                 p3 = Pose2d(
                     self.blue_starting_pose.x + 4.1,
-                    self.blue_starting_pose.y + 1.0,
-                    Rotation2d.fromDegrees(90.0),
+                    self.blue_starting_pose.y + 2.4,
+                    Rotation2d.fromDegrees(80.0),
+                )
+                p4 = Pose2d(
+                    self.blue_starting_pose.x + 3,
+                    self.blue_starting_pose.y + 3,
+                    Rotation2d.fromDegrees(0.0),
                 )
                 p5 = Pose2d(
                     self.blue_starting_pose.x - 0.2,
                     self.blue_starting_pose.y + 1.75,
-                    Rotation2d.fromDegrees(180.0),
+                    Rotation2d.fromDegrees(40.0),
                 )
-                waypoints = [initial_pose, p1, p2, p3, p5]
-                targetRotations = [RotationTarget(2, Rotation2d.fromDegrees(0))]
+                waypoints = [initial_pose, p1, p2, p3, p4, p5]
+                targetRotations = [
+                    RotationTarget(2, Rotation2d.fromDegrees(0)),
+                    RotationTarget(3, Rotation2d.fromDegrees(90)),
+                    RotationTarget(4, Rotation2d.fromDegrees(-140)),
+                ]
 
             self.set_trajectory(
                 waypoints,
