@@ -15,11 +15,11 @@ class Shooter:
     drivetrain: Drivetrain
 
     speed = tunable(25.0)
-    desired_hood_angle = tunable(70.0)
+    desired_hood_angle = tunable(60.0)
     _should_shoot = will_reset_to(False)
 
     # TODO check these values
-    HOOD_MIN_ANGLE = 40.0  # degrees from horizontal
+    HOOD_MIN_ANGLE = 48.0  # degrees from horizontal
     HOOD_MAX_ANGLE = 70.0
 
     def __init__(self) -> None:
@@ -47,9 +47,9 @@ class Shooter:
         talon_fx_configs = configs.TalonFXConfiguration()
         hood_pid_cfg = talon_fx_configs.slot0
         # TODO tune these values
-        hood_pid_cfg.k_p = 0.0  # 1 rev error will output 1V
+        hood_pid_cfg.k_p = 15.0  # Nm per 1 deg error
         hood_pid_cfg.k_i = 0.0
-        hood_pid_cfg.k_d = 0.0
+        hood_pid_cfg.k_d = 0.03
 
         current_cfg = talon_fx_configs.current_limits
         current_cfg.stator_current_limit = 40.0
@@ -62,7 +62,7 @@ class Shooter:
         feedback_cfg = talon_fx_configs.feedback
         feedback_cfg.feedback_remote_sensor_id = ids.CancoderId.HOOD
         feedback_cfg.feedback_sensor_source = (
-            signals.FeedbackSensorSourceValue.SYNC_CANCODER
+            signals.FeedbackSensorSourceValue.FUSED_CANCODER
         )
         # The hood is driven by a 24T:12T belt and pulleys, which then drives a 205T sector gear with a 24T spur gear
         feedback_cfg.sensor_to_mechanism_ratio = (
@@ -165,20 +165,15 @@ class Shooter:
             self.desired_hood_angle = desired_hood_angle
             should_spin = self._should_shoot
 
-        if self._should_shoot:
-            self._hood_motor.set_control(controls.DutyCycleOut(-0.05))
-        else:
-            self._hood_motor.stopMotor()
-        return
-
         # Update hood setpoint even if not shooting
-        desired_hood_angle = (
+        mechanism_hood_angle = (
             numpy.clip(desired_hood_angle, self.HOOD_MIN_ANGLE, self.HOOD_MAX_ANGLE)
             - 70.0
         )
         self._hood_motor.set_control(
-            controls.PositionTorqueCurrentFOC(desired_hood_angle)
+            controls.PositionTorqueCurrentFOC(mechanism_hood_angle)
         )
+        return
 
         if should_spin:
             # spin shooter motor
