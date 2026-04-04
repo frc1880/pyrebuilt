@@ -67,6 +67,8 @@ class PhysicsEngine:
             self.robot.green_vision_transform,
         )
 
+        self.canrange_sim = self.robot.indexer.canrange.sim_state
+
     def update_sim(self, now: float, tm_diff: float) -> None:
         if isinstance(self.robot, SysIdRobot):
             return
@@ -82,3 +84,8 @@ class PhysicsEngine:
         self.physics_controller.drive(speeds, tm_diff)
 
         self.vision_sim.update(self.physics_controller.get_pose())
+
+        if now % 10.0 < 5.0:
+            self.canrange_sim.set_distance(0.3)
+        else:
+            self.canrange_sim.set_distance(4.0)
