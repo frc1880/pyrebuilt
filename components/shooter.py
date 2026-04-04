@@ -145,7 +145,6 @@ class Shooter:
             desired_speed = self.speed
             should_spin = self._should_shoot
         else:
-            return
             # Teleop or auto, so always set to what ballistics says
             in_alliance = is_in_alliance_zone(self.drivetrain.pose())
             solution = self.ballistics.solution()
