@@ -49,7 +49,7 @@ class Indexer:
 
     def execute(self) -> None:
 
-        if self.canrange.get_is_detected().value:
+        if self.canrange.get_is_detected().value or not self._should_feed:
             self._timer.reset()
 
         if self._should_feed:
