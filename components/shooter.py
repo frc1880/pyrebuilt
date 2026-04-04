@@ -41,7 +41,7 @@ class Shooter:
         # TODO tune these values
         hood_pid_cfg.k_p = 15.0  # Nm per 1 deg error
         hood_pid_cfg.k_i = 0.0
-        hood_pid_cfg.k_d = 0.03
+        hood_pid_cfg.k_d = 0.15
 
         current_cfg = talon_fx_configs.current_limits
         current_cfg.stator_current_limit = 40.0
@@ -73,7 +73,7 @@ class Shooter:
         cc_cfg.magnet_sensor.sensor_direction = (
             signals.SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = 0.158936
+        cc_cfg.magnet_sensor.magnet_offset = -0.204346
         self._cancoder.configurator.apply(cc_cfg)
 
         # Example of closed loop mode once we have run sysid
