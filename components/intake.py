@@ -53,8 +53,8 @@ class Intake:
 
         talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
         # Chain sprockets are 24:12 after a (3*9):1 maxplanetary gearbox reduction
-        talon_fx_configs.feedback.rotor_to_sensor_ratio = 24.0 / 12.0 * 27.0 / 1.0
-        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 1.0
+        talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 / 1.0
+        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0
         talon_fx_configs.feedback.feedback_sensor_source = (
             signals.FeedbackSensorSourceValue.FUSED_CANCODER
         )
@@ -63,9 +63,9 @@ class Intake:
 
         cc_cfg = configs.CANcoderConfiguration()
         cc_cfg.magnet_sensor.sensor_direction = (
-            signals.SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
+            signals.SensorDirectionValue.CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = 0.0
+        cc_cfg.magnet_sensor.magnet_offset = -0.415527
         self._cancoder = phoenix6.hardware.CANcoder(
             ids.CancoderId.INTAKE, ids.CanbusId.INTAKE
         )
