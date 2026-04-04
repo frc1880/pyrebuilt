@@ -27,14 +27,6 @@ class Shooter:
             ids.TalonId.SHOOTER_FLYWHEEL_MOTOR, ids.CanbusId.SHOOTER
         )
 
-        # TODO Invert shooter motor if required
-        reverse_cfg = configs.MotorOutputConfigs()
-        reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
-        reverse_cfg.neutral_mode = signals.NeutralModeValue.COAST
-        self._shooter_motor.configurator.apply(
-            configs.TalonFXConfiguration().with_motor_output(reverse_cfg)
-        )
-
         self._shooter_follower_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.SHOOTER_FOLLOWER_FLYWHEEL_MOTOR, ids.CanbusId.SHOOTER
         )
@@ -99,10 +91,15 @@ class Shooter:
             .with_stator_current_limit(80.0)
             .with_stator_current_limit_enable(True)
         )
+        # TODO Invert shooter motor if required
+        reverse_cfg = configs.MotorOutputConfigs()
+        reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
+        reverse_cfg.neutral_mode = signals.NeutralModeValue.COAST
         self._shooter_motor.configurator.apply(
             configs.TalonFXConfiguration()
             .with_slot0(flywheel_gains_cfg)
             .with_current_limits(current_cfg)
+            .with_motor_output(reverse_cfg)
         )
         self._shooter_follower_motor.configurator.apply(
             configs.TalonFXConfiguration().with_current_limits(current_cfg)
@@ -173,16 +170,16 @@ class Shooter:
         self._hood_motor.set_control(
             controls.PositionTorqueCurrentFOC(mechanism_hood_angle)
         )
-        return
 
         if should_spin:
             # spin shooter motor
             # See https://www.chiefdelphi.com/t/kraken-x60-limp-mode-behavior/515080/44
             # for teams that have problems with Krakens in follower mode with FOC on
             # For now, we run without FOC enabled
-            self._shooter_motor.set_control(
-                controls.VelocityVoltage(desired_speed, enable_foc=False)
-            )
+            self._shooter_motor.set_control(controls.DutyCycleOut(0.05))
+            # self._shooter_motor.set_control(
+            #     controls.VelocityVoltage(desired_speed, enable_foc=False)
+            # )
         else:
             self._shooter_motor.stopMotor()
 
