@@ -10,8 +10,7 @@ class Intake:
 
     # All positions are in mechanism rotations
     deployed_position = 0.0
-    carry_position = tunable(0.25)
-    start_position = tunable(0.3)
+    carry_position = tunable(0.23)
     _should_spin = will_reset_to(False)
     _should_feed = will_reset_to(False)
     _should_deploy = will_reset_to(False)
@@ -31,14 +30,14 @@ class Intake:
 
         slot0_configs = talon_fx_configs.slot0
         # TODO tune these values
-        slot0_configs.k_g = 0.0
+        slot0_configs.k_g = 0.2
         slot0_configs.k_v = (
-            0.0  # A velocity target of 1 rps results in this voltage output
+            8.0  # A velocity target of 1 rps results in this voltage output
         )
         slot0_configs.k_a = (
             0.0  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 0.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 1.0  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
             0.0  # A velocity error of 1 rps results in this voltage output
@@ -48,10 +47,10 @@ class Intake:
 
         motion_magic_configs = talon_fx_configs.motion_magic
         motion_magic_configs.motion_magic_cruise_velocity = 0.0
-        motion_magic_configs.motion_magic_expo_k_a = 0.0
-        motion_magic_configs.motion_magic_expo_k_v = 0.0
+        motion_magic_configs.motion_magic_expo_k_a = 5.0
+        motion_magic_configs.motion_magic_expo_k_v = 1.0
 
-        talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
+        talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.COAST
         # Chain sprockets are 24:12 after a (3*9):1 maxplanetary gearbox reduction
         talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 / 1.0
         talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0
@@ -59,6 +58,10 @@ class Intake:
             signals.FeedbackSensorSourceValue.FUSED_CANCODER
         )
         talon_fx_configs.feedback.feedback_remote_sensor_id = ids.CancoderId.INTAKE
+        talon_fx_configs.software_limit_switch.forward_soft_limit_threshold = 0.34
+        talon_fx_configs.software_limit_switch.forward_soft_limit_enable = True
+        talon_fx_configs.software_limit_switch.reverse_soft_limit_threshold = 0.0
+        talon_fx_configs.software_limit_switch.reverse_soft_limit_enable = True
         self._deploy_motor.configurator.apply(talon_fx_configs)
 
         cc_cfg = configs.CANcoderConfiguration()
@@ -104,15 +107,6 @@ class Intake:
         self._should_feed = True
 
     def execute(self) -> None:
-        #######
-        # TESTING
-        #######
-        if self._should_deploy:
-            self._deploy_motor.set_control(controls.DutyCycleOut(0.05))
-        else:
-            self._deploy_motor.stopMotor()
-        return
-
         # while intake go to set position
         if self._should_deploy:
             self._desired_intake_position = self.deployed_position
@@ -120,7 +114,7 @@ class Intake:
             self._desired_intake_position = self.carry_position
 
         self._deploy_motor.set_control(
-            controls.MotionMagicExpoTorqueCurrentFOC(self._desired_intake_position)
+            controls.MotionMagicExpoVoltage(self._desired_intake_position)
         )
         self._deploy_follower_motor.set_control(
             controls.Follower(
