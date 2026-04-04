@@ -1,9 +1,13 @@
+import phoenix6
 from phoenix6.swerve.sim_swerve_drivetrain import SimSwerveDrivetrain
 from photonlibpy.simulation import PhotonCameraSim, SimCameraProperties, VisionSystemSim
 from pyfrc.physics.core import PhysicsInterface
-from wpilib.simulation import RoboRioSim
+from wpilib import DriverStation, RobotController
+from wpilib.simulation import DCMotorSim, RoboRioSim
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import SwerveDrive4Kinematics
+from wpimath.system.plant import DCMotor, LinearSystemId
+from wpimath.units import radiansToRotations
 
 from generated.comp import TunerConstants
 from robot import MyRobot
@@ -68,10 +72,21 @@ class PhysicsEngine:
         )
 
         self.canrange_sim = self.robot.indexer.canrange.sim_state
+        gearbox = DCMotor.krakenX60(2)
+        self.shooter_motor_sim = DCMotorSim(
+            LinearSystemId.DCMotorSystem(gearbox, 0.005, 1.0),
+            gearbox,
+        )
+        # Keep a reference to the motor sim state so we can update it
+        self.shooter_talon_sim = self.robot.shooter._shooter_motor.sim_state
 
     def update_sim(self, now: float, tm_diff: float) -> None:
         if isinstance(self.robot, SysIdRobot):
             return
+
+        # If the driver station is enabled, then feed enable for phoenix devices
+        if DriverStation.isEnabled():
+            phoenix6.unmanaged.feed_enable(100)
 
         self.swerve.update(
             tm_diff, self.roborio.getVInVoltage(), self.robot.drivetrain.modules
@@ -89,3 +104,13 @@ class PhysicsEngine:
             self.canrange_sim.set_distance(0.3)
         else:
             self.canrange_sim.set_distance(4.0)
+
+        self.shooter_talon_sim.set_supply_voltage(RobotController.getBatteryVoltage())
+        self.shooter_motor_sim.setInputVoltage(self.shooter_talon_sim.motor_voltage)
+        self.shooter_motor_sim.update(tm_diff)
+        self.shooter_talon_sim.set_raw_rotor_position(
+            radiansToRotations(self.shooter_motor_sim.getAngularPosition())
+        )
+        self.shooter_talon_sim.set_rotor_velocity(
+            radiansToRotations(self.shooter_motor_sim.getAngularVelocity())
+        )
