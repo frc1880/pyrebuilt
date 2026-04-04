@@ -28,7 +28,7 @@ class Indexer:
         self.canrange = hardware.CANrange(ids.CanRangeId.INDEXER, ids.CanbusId.INDEXER)
 
         cfg = configs.CANrangeConfiguration()
-        cfg.proximity_params.min_signal_strength_for_valid_measurement = 2500
+        cfg.proximity_params.min_signal_strength_for_valid_measurement = 4800
         cfg.proximity_params.proximity_threshold = 0.55
         cfg.to_f_params.update_mode = signals.UpdateModeValue.SHORT_RANGE100_HZ
 
@@ -36,7 +36,6 @@ class Indexer:
 
         self._timer = Timer()
         self._timer.start()
-        self._indexer_empty = True
 
     def feed(self) -> None:
         self._should_feed = True
@@ -45,19 +44,13 @@ class Indexer:
         self._should_backdrive = True
 
     @feedback
-    def is_indexer_empty(self) -> bool:
-        return self._indexer_empty
+    def is_hopper_empty(self) -> bool:
+        return self._timer.hasElapsed(0.5)
 
     def execute(self) -> None:
 
-        detected = self.canrange.get_is_detected().value
-        dist = self.canrange.get_distance().value
-
-        if detected and dist >= 0.05:
+        if self.canrange.get_is_detected().value:
             self._timer.reset()
-            self._indexer_empty = False
-        elif self._timer.hasElapsed(0.5):
-            self._indexer_empty = True
 
         if self._should_feed:
             # Spin the index motor
