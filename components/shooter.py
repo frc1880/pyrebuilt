@@ -79,12 +79,12 @@ class Shooter:
         # Example of closed loop mode once we have run sysid
         flywheel_gains_cfg = (
             configs.Slot0Configs()
-            .with_k_p(0.6)
+            .with_k_p(0.53475)
             .with_k_i(0)
             .with_k_d(0)
-            .with_k_s(0.22446)
-            .with_k_v(0.1213)
-            .with_k_a(0.024026)
+            .with_k_s(0.29794)
+            .with_k_v(0.12638)
+            .with_k_a(0.032839)
         )
         current_cfg = (
             configs.CurrentLimitsConfigs()
@@ -176,10 +176,9 @@ class Shooter:
             # See https://www.chiefdelphi.com/t/kraken-x60-limp-mode-behavior/515080/44
             # for teams that have problems with Krakens in follower mode with FOC on
             # For now, we run without FOC enabled
-            self._shooter_motor.set_control(controls.DutyCycleOut(0.05))
-            # self._shooter_motor.set_control(
-            #     controls.VelocityVoltage(desired_speed, enable_foc=False)
-            # )
+            self._shooter_motor.set_control(
+                controls.VelocityVoltage(desired_speed, enable_foc=False)
+            )
         else:
             self._shooter_motor.stopMotor()
 
