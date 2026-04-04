@@ -28,9 +28,10 @@ class RobotContainer:
         """
 
         # Default command is duty cycle control with the left up/down stick
-        self.mechanism.setDefaultCommand(
-            self.mechanism.joystick_drive_command(self.joystick.getLeftY)
-        )
+        def zero() -> float:
+            return 0.0
+
+        self.mechanism.setDefaultCommand(self.mechanism.joystick_drive_command(zero))
 
         # Manually start logging with left bumper before running any tests,
         # and stop logging with right bumper after we're done with ALL tests.
