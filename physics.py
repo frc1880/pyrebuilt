@@ -104,7 +104,7 @@ class PhysicsEngine:
             self.canrange_sim.set_distance(0.3)
         else:
             self.canrange_sim.set_distance(4.0)
-            
+
         self.shooter_talon_sim.set_supply_voltage(RobotController.getBatteryVoltage())
         self.shooter_motor_sim.setInputVoltage(self.shooter_talon_sim.motor_voltage)
         self.shooter_motor_sim.update(tm_diff)
