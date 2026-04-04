@@ -26,6 +26,19 @@ from utilities import game, positions
 from utilities.scalers import map_exponential
 
 
+####################
+# Enabling LiveWindow breaks test mode with a CANRange
+# MagicBot doesn't use LiveWindow in teleop or auto
+# Monkeypatch it so it won't start in test mode either
+def noop(enabled: bool) -> None:
+    pass
+
+
+wpilib.LiveWindow.setEnabled = noop  # type: ignore[method-assign]
+# END OF MONKEYPATCH
+####################
+
+
 class MyRobot(magicbot.MagicRobot):
     # CONTROLLERS MUST COME FIRST SO THAT will_reset_to works properly!!
     # Controllers
