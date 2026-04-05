@@ -79,7 +79,7 @@ class Shooter:
         # Example of closed loop mode once we have run sysid
         flywheel_gains_cfg = (
             configs.Slot0Configs()
-            .with_k_p(1.5)
+            .with_k_p(0.53475)
             .with_k_i(0)
             .with_k_d(0)
             .with_k_s(0.29794)
