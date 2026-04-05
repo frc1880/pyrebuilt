@@ -10,7 +10,7 @@ class Intake:
 
     # All positions are in mechanism rotations
     deployed_position = 0.0
-    carry_position = tunable(0.23)
+    carry_position = tunable(0.12)
     _should_spin = will_reset_to(False)
     _should_feed = will_reset_to(False)
     _should_deploy = will_reset_to(False)
