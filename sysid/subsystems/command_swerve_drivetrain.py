@@ -9,7 +9,7 @@ from wpilib import DriverStation, Notifier, RobotController
 from wpilib.sysid import SysIdRoutineLog
 from wpimath.geometry import Pose2d, Rotation2d
 
-from generated.tuner_constants import TunerSwerveDrivetrain
+from generated.comp import TunerSwerveDrivetrain
 
 
 class CommandSwerveDrivetrain(Subsystem, TunerSwerveDrivetrain):
@@ -152,10 +152,13 @@ class CommandSwerveDrivetrain(Subsystem, TunerSwerveDrivetrain):
                 # Reduce dynamic voltage to 4 V to prevent brownout
                 stepVoltage=4.0,
                 # Log state with SignalLogger class
-                recordState=lambda state: SignalLogger.write_string(
-                    "SysIdTranslation_State", SysIdRoutineLog.stateEnumToString(state)
-                )
-                and None,
+                recordState=lambda state: (
+                    SignalLogger.write_string(
+                        "SysIdTranslation_State",
+                        SysIdRoutineLog.stateEnumToString(state),
+                    )
+                    and None
+                ),
             ),
             SysIdRoutine.Mechanism(
                 lambda output: self.set_control(
@@ -173,10 +176,12 @@ class CommandSwerveDrivetrain(Subsystem, TunerSwerveDrivetrain):
                 # Use dynamic voltage of 7 V
                 stepVoltage=7.0,
                 # Log state with SignalLogger class
-                recordState=lambda state: SignalLogger.write_string(
-                    "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
-                )
-                and None,
+                recordState=lambda state: (
+                    SignalLogger.write_string(
+                        "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
+                    )
+                    and None
+                ),
             ),
             SysIdRoutine.Mechanism(
                 lambda output: self.set_control(
@@ -196,10 +201,12 @@ class CommandSwerveDrivetrain(Subsystem, TunerSwerveDrivetrain):
                 stepVoltage=7.0,
                 # Use default timeout (10 s)
                 # Log state with SignalLogger class
-                recordState=lambda state: SignalLogger.write_string(
-                    "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
-                )
-                and None,
+                recordState=lambda state: (
+                    SignalLogger.write_string(
+                        "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
+                    )
+                    and None
+                ),
             ),
             SysIdRoutine.Mechanism(
                 lambda output: (
