@@ -47,6 +47,18 @@ def shooter_to_hub(robot_pose: Pose2d) -> Rotation2d:
     return Rotation2d(desired_heading)
 
 
+def shooter_to_blue_hub(robot_pose: Pose2d) -> Rotation2d:
+    desired_heading = (
+        math.atan2(
+            HubPosition.BLUE.y - robot_pose.translation().y,
+            HubPosition.BLUE.x - robot_pose.translation().x,
+        )
+        - math.pi
+    )  # Shooter is at rear of robot facing on the -ve x axis
+
+    return Rotation2d(desired_heading)
+
+
 def is_in_alliance_zone(robot_pose: Pose2d) -> bool:
     # Returns True if in alliance zone.
     robot_x = robot_pose.translation().x
