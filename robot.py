@@ -74,7 +74,7 @@ class MyRobot(magicbot.MagicRobot):
         Rotation3d(0, math.radians(-30), math.radians(90)),
     )
     green_vision: Vision
-    green_vision_camera_name = "green"
+    green_vision_camera_name = "white"
     green_vision_transform = Transform3d(
         Translation3d(
             inchesToMeters(-26.0 / 2 + 5.123),
