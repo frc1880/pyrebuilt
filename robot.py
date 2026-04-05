@@ -73,9 +73,9 @@ class MyRobot(magicbot.MagicRobot):
         ),
         Rotation3d(0, math.radians(-30), math.radians(90)),
     )
-    green_vision: Vision
-    green_vision_camera_name = "white"
-    green_vision_transform = Transform3d(
+    white_vision: Vision
+    white_vision_camera_name = "white"
+    white_vision_transform = Transform3d(
         Translation3d(
             inchesToMeters(-26.0 / 2 + 5.123),
             -inchesToMeters(28.0 / 2 - 1.039),
@@ -116,14 +116,14 @@ class MyRobot(magicbot.MagicRobot):
     def _update_vision(self) -> None:
         self.shooter_vision.execute()
         self.red_vision.execute()
-        self.green_vision.execute()
+        self.white_vision.execute()
 
     def is_vision_alive(self) -> bool:
         self._update_vision()  # Run in case we forget to do it in a mode that needs it
         return (
             self.shooter_vision.alive()
             or self.red_vision.alive()
-            or self.green_vision.alive()
+            or self.white_vision.alive()
         )
 
     def disabledInit(self) -> None:
