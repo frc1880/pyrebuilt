@@ -41,6 +41,7 @@ class ShooterController(StateMachine):
             return
         # Point at the target
         self.drivetrain.track_heading(self._heading())
+        self.shooter.shoot()  # Spin up flywheels if not in alliance zone
         if self.drivetrain.is_aligned():
             self.next_state("shooting")
 
@@ -49,6 +50,7 @@ class ShooterController(StateMachine):
         # Check to see that we are still aligned with the goal
         # This is important if we are being defended
         self.drivetrain.track_heading(self._heading())
+        self.shooter.shoot()  # Spin up flywheels if not in alliance zone
         if not self.drivetrain.is_aligned():
             self.next_state_now("aligning")
         else:

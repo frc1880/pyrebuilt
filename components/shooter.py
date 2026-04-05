@@ -159,7 +159,7 @@ class Shooter:
             desired_speed = solution.flywheel_speed if in_alliance else 75.0
             self.speed = desired_speed
             self.desired_hood_angle = desired_hood_angle
-            should_spin = self._should_shoot
+            should_spin = self._should_shoot or in_alliance
 
         # Update hood setpoint even if not shooting
         mechanism_hood_angle = (
