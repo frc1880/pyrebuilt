@@ -10,7 +10,7 @@ class Intake:
 
     # All positions are in mechanism rotations
     deployed_position = 0.0
-    carry_position = tunable(0.23)
+    carry_position = tunable(0.12)
     _should_spin = will_reset_to(False)
     _should_feed = will_reset_to(False)
     _should_deploy = will_reset_to(False)
@@ -68,11 +68,14 @@ class Intake:
         cc_cfg.magnet_sensor.sensor_direction = (
             signals.SensorDirectionValue.CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = -0.415527
+        cc_cfg.magnet_sensor.magnet_offset = -0.173340
         self._cancoder = phoenix6.hardware.CANcoder(
             ids.CancoderId.INTAKE, ids.CanbusId.INTAKE
         )
         self._cancoder.configurator.apply(cc_cfg)
+        initial_position = self._cancoder.get_position().value
+        if initial_position < -0.1:
+            self._cancoder.set_position(initial_position + 1.0)
 
         # Variables used for zeroing against hard stop
         self._desired_intake_position = 0.0
@@ -90,7 +93,7 @@ class Intake:
 
     @feedback
     def cancoder_position(self) -> float:
-        return self._cancoder.get_position().value
+        return self._cancoder.get_absolute_position().value
 
     @feedback
     def setpoint(self) -> float:
