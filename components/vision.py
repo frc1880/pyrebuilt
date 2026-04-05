@@ -49,32 +49,32 @@ class Vision:
 
     def execute(self) -> None:
         # Get any observations from photonvision and add them to the drivetrain
-        self.estimator.addHeadingData(
-            wpilib.Timer.getFPGATimestamp(), self.drivetrain.pose().rotation()
-        )
-        for result in self.camera.getAllUnreadResults():
-            self._targets = result.getTargets()
-            pose = self.estimator.estimateCoprocMultiTagPose(result)
-            if pose:
-                # Multitag successful
-                self._field_obj.setPose(pose.estimatedPose.toPose2d())
-                self.drivetrain.add_vision_measurement(
-                    pose.estimatedPose.toPose2d(),
-                    fpga_to_current_time(pose.timestampSeconds),
-                    (0.05, 0.05, math.radians(3)),
-                )
-                self._has_seen_multitag = True
-                self._last_multitag = wpilib.Timer.getFPGATimestamp()
-                continue
-            if not self._has_seen_multitag or not self.use_single_tag:
-                # Don't fuse single tags until multitag has given us a proper heading
-                continue
+        if self._has_seen_multitag:
+            self.estimator.addHeadingData(
+                wpilib.Timer.getFPGATimestamp(), self.drivetrain.pose().rotation()
+            )
+        result = self.camera.getLatestResult()
+        self._targets = result.getTargets()
+        pose = self.estimator.estimateCoprocMultiTagPose(result)
+        if pose:
+            # Multitag successful
+            self._field_obj.setPose(pose.estimatedPose.toPose2d())
+            self.drivetrain.add_vision_measurement(
+                pose.estimatedPose.toPose2d(),
+                fpga_to_current_time(pose.timestampSeconds),
+                (0.05, 0.05, math.radians(3)),
+            )
+            self._has_seen_multitag = True
+            self._last_multitag = wpilib.Timer.getFPGATimestamp()
+
+        elif self._has_seen_multitag and self.use_single_tag:
+            # Don't fuse single tags until multitag has given us a proper heading
             # We don't have multitag result, so try single tag
             pose = self.estimator.estimatePnpDistanceTrigSolvePose(result)
-            if pose:
-                self.drivetrain.add_vision_measurement(
-                    pose.estimatedPose.toPose2d(),
-                    fpga_to_current_time(pose.timestampSeconds),
-                    (0.3, 0.3, math.radians(10)),
-                )
+        if pose:
+            self.drivetrain.add_vision_measurement(
+                pose.estimatedPose.toPose2d(),
+                fpga_to_current_time(pose.timestampSeconds),
+                (0.1, 0.1, math.radians(5)),
+            )
         self.drivetrain.update_odometry()
