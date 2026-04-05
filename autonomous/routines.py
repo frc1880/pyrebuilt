@@ -17,12 +17,14 @@ from components.intake import Intake
 from controllers.shooter import ShooterController
 from utilities.game import (
     field_flip_pose2d,
+    field_flip_rotation2d,
     field_mirror_pose2d,
+    field_mirror_rotation2d,
     field_mirror_translation2d,
     is_blue,
     is_red,
 )
-from utilities.positions import shooter_to_hub
+from utilities.positions import shooter_to_blue_hub, shooter_to_hub
 
 
 class AutoBase(AutonomousStateMachine):
@@ -94,13 +96,17 @@ class AutoBase(AutonomousStateMachine):
             ),
             holonomic_rotations=holonomic_rotations,
         )
+        starting_rotation = self.drivetrain.pose().rotation()
         if field_flip:
             pp_path = pp_path.flipPath()
+            starting_rotation = field_flip_rotation2d(starting_rotation)
         if mirror:
             pp_path = pp_path.mirrorPath()
+            starting_rotation = field_mirror_rotation2d(starting_rotation)
+
         self._trajectory = pp_path.generateTrajectory(
             starting_speeds=ChassisSpeeds(),
-            starting_rotation=self.drivetrain.pose().rotation(),
+            starting_rotation=starting_rotation,
             config=self.drivetrain.pp_robot_config,
         )
         auto_path = self.field.getObject("auto")
@@ -162,7 +168,7 @@ class Shoot(AutoBase):
 class ShootGobblerRight(AutoBase):
     MODE_NAME = "Shoot + Gobbler - Right"
 
-    blue_starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(0.0))
+    blue_starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(-90.0))
 
     def on_enable(self) -> None:
         self._cycle_count = 0
@@ -189,62 +195,75 @@ class ShootGobblerRight(AutoBase):
                 if not self.mirror
                 else field_mirror_translation2d(current_blue_pose.translation())
             )
-            initial_pose = Pose2d(translation, Rotation2d.fromDegrees(0.0))
+            initial_waypoint = Pose2d(translation, Rotation2d.fromDegrees(0.0))
             targetRotations = []
+            p1 = Pose2d(
+                self.blue_starting_pose.x + 1.0,
+                self.blue_starting_pose.y,
+                Rotation2d.fromDegrees(0.0),
+            )
+            p2 = Pose2d(
+                self.blue_starting_pose.x + 2.5,
+                self.blue_starting_pose.y,
+                Rotation2d.fromDegrees(0.0),
+            )
+            p4 = Pose2d(
+                self.blue_starting_pose.x - 0.2,
+                self.blue_starting_pose.y + 1.75,
+                Rotation2d.fromDegrees(180.0),
+            )
+            final_heading = shooter_to_blue_hub(p4)
             if self._cycle_count == 0:
-                p1 = Pose2d(
-                    self.blue_starting_pose.x + 2.5,
-                    self.blue_starting_pose.y,
-                    Rotation2d.fromDegrees(0.0),
-                )
-                p2 = Pose2d(
+                p3 = Pose2d(
                     self.blue_starting_pose.x + 4.1,
                     self.blue_starting_pose.y + 0.6,
-                    Rotation2d.fromDegrees(50.0),
+                    Rotation2d.fromDegrees(90.0),
+                )
+                waypoints = [initial_waypoint, p1, p2, p3, p4]
+                targetRotations = [
+                    RotationTarget(1.0, Rotation2d.fromDegrees(-90.0)),
+                    RotationTarget(3.0, Rotation2d.fromDegrees(90.0)),
+                ]
+            else:
+                auto_starting_pose = Pose2d(
+                    self.blue_starting_pose.translation(), Rotation2d.fromDegrees(0.0)
                 )
                 p3 = Pose2d(
-                    self.blue_starting_pose.x - 0.2,
+                    self.blue_starting_pose.x + 4.1,
+                    self.blue_starting_pose.y + 1.9,
+                    Rotation2d.fromDegrees(90.0),
+                )
+                extra1 = Pose2d(
+                    self.blue_starting_pose.x + 3.5,
+                    self.blue_starting_pose.y + 2.2,
+                    Rotation2d.fromDegrees(180.0),
+                )
+                extra2 = Pose2d(
+                    self.blue_starting_pose.x + 1.5,
                     self.blue_starting_pose.y + 1.75,
                     Rotation2d.fromDegrees(180.0),
                 )
-                waypoints = [initial_pose, p1, p2, p3]
-                targetRotations = [RotationTarget(2, Rotation2d.fromDegrees(90))]
-            else:
-                p1 = Pose2d(
-                    self.blue_starting_pose.x - 0.2,
-                    self.blue_starting_pose.y + 1.75,
-                    Rotation2d.fromDegrees(90.0),
-                )
-                p2 = Pose2d(
-                    self.blue_starting_pose.x - 0.2,
-                    self.blue_starting_pose.y - 0.1,
-                    Rotation2d.fromDegrees(8.0),
-                )
-                p3 = Pose2d(
-                    self.blue_starting_pose.x + 4.1,
-                    self.blue_starting_pose.y + 2.4,
-                    Rotation2d.fromDegrees(80.0),
-                )
-                p4 = Pose2d(
-                    self.blue_starting_pose.x + 3,
-                    self.blue_starting_pose.y + 3,
-                    Rotation2d.fromDegrees(0.0),
-                )
-                p5 = Pose2d(
-                    self.blue_starting_pose.x - 0.2,
-                    self.blue_starting_pose.y + 1.75,
-                    Rotation2d.fromDegrees(40.0),
-                )
-                waypoints = [initial_pose, p1, p2, p3, p4, p5]
+                waypoints = [
+                    initial_waypoint,
+                    auto_starting_pose,
+                    p1,
+                    p2,
+                    p3,
+                    extra1,
+                    extra2,
+                    p4,
+                ]
                 targetRotations = [
-                    RotationTarget(2, Rotation2d.fromDegrees(0)),
-                    RotationTarget(3, Rotation2d.fromDegrees(90)),
-                    RotationTarget(4, Rotation2d.fromDegrees(-140)),
+                    RotationTarget(1.0, Rotation2d.fromDegrees(-90.0)),
+                    RotationTarget(2.0, Rotation2d.fromDegrees(-90.0)),
+                    RotationTarget(4.0, Rotation2d.fromDegrees(90.0)),
+                    RotationTarget(5.0, Rotation2d.fromDegrees(180.0)),
+                    RotationTarget(6.0, Rotation2d.fromDegrees(180.0)),
                 ]
 
             self.set_trajectory(
                 waypoints,
-                Rotation2d.fromDegrees(180),
+                final_heading,
                 field_flip=is_red(),
                 mirror=self.mirror,
                 holonomic_rotations=targetRotations,
