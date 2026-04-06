@@ -13,6 +13,7 @@ from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.kinematics import ChassisSpeeds
 
 from components.drivetrain import Drivetrain
+from components.indexer import Indexer
 from components.intake import Intake
 from controllers.shooter import ShooterController
 from utilities.game import (
@@ -34,6 +35,7 @@ class AutoBase(AutonomousStateMachine):
     field: wpilib.Field2d
     drivetrain: Drivetrain
     intake: Intake
+    indexer: Indexer
     shooter_controller: ShooterController
 
     blue_starting_pose: Pose2d | None = None
@@ -169,9 +171,11 @@ class ShootGobblerRight(AutoBase):
         super().on_enable()
 
     @timed_state(first=True, duration=2.5, next_state="collect")
-    def shooting(self) -> None:
+    def shooting(self, state_tm: float) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
+        if self.indexer.is_hopper_empty and state_tm > 1.45:
+            self.next_state_now("collect")
 
     @state
     def collect(self, initial_call: bool, state_tm: float) -> None:
@@ -191,60 +195,48 @@ class ShootGobblerRight(AutoBase):
             )
             initial_pose = Pose2d(translation, Rotation2d.fromDegrees(0.0))
             targetRotations = []
-            if self._cycle_count == 0:
-                p1 = Pose2d(
-                    self.blue_starting_pose.x + 2.5,
-                    self.blue_starting_pose.y,
-                    Rotation2d.fromDegrees(0.0),
-                )
-                p2 = Pose2d(
-                    self.blue_starting_pose.x + 4.1,
-                    self.blue_starting_pose.y + 0.6,
-                    Rotation2d.fromDegrees(50.0),
-                )
-                p3 = Pose2d(
-                    self.blue_starting_pose.x - 0.2,
-                    self.blue_starting_pose.y + 1.75,
-                    Rotation2d.fromDegrees(180.0),
-                )
-                waypoints = [initial_pose, p1, p2, p3]
-                targetRotations = [RotationTarget(2, Rotation2d.fromDegrees(90))]
-            else:
-                p1 = Pose2d(
-                    self.blue_starting_pose.x - 0.2,
-                    self.blue_starting_pose.y + 1.75,
-                    Rotation2d.fromDegrees(90.0),
-                )
-                p2 = Pose2d(
-                    self.blue_starting_pose.x - 0.2,
-                    self.blue_starting_pose.y - 0.1,
-                    Rotation2d.fromDegrees(8.0),
-                )
-                p3 = Pose2d(
-                    self.blue_starting_pose.x + 4.1,
-                    self.blue_starting_pose.y + 2.4,
-                    Rotation2d.fromDegrees(80.0),
-                )
-                p4 = Pose2d(
-                    self.blue_starting_pose.x + 3,
-                    self.blue_starting_pose.y + 3,
-                    Rotation2d.fromDegrees(0.0),
-                )
-                p5 = Pose2d(
-                    self.blue_starting_pose.x - 0.2,
-                    self.blue_starting_pose.y + 1.75,
-                    Rotation2d.fromDegrees(40.0),
-                )
-                waypoints = [initial_pose, p1, p2, p3, p4, p5]
-                targetRotations = [
-                    RotationTarget(2, Rotation2d.fromDegrees(0)),
-                    RotationTarget(3, Rotation2d.fromDegrees(90)),
-                    RotationTarget(4, Rotation2d.fromDegrees(-140)),
-                ]
+            p1 = Pose2d(
+                self.blue_starting_pose.x + 2.5,
+                self.blue_starting_pose.y,
+                Rotation2d.fromDegrees(0.0),
+            )
+            p2 = Pose2d(
+                self.blue_starting_pose.x + 4.1 - 1,
+                self.blue_starting_pose.y,
+                Rotation2d.fromDegrees(0.0),
+            )
+            p3 = Pose2d(
+                self.blue_starting_pose.x + 4.1,
+                self.blue_starting_pose.y + 1,
+                Rotation2d.fromDegrees(90.0),
+            )
 
+            p4 = Pose2d(
+                self.blue_starting_pose.x + 4.1,
+                self.blue_starting_pose.y + 2 + 0.5 * self._cycle_count,
+                Rotation2d.fromDegrees(-90.0),
+            )
+            p5 = Pose2d(
+                self.blue_starting_pose.x + 4.1,
+                self.blue_starting_pose.y + 1,
+                Rotation2d.fromDegrees(-90.0),
+            )
+            p6 = Pose2d(
+                self.blue_starting_pose.x + 4.1 - 1,
+                self.blue_starting_pose.y,
+                Rotation2d.fromDegrees(180.0),
+            )
+            p7 = Pose2d(
+                self.blue_starting_pose.x,
+                self.blue_starting_pose.y,
+                Rotation2d.fromDegrees(180.0),
+            )
+
+            waypoints = [initial_pose, p1, p2, p3, p4, p5, p6, p7]
+            targetRotations = [RotationTarget(2, Rotation2d.fromDegrees(90))]
             self.set_trajectory(
                 waypoints,
-                Rotation2d.fromDegrees(180),
+                Rotation2d.fromDegrees(0),
                 field_flip=is_red(),
                 mirror=self.mirror,
                 holonomic_rotations=targetRotations,
@@ -267,9 +259,11 @@ class ShootGobblerRight(AutoBase):
             self.next_state("spraying")
 
     @timed_state(duration=4, next_state="collect")
-    def spraying(self) -> None:
+    def spraying(self, state_tm) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
+        if self.indexer.is_hopper_empty and state_tm > 1.45:
+            self.next_state_now("collect")
 
 
 class GobblerRight(ShootGobblerRight):
