@@ -39,9 +39,9 @@ class Shooter:
         talon_fx_configs = configs.TalonFXConfiguration()
         hood_pid_cfg = talon_fx_configs.slot0
         # TODO tune these values
-        hood_pid_cfg.k_p = 15.0  # Nm per 1 deg error
+        hood_pid_cfg.k_p = 1.0  # Voltage per 1 deg error
         hood_pid_cfg.k_i = 0.0
-        hood_pid_cfg.k_d = 0.15
+        hood_pid_cfg.k_d = 0.01
 
         current_cfg = talon_fx_configs.current_limits
         current_cfg.stator_current_limit = 40.0
@@ -79,7 +79,7 @@ class Shooter:
         # Example of closed loop mode once we have run sysid
         flywheel_gains_cfg = (
             configs.Slot0Configs()
-            .with_k_p(1.5)
+            .with_k_p(0.53475)
             .with_k_i(0)
             .with_k_d(0)
             .with_k_s(0.29794)
@@ -166,9 +166,7 @@ class Shooter:
             numpy.clip(desired_hood_angle, self.HOOD_MIN_ANGLE, self.HOOD_MAX_ANGLE)
             - 70.0
         )
-        self._hood_motor.set_control(
-            controls.PositionTorqueCurrentFOC(mechanism_hood_angle)
-        )
+        self._hood_motor.set_control(controls.PositionVoltage(mechanism_hood_angle))
 
         if should_spin:
             # spin shooter motor

@@ -13,7 +13,6 @@ class Intake:
     carry_position = tunable(0.12)
     _should_spin = will_reset_to(False)
     _should_feed = will_reset_to(False)
-    _should_deploy = will_reset_to(False)
 
     def __init__(self) -> None:
         self._roller_motor = phoenix6.hardware.TalonFX(
@@ -77,15 +76,15 @@ class Intake:
         if initial_position < -0.1:
             self._cancoder.set_position(initial_position + 1.0)
 
-        # Variables used for zeroing against hard stop
-        self._desired_intake_position = 0.0
-
         reverse_cfg = configs.MotorOutputConfigs()
         reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
         reverse_cfg.neutral_mode = signals.NeutralModeValue.COAST
         self._roller_motor.configurator.apply(
             configs.TalonFXConfiguration().with_motor_output(reverse_cfg)
         )
+
+    def setup(self) -> None:
+        self._desired_intake_position = self.carry_position
 
     @feedback
     def position(self) -> float:
@@ -100,22 +99,20 @@ class Intake:
         return self._desired_intake_position
 
     def intake(self) -> None:
-        self._should_deploy = True
+        self._desired_intake_position = self.deployed_position
         self._should_spin = True
+
+    def carry(self) -> None:
+        self._desired_intake_position = self.carry_position
 
     def spin(self) -> None:
         self._should_spin = True
 
     def feed(self) -> None:
+        self._desired_intake_position = self.carry_position
         self._should_feed = True
 
     def execute(self) -> None:
-        # while intake go to set position
-        if self._should_deploy:
-            self._desired_intake_position = self.deployed_position
-        else:
-            self._desired_intake_position = self.carry_position
-
         self._deploy_motor.set_control(
             controls.MotionMagicExpoVoltage(self._desired_intake_position)
         )

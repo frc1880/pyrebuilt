@@ -57,4 +57,4 @@ class ShooterController(StateMachine):
             # We are still aligned, so keep shooting
             if self.shooter.at_speed():
                 self.indexer.feed()
-                self.intake.spin()
+                self.intake.feed()
