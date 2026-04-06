@@ -1,5 +1,3 @@
-import math
-
 import phoenix6
 from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
@@ -10,11 +8,11 @@ import ids
 class Intake:
     intake_speed = tunable(1.0)
 
-    deployed_position = tunable(-20.5)
-    carry_position = tunable(-7.0)
+    # All positions are in mechanism rotations
+    deployed_position = 0.0
+    carry_position = tunable(0.12)
     _should_spin = will_reset_to(False)
     _should_feed = will_reset_to(False)
-    _should_deploy = will_reset_to(False)
 
     def __init__(self) -> None:
         self._roller_motor = phoenix6.hardware.TalonFX(
@@ -23,39 +21,60 @@ class Intake:
         self._deploy_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.INTAKE_DEPLOY_MOTOR, ids.CanbusId.INTAKE
         )
+        self._deploy_follower_motor = phoenix6.hardware.TalonFX(
+            ids.TalonId.INTAKE_DEPLOY_FOLLOWER_MOTOR, ids.CanbusId.INTAKE
+        )
 
         talon_fx_configs = configs.TalonFXConfiguration()
 
         slot0_configs = talon_fx_configs.slot0
         # TODO tune these values
-        slot0_configs.k_s = (
-            0.25 * 0.0
-        )  # Add this voltage output to overcome static friction
+        slot0_configs.k_g = 0.2
         slot0_configs.k_v = (
-            6.72 * 0.15  # A velocity target of 1 rps results in this voltage output
+            8.0  # A velocity target of 1 rps results in this voltage output
         )
         slot0_configs.k_a = (
-            0.04  # An acceleration of 1 rps/s requires this voltage output
+            0.0  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 10.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 1.0  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
-            0.12 * 0.01  # A velocity error of 1 rps results in this voltage output
+            0.0  # A velocity error of 1 rps results in this voltage output
         )
+        slot0_configs.gravity_type = signals.GravityTypeValue.ARM_COSINE
+        slot0_configs.gravity_arm_position_offset = 0.0
 
         motion_magic_configs = talon_fx_configs.motion_magic
-        motion_magic_configs.motion_magic_cruise_velocity = 1000.0
-        motion_magic_configs.motion_magic_expo_k_a = 0.1 * 1
-        motion_magic_configs.motion_magic_expo_k_v = 0.12 * 0.5
+        motion_magic_configs.motion_magic_cruise_velocity = 0.0
+        motion_magic_configs.motion_magic_expo_k_a = 5.0
+        motion_magic_configs.motion_magic_expo_k_v = 1.0
 
-        talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
-
+        talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.COAST
+        # Chain sprockets are 24:12 after a (3*9):1 maxplanetary gearbox reduction
+        talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 / 1.0
+        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0
+        talon_fx_configs.feedback.feedback_sensor_source = (
+            signals.FeedbackSensorSourceValue.FUSED_CANCODER
+        )
+        talon_fx_configs.feedback.feedback_remote_sensor_id = ids.CancoderId.INTAKE
+        talon_fx_configs.software_limit_switch.forward_soft_limit_threshold = 0.34
+        talon_fx_configs.software_limit_switch.forward_soft_limit_enable = True
+        talon_fx_configs.software_limit_switch.reverse_soft_limit_threshold = 0.0
+        talon_fx_configs.software_limit_switch.reverse_soft_limit_enable = True
         self._deploy_motor.configurator.apply(talon_fx_configs)
 
-        # Variables used for zeroing against hard stop
-        self._desired_intake_position = 0.0
-        self._prev_intake_angle = 0.0
-        self._initialized = False
+        cc_cfg = configs.CANcoderConfiguration()
+        cc_cfg.magnet_sensor.sensor_direction = (
+            signals.SensorDirectionValue.CLOCKWISE_POSITIVE
+        )
+        cc_cfg.magnet_sensor.magnet_offset = -0.173340
+        self._cancoder = phoenix6.hardware.CANcoder(
+            ids.CancoderId.INTAKE, ids.CanbusId.INTAKE
+        )
+        self._cancoder.configurator.apply(cc_cfg)
+        initial_position = self._cancoder.get_position().value
+        if initial_position < -0.1:
+            self._cancoder.set_position(initial_position + 1.0)
 
         reverse_cfg = configs.MotorOutputConfigs()
         reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
@@ -64,77 +83,44 @@ class Intake:
             configs.TalonFXConfiguration().with_motor_output(reverse_cfg)
         )
 
-    @feedback
-    def initialized(self) -> bool:
-        return self._initialized
+    def setup(self) -> None:
+        self._desired_intake_position = self.carry_position
 
     @feedback
     def position(self) -> float:
         return self._deploy_motor.get_position().value
 
     @feedback
+    def cancoder_position(self) -> float:
+        return self._cancoder.get_absolute_position().value
+
+    @feedback
     def setpoint(self) -> float:
         return self._desired_intake_position
 
     def intake(self) -> None:
-        self._should_deploy = True
+        self._desired_intake_position = self.deployed_position
         self._should_spin = True
+
+    def carry(self) -> None:
+        self._desired_intake_position = self.carry_position
 
     def spin(self) -> None:
         self._should_spin = True
 
     def feed(self) -> None:
+        self._desired_intake_position = self.carry_position
         self._should_feed = True
 
     def execute(self) -> None:
-        if not self._initialized:
-            # Drive the motor very slowly towards the hard stop
-            # Check to see if we are still moving/current spike
-            # If we are stopped, reset the encoder value and put the motor in closed loop mode
-            # TODO Is this output too small?
-            self._deploy_motor.set_control(controls.DutyCycleOut(0.15))
-
-            current = self._deploy_motor.get_stator_current().value
-            angle = self._deploy_motor.get_position().value
-
-            # TODO Check 1 degree threshold is okay
-            # TODO Maybe use current as well - we expect a spike when stalled, but it will also spike on start
-            # TODO Check 4A current threshold is okay
-            if abs(angle - self._prev_intake_angle) < 0.05 and current > 10.0:
-                self._deploy_motor.stopMotor()
-                self._deploy_motor.set_position(0.0)
-                self._desired_intake_position = 0.0
-                self._initialized = True
-                return
-            else:
-                self._prev_intake_angle = angle
-                return  # we can't intake until we are ready
-
-        # while intake go to set position
-        if self._should_deploy:
-            self._desired_intake_position = self.deployed_position
-        else:
-            self._desired_intake_position = self.carry_position
-
-        # Only use the motion profile if we are away from the setpoint
-        if (
-            self._desired_intake_position == self.carry_position
-            and self._deploy_motor.get_position().value < self.carry_position
-        ) or (
-            self._desired_intake_position == self.deployed_position
-            and self._deploy_motor.get_position().value > self.deployed_position
-        ):
-            # Compensate for gravity
-            ff_volts = -0.0 * math.sin(
-                self.position() / self.deployed_position * math.pi / 2.0
+        self._deploy_motor.set_control(
+            controls.MotionMagicExpoVoltage(self._desired_intake_position)
+        )
+        self._deploy_follower_motor.set_control(
+            controls.Follower(
+                ids.TalonId.INTAKE_DEPLOY_MOTOR, signals.MotorAlignmentValue.OPPOSED
             )
-            self._deploy_motor.set_control(
-                controls.MotionMagicExpoVoltage(
-                    self._desired_intake_position, feed_forward=ff_volts
-                )
-            )
-        else:
-            self._deploy_motor.stopMotor()
+        )
 
         if self._should_spin:
             # Spin the intake motor

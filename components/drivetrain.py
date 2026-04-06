@@ -34,9 +34,9 @@ class Drivetrain:
                 TunerConstants,
                 TunerSwerveDrivetrain,
             )
-        self._heading_controller = PIDController(Kp=3, Ki=0, Kd=0)
+        self._heading_controller = PIDController(Kp=10, Ki=0, Kd=0)
         self._heading_controller.enableContinuousInput(-math.pi, math.pi)
-        self._heading_controller.setTolerance(math.radians(5.0))
+        self._heading_controller.setTolerance(math.radians(3.0))
         self._aligned = False
 
         tuner_constants = TunerConstants()
