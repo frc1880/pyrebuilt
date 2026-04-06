@@ -164,6 +164,9 @@ class MyRobot(magicbot.MagicRobot):
             * self.drivetrain.max_angular_rate
         )
         self.drivetrain.drive_field(vx, vy, vz)
+        if self.intake.timeSinceDeployed > 2 and self.intake.deployed:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 1.0)
 
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
