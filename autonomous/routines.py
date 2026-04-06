@@ -174,7 +174,7 @@ class ShootGobblerRight(AutoBase):
     def shooting(self, state_tm: float) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty and state_tm > 1.45:
+        if self.indexer.is_hopper_empty() and state_tm > 1.45:
             self.next_state_now("collect")
 
     @state
@@ -262,7 +262,7 @@ class ShootGobblerRight(AutoBase):
     def spraying(self, state_tm) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty and state_tm > 1.45:
+        if self.indexer.is_hopper_empty() and state_tm > 1.45:
             self.next_state_now("collect")
 
 
