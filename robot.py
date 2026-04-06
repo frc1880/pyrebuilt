@@ -167,7 +167,7 @@ class MyRobot(magicbot.MagicRobot):
 
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
-        if self.gamepad.getLeftBumper:
+        if self.gamepad.getLeftBumper():
             self.intake.carry()
         if self.gamepad.getRightTriggerAxis() > 0.5:
             self.shooter_controller.engage()
