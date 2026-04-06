@@ -72,9 +72,16 @@ class Vision:
             # We don't have multitag result, so try single tag
             pose = self.estimator.estimatePnpDistanceTrigSolvePose(result)
         if pose:
-            self.drivetrain.add_vision_measurement(
-                pose.estimatedPose.toPose2d(),
-                fpga_to_current_time(pose.timestampSeconds),
-                (0.2, 0.2, math.radians(5)),
+            # Check for innovation and gate
+            innovation = (
+                pose.estimatedPose.toPose2d()
+                .translation()
+                .distance(self.drivetrain.pose().translation())
             )
+            if innovation < 1.0:
+                self.drivetrain.add_vision_measurement(
+                    pose.estimatedPose.toPose2d(),
+                    fpga_to_current_time(pose.timestampSeconds),
+                    (0.2, 0.2, math.radians(5)),
+                )
         self.drivetrain.update_odometry()
