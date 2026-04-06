@@ -21,6 +21,7 @@ from components.intake import Intake
 from components.leds import Leds
 from components.shooter import Shooter
 from components.vision import Vision
+from components.vision_coordinator import VisionCoordinator
 from controllers.shooter import ShooterController
 from utilities import game, positions
 from utilities.scalers import map_exponential
@@ -83,6 +84,8 @@ class MyRobot(magicbot.MagicRobot):
         ),
         Rotation3d(0, math.radians(-30), math.radians(-90)),
     )
+
+    vision_coordinator: VisionCoordinator
 
     def createObjects(self) -> None:
         self.gamepad = wpilib.XboxController(0)
