@@ -27,13 +27,15 @@ class TalonId(enum.IntEnum):
     # Intake 41-49
     INTAKE_ROLLER_MOTOR = 41
     INTAKE_DEPLOY_MOTOR = 42
+    INTAKE_DEPLOY_FOLLOWER_MOTOR = 43
 
 
 @enum.unique
 class CancoderId(enum.IntEnum):
     """CAN ID for CTRE CANcoder."""
 
-    pass
+    HOOD = 29
+    INTAKE = 49
 
 
 @enum.unique
@@ -78,3 +80,10 @@ class CandleId(enum.IntEnum):
     """CAN ID for CTRE CANdle devices"""
 
     LED = 27
+
+
+@enum.unique
+class CanRangeId(enum.IntEnum):
+    """CAN ID for CTRE CAN Range devices"""
+
+    INDEXER = 39

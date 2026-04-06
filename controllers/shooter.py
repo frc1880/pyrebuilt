@@ -22,9 +22,9 @@ class ShooterController(StateMachine):
         # If we are in our alliance zone, aim at the hub
         # Otherwise fire back at the alliance wall as a passing shot
         if positions.is_in_alliance_zone(self.drivetrain.pose()):
-            return positions.shooter_to_hub(self.drivetrain.pose()).radians()
+            return self.ballistics.solution().bearing
         else:
-            return math.radians(-90.0) if game.is_red() else math.radians(90.0)
+            return math.radians(180.0) if game.is_red() else math.radians(0.0)
 
     def _can_shoot(self) -> bool:
         # We can shoot if we are in our zone and the hub is active,
@@ -40,7 +40,8 @@ class ShooterController(StateMachine):
         if not self._can_shoot():
             return
         # Point at the target
-        self.drivetrain.track_heading(self.ballistics.solution().bearing)
+        self.drivetrain.track_heading(self._heading())
+        self.shooter.shoot()  # Spin up flywheels if not in alliance zone
         if self.drivetrain.is_aligned():
             self.next_state("shooting")
 
@@ -48,11 +49,12 @@ class ShooterController(StateMachine):
     def shooting(self) -> None:
         # Check to see that we are still aligned with the goal
         # This is important if we are being defended
-        self.drivetrain.track_heading(self.ballistics.solution().bearing)
+        self.drivetrain.track_heading(self._heading())
+        self.shooter.shoot()  # Spin up flywheels if not in alliance zone
         if not self.drivetrain.is_aligned():
             self.next_state_now("aligning")
         else:
             # We are still aligned, so keep shooting
             if self.shooter.at_speed():
                 self.indexer.feed()
-                self.intake.spin()
+                self.intake.feed()

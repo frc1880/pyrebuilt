@@ -37,14 +37,14 @@ class Ballistics:
 
     # Ranges measured from hub corner (so starting at 54inch) and to front bumper (add 18inch)
     samples = [
-        Sample(inchesToMeters(54 + 18), 70.0, 43.0, 1.0),
-        Sample(inchesToMeters(74 + 18), 70.0, 46.0, 1.0),
-        Sample(inchesToMeters(94 + 18), 65.0, 47.0, 1.0),
-        Sample(inchesToMeters(114 + 18), 60.0, 49.0, 1.0),
-        Sample(inchesToMeters(134 + 18), 60.0, 53.0, 1.0),
-        Sample(inchesToMeters(154 + 18), 60.0, 55.0, 1.0),
-        Sample(inchesToMeters(174 + 18), 60.0, 58.0, 1.0),
-        Sample(inchesToMeters(194 + 18), 56.0, 60.0, 1.0),
+        Sample(inchesToMeters(54 + 18), 70.0, 53.0, 1.0),
+        Sample(inchesToMeters(74 + 18), 70.0, 56.0, 1.0),
+        Sample(inchesToMeters(94 + 18), 65.0, 57.0, 1.0),
+        Sample(inchesToMeters(114 + 18), 65.0, 61.0, 1.0),
+        Sample(inchesToMeters(134 + 18), 65.0, 67.0, 1.0),
+        Sample(inchesToMeters(154 + 18), 65.0, 75.0, 1.0),
+        Sample(inchesToMeters(174 + 18), 60.0, 83.0, 1.0),
+        Sample(inchesToMeters(194 + 18), 60.0, 86.0, 1.0),
     ]
 
     # Split the samples out to make interpolating easier
