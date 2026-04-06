@@ -19,7 +19,7 @@ class Vision:
     # We need to access the drivetrain to add measurements
     drivetrain: Drivetrain
     field: wpilib.Field2d
-    use_single_tag = tunable(False)
+    use_single_tag = tunable(True)
 
     def __init__(self, camera_name: str, transform: Transform3d) -> None:
         # Instantiate the camera/photonvision
@@ -75,6 +75,6 @@ class Vision:
             self.drivetrain.add_vision_measurement(
                 pose.estimatedPose.toPose2d(),
                 fpga_to_current_time(pose.timestampSeconds),
-                (0.1, 0.1, math.radians(5)),
+                (0.2, 0.2, math.radians(5)),
             )
         self.drivetrain.update_odometry()
