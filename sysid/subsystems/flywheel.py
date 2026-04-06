@@ -23,12 +23,15 @@ class FlywheelMechanism(Subsystem):
         self.sys_id_control = controls.VoltageOut(0)
 
         if follower_id is not None:
-            self.follower_to_test = hardware.TalonFX(device_id, canbus)
+            self.follower_to_test = hardware.TalonFX(follower_id, canbus)
             self.follower_to_test.set_control(
                 controls.Follower(
                     self.motor_to_test.device_id, signals.MotorAlignmentValue.OPPOSED
                 )
             )
+
+        def control(volts: float) -> None:
+            self.motor_to_test.set_control(self.sys_id_control.with_output(volts))
 
         self.sys_id_routine = SysIdRoutine(
             SysIdRoutine.Config(
@@ -42,9 +45,7 @@ class FlywheelMechanism(Subsystem):
                 ),
             ),
             SysIdRoutine.Mechanism(
-                lambda volts: self.motor_to_test.set_control(
-                    self.sys_id_control.with_output(volts)
-                ),
+                control,
                 lambda log: None,
                 self,
             ),
