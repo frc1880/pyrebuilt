@@ -1,5 +1,5 @@
 import phoenix6
-from magicbot import tunable, will_reset_to
+from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
 from wpilib import Timer
 
@@ -72,7 +72,7 @@ class Intake:
         cc_cfg.magnet_sensor.sensor_direction = (
             signals.SensorDirectionValue.CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = -0.173340
+        cc_cfg.magnet_sensor.magnet_offset = -0.185791
         self._cancoder = phoenix6.hardware.CANcoder(
             ids.CancoderId.INTAKE, ids.CanbusId.INTAKE
         )
@@ -93,9 +93,11 @@ class Intake:
     def setup(self) -> None:
         self._desired_intake_position = self.carry_position
 
+    @feedback
     def position(self) -> float:
         return self._deploy_motor.get_position().value
 
+    @feedback
     def cancoder_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
