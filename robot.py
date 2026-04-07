@@ -203,7 +203,7 @@ class MyRobot(magicbot.MagicRobot):
             self.intake.intake()
         if self.gamepad.getLeftBumper():
             self.intake.carry()
-        if self.gamepad.getPOV(0):
+        if self.gamepad.getPOV() == 180:
             self.intake.retract()
         if self.intake.timeSinceDeployed > 2 and self.intake.deployed:
             self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
