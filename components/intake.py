@@ -11,7 +11,7 @@ class Intake:
 
     # All positions are in mechanism rotations
     deployed_position = 0.0
-    carry_position = tunable(0.12)
+    carry_position = tunable(0.15)
     timeSinceDeployed = 0.0
     deployed = False
     _should_spin = will_reset_to(False)
@@ -34,12 +34,12 @@ class Intake:
         # TODO tune these values
         slot0_configs.k_g = 0.2
         slot0_configs.k_v = (
-            10.0  # A velocity target of 1 rps results in this voltage output
+            8.0  # A velocity target of 1 rps results in this voltage output
         )
         slot0_configs.k_a = (
             0.0  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 5.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 3.0  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
             0.0  # A velocity error of 1 rps results in this voltage output
