@@ -194,7 +194,6 @@ class MyRobot(magicbot.MagicRobot):
         self._test_shooter_on = False
 
     def testPeriodic(self) -> None:
-        # self.poseLog.append(self.drivetrain.pose)
         if self.gamepad.getXButtonPressed():
             self._test_shooter_on = not self._test_shooter_on
         if self.gamepad.getRightTriggerAxis() > 0.5 and self._test_shooter_on:
