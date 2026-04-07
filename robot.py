@@ -2,7 +2,6 @@ import math
 
 import magicbot
 import wpilib
-from wpilib import DataLogManager, DriverStation
 from wpimath.geometry import (
     Pose2d,
     Rotation2d,
@@ -13,7 +12,6 @@ from wpimath.geometry import (
     Translation3d,
 )
 from wpimath.units import inchesToMeters
-from wpiutil.log import StructLogEntry
 
 from autonomous.routines import AutoBase
 from components.ballistics import Ballistics
@@ -182,6 +180,7 @@ class MyRobot(magicbot.MagicRobot):
             self.shooter_controller.engage()
         elif self.gamepad.getAButton():
             self.indexer.backdrive()
+            self.intake.backdrive()
         if self.gamepad.getXButton():
             home_pose = Pose2d(
                 182.11 * 25.4 / 1000 - 1.25, 158.84 * 25.4 / 1000, Rotation2d()
@@ -192,13 +191,10 @@ class MyRobot(magicbot.MagicRobot):
             self.drivetrain.set_pose(home_pose)
 
     def testInit(self) -> None:
-        DataLogManager.start()
-        DriverStation.startDataLog(DataLogManager.getLog())
-        self.poseLog = StructLogEntry(DataLogManager.getLog(), "/Robot/Pose", Pose2d)
         self._test_shooter_on = False
 
     def testPeriodic(self) -> None:
-        self.poseLog.append(self.drivetrain.pose)
+        # self.poseLog.append(self.drivetrain.pose)
         if self.gamepad.getXButtonPressed():
             self._test_shooter_on = not self._test_shooter_on
         if self.gamepad.getRightTriggerAxis() > 0.5 and self._test_shooter_on:
@@ -231,7 +227,9 @@ class MyRobot(magicbot.MagicRobot):
                 self.leds.not_in_range()
             if self.gamepad.getYButton():
                 self.leds.not_in_range(True)
-
+        if self.gamepad.getAButton():
+            self.indexer.backdrive()
+            self.intake.backdrive()
         if self._test_shooter_on:
             self.shooter.shoot()
 

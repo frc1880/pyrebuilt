@@ -15,6 +15,7 @@ class Intake:
     timeSinceDeployed = 0.0
     deployed = False
     _should_spin = will_reset_to(False)
+    _should_backdrive = will_reset_to(False)
     _should_feed = will_reset_to(False)
 
     def __init__(self) -> None:
@@ -109,6 +110,9 @@ class Intake:
         self._desired_intake_position = self.carry_position
         self.deployed = False
 
+    def backdrive(self) -> None:
+        self._should_backdrive = True
+
     def spin(self) -> None:
         self._should_spin = True
 
@@ -134,5 +138,7 @@ class Intake:
             self._roller_motor.set(self.intake_speed)
         elif self._should_feed:
             self._roller_motor.set(0.3)
+        elif self._should_backdrive:
+            self._roller_motor.set(-1.0)
         else:
             self._roller_motor.stopMotor()
