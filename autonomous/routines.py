@@ -294,7 +294,10 @@ class ShootGobblerRight(AutoBase):
             waypoints = [sp, p5, p6, p7]
 
             self.set_trajectory(
-                waypoints, Rotation2d.fromDegrees(0.0), field_flip=is_red()
+                waypoints,
+                Rotation2d.fromDegrees(0.0),
+                field_flip=is_red(),
+                mirror=self.mirror,
             )
 
         # Follow the trajectory until we are in shooting position
