@@ -21,7 +21,6 @@ from components.intake import Intake
 from components.leds import Leds
 from components.shooter import Shooter
 from components.vision import Vision
-from components.vision_coordinator import VisionCoordinator
 from controllers.shooter import ShooterController
 from utilities import game, positions
 from utilities.scalers import map_exponential
@@ -84,8 +83,6 @@ class MyRobot(magicbot.MagicRobot):
         ),
         Rotation3d(0, math.radians(-30), math.radians(-90)),
     )
-
-    vision_coordinator: VisionCoordinator
 
     def createObjects(self) -> None:
         self.gamepad = wpilib.XboxController(0)
@@ -164,9 +161,18 @@ class MyRobot(magicbot.MagicRobot):
             * self.drivetrain.max_angular_rate
         )
         self.drivetrain.drive_field(vx, vy, vz)
+        if self.intake.timeSinceDeployed > 2 and self.intake.deployed:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 1.0)
+
+        else:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
 
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
+        if self.gamepad.getLeftBumper():
+            self.intake.carry()
         if self.gamepad.getRightTriggerAxis() > 0.5:
             self.shooter_controller.engage()
         elif self.gamepad.getAButton():
@@ -190,7 +196,14 @@ class MyRobot(magicbot.MagicRobot):
             self.indexer.feed()
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
-
+        if self.gamepad.getLeftBumper():
+            self.intake.carry()
+        if self.intake.timeSinceDeployed > 2 and self.intake.deployed:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 1.0)
+        else:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
         if self.gamepad.getLeftBumper():
             self.leds.disabled()
             if self.gamepad.getPOV() == 0:

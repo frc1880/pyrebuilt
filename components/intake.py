@@ -1,6 +1,7 @@
 import phoenix6
 from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
+from wpilib import Timer
 
 import ids
 
@@ -11,6 +12,8 @@ class Intake:
     # All positions are in mechanism rotations
     deployed_position = 0.0
     carry_position = tunable(0.12)
+    timeSinceDeployed = 0.0
+    deployed = False
     _should_spin = will_reset_to(False)
     _should_feed = will_reset_to(False)
 
@@ -31,12 +34,12 @@ class Intake:
         # TODO tune these values
         slot0_configs.k_g = 0.2
         slot0_configs.k_v = (
-            8.0  # A velocity target of 1 rps results in this voltage output
+            10.0  # A velocity target of 1 rps results in this voltage output
         )
         slot0_configs.k_a = (
             0.0  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 1.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 5  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
             0.0  # A velocity error of 1 rps results in this voltage output
@@ -82,6 +85,8 @@ class Intake:
         self._roller_motor.configurator.apply(
             configs.TalonFXConfiguration().with_motor_output(reverse_cfg)
         )
+        self._timer = Timer()
+        self._timer.start()
 
     def setup(self) -> None:
         self._desired_intake_position = self.carry_position
@@ -99,11 +104,13 @@ class Intake:
         return self._desired_intake_position
 
     def intake(self) -> None:
+        self.deployed = True
         self._desired_intake_position = self.deployed_position
         self._should_spin = True
 
     def carry(self) -> None:
         self._desired_intake_position = self.carry_position
+        self.deployed = False
 
     def spin(self) -> None:
         self._should_spin = True
@@ -121,6 +128,9 @@ class Intake:
                 ids.TalonId.INTAKE_DEPLOY_MOTOR, signals.MotorAlignmentValue.OPPOSED
             )
         )
+        self.timeSinceDeployed = self._timer.get()
+        if not self.deployed:
+            self._timer.reset()
 
         if self._should_spin:
             # Spin the intake motor
