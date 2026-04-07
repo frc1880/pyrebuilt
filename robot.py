@@ -168,6 +168,10 @@ class MyRobot(magicbot.MagicRobot):
             self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
             self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 1.0)
 
+        else:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
+
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
         if self.gamepad.getLeftBumper():
@@ -197,7 +201,12 @@ class MyRobot(magicbot.MagicRobot):
             self.intake.intake()
         if self.gamepad.getLeftBumper():
             self.intake.carry()
-
+        if self.intake.timeSinceDeployed > 2 and self.intake.deployed:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 1.0)
+        else:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
         if self.gamepad.getLeftBumper():
             self.leds.disabled()
             if self.gamepad.getPOV() == 0:
