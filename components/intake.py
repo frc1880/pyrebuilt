@@ -34,12 +34,12 @@ class Intake:
         # TODO tune these values
         slot0_configs.k_g = 0.2
         slot0_configs.k_v = (
-            8.0  # A velocity target of 1 rps results in this voltage output
+            10.0  # A velocity target of 1 rps results in this voltage output
         )
         slot0_configs.k_a = (
             0.0  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 1.5  # 1 rev error will output this voltage
+        slot0_configs.k_p = 5  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
             0.0  # A velocity error of 1 rps results in this voltage output
