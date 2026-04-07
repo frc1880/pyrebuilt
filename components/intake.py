@@ -39,7 +39,7 @@ class Intake:
         slot0_configs.k_a = (
             0.0  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 1.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 1.5  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
             0.0  # A velocity error of 1 rps results in this voltage output
