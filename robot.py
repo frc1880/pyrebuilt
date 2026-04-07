@@ -2,6 +2,9 @@ import math
 
 import magicbot
 import wpilib
+from pykit.logger import Logger
+from pykit.networktables.nt4Publisher import NT4Publisher
+from pykit.wpilog.wpilogwriter import WPILOGWriter
 from wpimath.geometry import (
     Pose2d,
     Rotation2d,
@@ -190,10 +193,19 @@ class MyRobot(magicbot.MagicRobot):
             )
             self.drivetrain.set_pose(home_pose)
 
+    def __init__(self) -> None:
+        super().__init__()
+
     def testInit(self) -> None:
+        Logger.recordMetadata("Robot", "KitBot2025")
+        Logger.addDataReciever(NT4Publisher(True))
+        Logger.addDataReciever(WPILOGWriter())
+        Logger.start()
         self._test_shooter_on = False
 
     def testPeriodic(self) -> None:
+        pos = Pose2d(5, 5, Rotation2d.fromDegrees(30))
+        Logger.recordOutput("MyPose", pos)
         # self.poseLog.append(self.drivetrain.pose)
         if self.gamepad.getXButtonPressed():
             self._test_shooter_on = not self._test_shooter_on

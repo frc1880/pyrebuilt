@@ -5,6 +5,7 @@ from magicbot import feedback, tunable, will_reset_to
 from pathplannerlib.config import ModuleConfig, RobotConfig
 from phoenix6.swerve import requests
 from phoenix6.swerve.swerve_module import ChassisSpeeds, SwerveModule
+from pykit.autolog import autolog_output
 from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.system.plant import DCMotor
@@ -123,6 +124,7 @@ class Drivetrain:
         return wpilib.RobotController.getSerialNumber()
 
     @feedback
+    @autolog_output(key="Odometry/Robot")
     def pose(self) -> Pose2d:
         return self._phoenix_swerve.get_state().pose
 
