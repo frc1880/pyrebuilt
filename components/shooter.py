@@ -113,11 +113,9 @@ class Shooter:
     def hood_angle(self) -> float:
         return self._hood_motor.get_position().value + 70.0
 
-    @feedback
     def hood_cancoder_position(self) -> float:
         return self._cancoder.get_position().value
 
-    @feedback
     def hood_cancoder_absolute_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
@@ -125,15 +123,12 @@ class Shooter:
     def setpoint(self) -> float:
         return self.desired_hood_angle
 
-    @feedback
     def current_speed(self) -> float:
         return self._shooter_motor.get_velocity().value
 
-    @feedback
     def shooter_motor_current(self) -> float:
         return self._shooter_motor.get_supply_current().value
 
-    @feedback
     def at_speed(self) -> bool:
         return abs(self._shooter_motor.get_velocity().value - self.speed) < 5
 

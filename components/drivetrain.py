@@ -119,7 +119,6 @@ class Drivetrain:
         )
         self.update_alliance()
 
-    @feedback
     def roborio_serial(self) -> str:
         return wpilib.RobotController.getSerialNumber()
 
@@ -127,11 +126,9 @@ class Drivetrain:
     def pose(self) -> Pose2d:
         return self._phoenix_swerve.get_state().pose
 
-    @feedback
     def velocity_robot(self) -> ChassisSpeeds:
         return self._phoenix_swerve.get_state().speeds
 
-    @feedback
     def velocity_field(self) -> ChassisSpeeds:
         pose = self.pose()
         robot_vel = self.velocity_robot()
@@ -190,7 +187,6 @@ class Drivetrain:
         self._heading_controller.setSetpoint(heading)
         self._should_track_hub = True
 
-    @feedback
     def is_aligned(self) -> bool:
         return self._aligned
 

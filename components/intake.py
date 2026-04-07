@@ -1,5 +1,5 @@
 import phoenix6
-from magicbot import feedback, tunable, will_reset_to
+from magicbot import tunable, will_reset_to
 from phoenix6 import configs, controls, signals
 from wpilib import Timer
 
@@ -91,15 +91,12 @@ class Intake:
     def setup(self) -> None:
         self._desired_intake_position = self.carry_position
 
-    @feedback
     def position(self) -> float:
         return self._deploy_motor.get_position().value
 
-    @feedback
     def cancoder_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
-    @feedback
     def setpoint(self) -> float:
         return self._desired_intake_position
 
