@@ -164,18 +164,26 @@ class Shoot(AutoBase):
 class ShootGobblerRight(AutoBase):
     MODE_NAME = "Shoot + Gobbler - Right"
 
-    blue_starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(0.0))
+    blue_starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(90.0))
 
     def on_enable(self) -> None:
         self._cycle_count = 0
         super().on_enable()
 
-    @timed_state(first=True, duration=2.5, next_state="collect")
+    @timed_state(first=True, duration=2.5, next_state="aligning")
     def shooting(self, state_tm: float) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
         if self.indexer.is_hopper_empty() and state_tm > 1.45:
-            self.next_state_now("collect")
+            self.next_state("aligning")
+
+    @state
+    def aligning(self, initial_call: bool) -> None:
+        self.drivetrain.track_heading(
+            math.radians(0.0) if is_blue() else math.radians(180.0)
+        )
+        if self.drivetrain.is_aligned() and not initial_call:
+            self.next_state("collect")
 
     @state
     def collect(self, initial_call: bool, state_tm: float) -> None:
@@ -214,7 +222,7 @@ class ShootGobblerRight(AutoBase):
             p4 = Pose2d(
                 self.blue_starting_pose.x + 4.1,
                 self.blue_starting_pose.y + 2 + 0.5 * self._cycle_count,
-                Rotation2d.fromDegrees(-90.0),
+                Rotation2d.fromDegrees(90.0),
             )
             p5 = Pose2d(
                 self.blue_starting_pose.x + 4.1,
@@ -233,7 +241,9 @@ class ShootGobblerRight(AutoBase):
             )
 
             waypoints = [initial_pose, p1, p2, p3, p4, p5, p6, p7]
-            targetRotations = [RotationTarget(2, Rotation2d.fromDegrees(90))]
+            targetRotations = [
+                RotationTarget(4, Rotation2d.fromDegrees(90)),
+            ]
             self.set_trajectory(
                 waypoints,
                 Rotation2d.fromDegrees(0),
@@ -258,20 +268,22 @@ class ShootGobblerRight(AutoBase):
             self._cycle_count += 1
             self.next_state("spraying")
 
-    @timed_state(duration=4, next_state="collect")
+    @timed_state(duration=4, next_state="aligning")
     def spraying(self, state_tm) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
         if self.indexer.is_hopper_empty() and state_tm > 1.45:
-            self.next_state_now("collect")
+            self.next_state("aligning")
 
 
 class GobblerRight(ShootGobblerRight):
     MODE_NAME = "Gobbler only - Right"
 
+    blue_starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(0.0))
+
     @state(first=True)
     def shooting(self) -> None:
-        self.next_state_now("collect")
+        self.next_state_now("aligning")
 
 
 class ShootGobblerLeft(ShootGobblerRight):
