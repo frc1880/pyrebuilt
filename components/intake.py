@@ -12,6 +12,7 @@ class Intake:
     # All positions are in mechanism rotations
     deployed_position = 0.0
     carry_position = tunable(0.12)
+    retracted_position = 0.3
     timeSinceDeployed = 0.0
     deployed = False
     _should_spin = will_reset_to(False)
@@ -108,6 +109,10 @@ class Intake:
 
     def carry(self) -> None:
         self._desired_intake_position = self.carry_position
+        self.deployed = False
+
+    def retract(self) -> None:
+        self._desired_intake_position = self.retracted_position
         self.deployed = False
 
     def backdrive(self) -> None:
