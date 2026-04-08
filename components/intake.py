@@ -11,7 +11,7 @@ class Intake:
 
     # All positions are in mechanism rotations
     deployed_position = 0.0
-    carry_position = tunable(0.15)
+    carry_position = tunable(0.20)
     retracted_position = 0.3
     timeSinceDeployed = 0.0
     deployed = False
@@ -56,11 +56,12 @@ class Intake:
 
         talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.COAST
         # Chain sprockets are 24:12 after a (3*9):1 maxplanetary gearbox reduction
-        talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 / 1.0
-        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0
-        talon_fx_configs.feedback.feedback_sensor_source = (
-            signals.FeedbackSensorSourceValue.FUSED_CANCODER
-        )
+        # talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 / 1.0
+        # talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0
+        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0 * 27.0
+        ## talon_fx_configs.feedback.feedback_sensor_source = (
+        #    signals.FeedbackSensorSourceValue.FUSED_CANCODER
+        # )
         talon_fx_configs.feedback.feedback_remote_sensor_id = ids.CancoderId.INTAKE
         talon_fx_configs.software_limit_switch.forward_soft_limit_threshold = 0.34
         talon_fx_configs.software_limit_switch.forward_soft_limit_enable = True
@@ -72,7 +73,7 @@ class Intake:
         cc_cfg.magnet_sensor.sensor_direction = (
             signals.SensorDirectionValue.CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = -0.185791
+        cc_cfg.magnet_sensor.magnet_offset = -0.439697
         self._cancoder = phoenix6.hardware.CANcoder(
             ids.CancoderId.INTAKE, ids.CanbusId.INTAKE
         )
@@ -92,6 +93,7 @@ class Intake:
 
     def setup(self) -> None:
         self._desired_intake_position = self.carry_position
+        self._deploy_motor.set_position(0.33)
 
     @feedback
     def position(self) -> float:
