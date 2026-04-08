@@ -130,7 +130,8 @@ class MyRobot(magicbot.MagicRobot):
         )
 
     def disabledInit(self) -> None:
-        pass
+        self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
+        self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
 
     def disabledPeriodic(self) -> None:
         self._update_vision()
@@ -165,8 +166,8 @@ class MyRobot(magicbot.MagicRobot):
         )
         self.drivetrain.drive_field(vx, vy, vz)
         if self.intake.timeSinceDeployed > 2 and self.intake.deployed:
-            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
-            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 1.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.5)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.5)
 
         else:
             self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
@@ -205,8 +206,8 @@ class MyRobot(magicbot.MagicRobot):
         if self.gamepad.getPOV() == 180:
             self.intake.retract()
         if self.intake.timeSinceDeployed > 2 and self.intake.deployed:
-            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
-            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 1.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.5)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.5)
         else:
             self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
             self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
