@@ -308,11 +308,11 @@ class ShootGobblerRight(AutoBase):
             self.drivetrain.stop()
             self.next_state("spraying")
 
-    @timed_state(duration=4, next_state="aligning")
-    def spraying(self, state_tm) -> None:
+    @timed_state(duration=6, next_state="aligning")
+    def spraying(self, state_tm: float) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty() and state_tm > 1.45:
+        if self.indexer.is_hopper_empty() and state_tm > 2.5 and self._cycle_count == 1:
             self.next_state("aligning")
 
 
