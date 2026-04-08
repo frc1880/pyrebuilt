@@ -39,8 +39,8 @@ class Shooter:
         talon_fx_configs = configs.TalonFXConfiguration()
         hood_pid_cfg = talon_fx_configs.slot0
         # TODO tune these values
-        hood_pid_cfg.k_p = 1.0  # Voltage per 1 deg error
-        hood_pid_cfg.k_i = 0.0
+        hood_pid_cfg.k_p = 0.5  # Voltage per 1 deg error
+        hood_pid_cfg.k_i = 0.001
         hood_pid_cfg.k_d = 0.01
 
         current_cfg = talon_fx_configs.current_limits
@@ -79,7 +79,8 @@ class Shooter:
         # Example of closed loop mode once we have run sysid
         flywheel_gains_cfg = (
             configs.Slot0Configs()
-            .with_k_p(0.53475)
+            .with_k_p(0.253475)
+            # .with_k_p(0.53475)
             .with_k_i(0)
             .with_k_d(0)
             .with_k_s(0.29794)
@@ -113,11 +114,9 @@ class Shooter:
     def hood_angle(self) -> float:
         return self._hood_motor.get_position().value + 70.0
 
-    @feedback
     def hood_cancoder_position(self) -> float:
         return self._cancoder.get_position().value
 
-    @feedback
     def hood_cancoder_absolute_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
@@ -125,15 +124,12 @@ class Shooter:
     def setpoint(self) -> float:
         return self.desired_hood_angle
 
-    @feedback
     def current_speed(self) -> float:
         return self._shooter_motor.get_velocity().value
 
-    @feedback
     def shooter_motor_current(self) -> float:
         return self._shooter_motor.get_supply_current().value
 
-    @feedback
     def at_speed(self) -> bool:
         return abs(self._shooter_motor.get_velocity().value - self.speed) < 5
 

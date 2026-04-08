@@ -164,13 +164,23 @@ class MyRobot(magicbot.MagicRobot):
             * self.drivetrain.max_angular_rate
         )
         self.drivetrain.drive_field(vx, vy, vz)
+        if self.intake.timeSinceDeployed > 2 and self.intake.deployed:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 1.0)
+
+        else:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
 
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
+        if self.gamepad.getLeftBumper():
+            self.intake.carry()
         if self.gamepad.getRightTriggerAxis() > 0.5:
             self.shooter_controller.engage()
         elif self.gamepad.getAButton():
             self.indexer.backdrive()
+            self.intake.backdrive()
         if self.gamepad.getXButton():
             home_pose = Pose2d(
                 182.11 * 25.4 / 1000 - 1.25, 158.84 * 25.4 / 1000, Rotation2d()
@@ -190,7 +200,16 @@ class MyRobot(magicbot.MagicRobot):
             self.indexer.feed()
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
-
+        if self.gamepad.getLeftBumper():
+            self.intake.carry()
+        if self.gamepad.getPOV() == 180:
+            self.intake.retract()
+        if self.intake.timeSinceDeployed > 2 and self.intake.deployed:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 1.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 1.0)
+        else:
+            self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
+            self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
         if self.gamepad.getLeftBumper():
             self.leds.disabled()
             if self.gamepad.getPOV() == 0:
@@ -209,7 +228,9 @@ class MyRobot(magicbot.MagicRobot):
                 self.leds.not_in_range()
             if self.gamepad.getYButton():
                 self.leds.not_in_range(True)
-
+        if self.gamepad.getAButton():
+            self.indexer.backdrive()
+            self.intake.backdrive()
         if self._test_shooter_on:
             self.shooter.shoot()
 

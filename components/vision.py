@@ -19,7 +19,7 @@ class Vision:
     # We need to access the drivetrain to add measurements
     drivetrain: Drivetrain
     field: wpilib.Field2d
-    use_single_tag = tunable(True)
+    use_single_tag = tunable(False)
 
     def __init__(self, camera_name: str, transform: Transform3d) -> None:
         # Instantiate the camera/photonvision
