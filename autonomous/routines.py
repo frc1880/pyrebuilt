@@ -273,7 +273,7 @@ class ShootGobblerRight(AutoBase):
             assert self.blue_starting_pose
             sp = Pose2d(
                 self.blue_starting_pose.x + 4.1,
-                self.blue_starting_pose.y + 2 + 0.5 * self._cycle_count,
+                self.blue_starting_pose.y + 2 + 0.5 * self._cycle_count - 0.5,
                 Rotation2d.fromDegrees(90.0),
             )
             p5 = Pose2d(
