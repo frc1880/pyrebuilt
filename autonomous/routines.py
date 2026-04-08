@@ -202,11 +202,7 @@ class ShootGobblerRight(AutoBase):
                 else field_mirror_translation2d(current_blue_pose.translation())
             )
             initial_pose = Pose2d(translation, Rotation2d.fromDegrees(0.0))
-            p0 = Pose2d(
-                self.blue_starting_pose.x,
-                self.blue_starting_pose.y,
-                Rotation2d.fromDegrees(0.0),
-            )
+            targetRotations = []
             p1 = Pose2d(
                 self.blue_starting_pose.x + 2.5,
                 self.blue_starting_pose.y,
@@ -228,18 +224,30 @@ class ShootGobblerRight(AutoBase):
                 self.blue_starting_pose.y + 2 + 0.5 * self._cycle_count,
                 Rotation2d.fromDegrees(90.0),
             )
+            # p5 = Pose2d(
+            #     self.blue_starting_pose.x + 4.1,
+            #     self.blue_starting_pose.y + 1,
+            #     Rotation2d.fromDegrees(-90.0),
+            # )
+            # p6 = Pose2d(
+            #     self.blue_starting_pose.x + 4.1 - 1,
+            #     self.blue_starting_pose.y,
+            #     Rotation2d.fromDegrees(180.0),
+            # )
+            # p7 = Pose2d(
+            #     self.blue_starting_pose.x,
+            #     self.blue_starting_pose.y,
+            #     Rotation2d.fromDegrees(180.0),
+            # )
 
-            if self._cycle_count == 0:
-                # Don't include auto start pose on first run in case we aren't quite correctly positioned
-                waypoints = [initial_pose, p1, p2, p3, p4]
-            else:
-                waypoints = [initial_pose, p0, p1, p2, p3, p4]
+            waypoints = [initial_pose, p1, p2, p3, p4]
 
             self.set_trajectory(
                 waypoints,
                 Rotation2d.fromDegrees(90),
                 field_flip=is_red(),
                 mirror=self.mirror,
+                holonomic_rotations=targetRotations,
             )
 
         # Follow the trajectory until we are in shooting position
@@ -283,12 +291,7 @@ class ShootGobblerRight(AutoBase):
                 self.blue_starting_pose.y,
                 Rotation2d.fromDegrees(180.0),
             )
-            p8 = Pose2d(
-                self.blue_starting_pose.x - 0.5,
-                self.blue_starting_pose.y + 0.5,
-                Rotation2d.fromDegrees(135),
-            )
-            waypoints = [sp, p5, p6, p7, p8]
+            waypoints = [sp, p5, p6, p7]
 
             self.set_trajectory(
                 waypoints,
