@@ -297,11 +297,7 @@ class ShootGobblerRight(AutoBase):
                 field_flip=is_red(),
                 mirror=self.mirror,
             )
-        in_zone = (self.drivetrain.pose().x < 11) and (self.drivetrain.pose().x > 5.5)
-        if in_zone:
-            self.intake.intake()
-        else:
-            self.intake.carry()
+        self.intake.carry()
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory(state_tm)
         if self.is_trajectory_expired(state_tm):
