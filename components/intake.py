@@ -103,6 +103,7 @@ class Intake:
     def cancoder_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
+    @feedback
     def setpoint(self) -> float:
         return self._desired_intake_position
 

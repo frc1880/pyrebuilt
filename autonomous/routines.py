@@ -202,7 +202,6 @@ class ShootGobblerRight(AutoBase):
                 else field_mirror_translation2d(current_blue_pose.translation())
             )
             initial_pose = Pose2d(translation, Rotation2d.fromDegrees(0.0))
-            targetRotations = []
             p1 = Pose2d(
                 self.blue_starting_pose.x + 2.5,
                 self.blue_starting_pose.y,
@@ -224,21 +223,6 @@ class ShootGobblerRight(AutoBase):
                 self.blue_starting_pose.y + 2 + 0.5 * self._cycle_count,
                 Rotation2d.fromDegrees(90.0),
             )
-            # p5 = Pose2d(
-            #     self.blue_starting_pose.x + 4.1,
-            #     self.blue_starting_pose.y + 1,
-            #     Rotation2d.fromDegrees(-90.0),
-            # )
-            # p6 = Pose2d(
-            #     self.blue_starting_pose.x + 4.1 - 1,
-            #     self.blue_starting_pose.y,
-            #     Rotation2d.fromDegrees(180.0),
-            # )
-            # p7 = Pose2d(
-            #     self.blue_starting_pose.x,
-            #     self.blue_starting_pose.y,
-            #     Rotation2d.fromDegrees(180.0),
-            # )
 
             waypoints = [initial_pose, p1, p2, p3, p4]
 
@@ -247,20 +231,17 @@ class ShootGobblerRight(AutoBase):
                 Rotation2d.fromDegrees(90),
                 field_flip=is_red(),
                 mirror=self.mirror,
-                holonomic_rotations=targetRotations,
             )
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory(state_tm)
 
         assert self.starting_pose
-        if (
-            self.drivetrain.pose()
-            .translation()
-            .distance(self.starting_pose.translation())
-            > 1.0
-        ):
+        in_zone = (self.drivetrain.pose().x < 11) and (self.drivetrain.pose().x > 5.5)
+        if in_zone:
             self.intake.intake()
+        else:
+            self.intake.carry()
         if self.is_trajectory_expired(state_tm):
             self.drivetrain.stop()
             self._cycle_count += 1
@@ -299,18 +280,18 @@ class ShootGobblerRight(AutoBase):
                 field_flip=is_red(),
                 mirror=self.mirror,
             )
-
+        self.intake.carry()
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory(state_tm)
         if self.is_trajectory_expired(state_tm):
             self.drivetrain.stop()
             self.next_state("spraying")
 
-    @timed_state(duration=4, next_state="aligning")
-    def spraying(self, state_tm) -> None:
+    @timed_state(duration=6, next_state="aligning")
+    def spraying(self, state_tm: float) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty() and state_tm > 1.45:
+        if self.indexer.is_hopper_empty() and state_tm > 2.5 and self._cycle_count == 1:
             self.next_state("aligning")
 
 
