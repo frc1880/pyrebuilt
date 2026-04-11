@@ -237,6 +237,11 @@ class MyRobot(magicbot.MagicRobot):
                 self.leds.wrong_start(Transform2d(0, 1, Rotation2d()))
             if self.gamepad.getPOV() == 270:
                 self.leds.wrong_start(Transform2d(0, -1, Rotation2d()))
+            if self.gamepad.getLeftStickButton():
+                self.leds.wrong_start(Transform2d(0, -1, Rotation2d.fromDegrees(-30)))
+            if self.gamepad.getRightStickButton():
+                self.leds.wrong_start(Transform2d(0, -1, Rotation2d.fromDegrees(30)))
+
             if self.gamepad.getAButton():
                 self.leds.in_range()
             if self.gamepad.getBButton():
