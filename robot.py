@@ -129,6 +129,13 @@ class MyRobot(magicbot.MagicRobot):
             or self.white_vision.alive()
         )
 
+    def is_vision_initialized(self) -> bool:
+        return (
+            self.shooter_vision.is_initialized()
+            or self.red_vision.is_initialized()
+            or self.white_vision.is_initialized()
+        )
+
     def disabledInit(self) -> None:
         self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
         self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
@@ -139,20 +146,23 @@ class MyRobot(magicbot.MagicRobot):
         self.leds.execute()
 
         # First check that one of our cameras has seen multitag in the last 2 seconds
-        if not self.is_vision_alive():
-            self.leds.missing_vision()
-        else:
-            # Indicate that we don't have an auto mode selected
-            selected_auto = self._automodes.chooser.getSelected()
-            if not isinstance(selected_auto, AutoBase):
-                # No auto so set the lights
-                self.leds.missing_auto()
+        if self.is_vision_initialized() or wpilib.DriverStation.isFMSAttached():
+            if not self.is_vision_alive():
+                self.leds.missing_vision()
             else:
-                error = self._get_start_pose_error(selected_auto)
-                if error != Transform2d():
-                    self.leds.wrong_start(error)
+                # Indicate that we don't have an auto mode selected
+                selected_auto = self._automodes.chooser.getSelected()
+                if not isinstance(selected_auto, AutoBase):
+                    # No auto so set the lights
+                    self.leds.missing_auto()
                 else:
-                    self.leds.disabled()
+                    error = self._get_start_pose_error(selected_auto)
+                    if error != Transform2d():
+                        self.leds.wrong_start(error)
+                    else:
+                        self.leds.disabled()
+        else:
+            self.leds.off()
 
     def teleopInit(self) -> None:
         pass
