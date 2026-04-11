@@ -46,16 +46,18 @@ class Leds:
     ballistics: Ballistics
 
     # Colours
-    RED = RGBWColor(255, 0, 0)
-    GREEN = RGBWColor(0, 255, 0)
+    # OUR LEDS HAVE RED AND GREEN REVERSED!!
+
+    RED = RGBWColor(0, 255, 0)
+    GREEN = RGBWColor(255, 0, 0)
     YELLOW = RGBWColor(255, 255, 0)
     BLUE = RGBWColor(0, 0, 255)
     WHITE = RGBWColor(255, 255, 255)
-    ORANGE = RGBWColor(255, 165, 0)
+    ORANGE = RGBWColor(165, 255, 0)
 
     led_start: int = 0
     led_end: int = 37
-    segments = [0, 7, 14, 21, 29, 35]
+    segments = [0, 7, 14, 21, 30, 36]
     brightness: float = 1.0
 
     def __init__(self) -> None:
@@ -105,6 +107,9 @@ class Leds:
     def disabled(self) -> None:
         self._pattern = Pattern.DISABLED
 
+    def off(self) -> None:
+        self._pattern = Pattern.OFF
+
     @feedback
     def pattern(self) -> str:
         return self._pattern.name
@@ -127,21 +132,29 @@ class Leds:
                     self._pattern = (
                         Pattern.IN_RANGE_PULSE
                         if should_pulse
-                        else Pattern.IN_RANGE_FAST_FLASH
-                        if should_fast_flash
-                        else Pattern.IN_RANGE_FLASH
-                        if should_flash
-                        else Pattern.IN_RANGE
+                        else (
+                            Pattern.IN_RANGE_FAST_FLASH
+                            if should_fast_flash
+                            else (
+                                Pattern.IN_RANGE_FLASH
+                                if should_flash
+                                else Pattern.IN_RANGE
+                            )
+                        )
                     )
                 else:
                     self._pattern = (
                         Pattern.NOT_IN_RANGE_PULSE
                         if should_pulse
-                        else Pattern.NOT_IN_RANGE_FAST_FLASH
-                        if should_fast_flash
-                        else Pattern.NOT_IN_RANGE_FLASH
-                        if should_flash
-                        else Pattern.NOT_IN_RANGE
+                        else (
+                            Pattern.NOT_IN_RANGE_FAST_FLASH
+                            if should_fast_flash
+                            else (
+                                Pattern.NOT_IN_RANGE_FLASH
+                                if should_flash
+                                else Pattern.NOT_IN_RANGE
+                            )
+                        )
                     )
             else:
                 self._pattern = Pattern.OFF
@@ -186,14 +199,14 @@ class Leds:
                             self.segments[3], self.segments[5], color=self.YELLOW
                         )
                     )
-                case Pattern.MOVE_LEFT:
+                case Pattern.MOVE_RIGHT:
                     self._candle.set_control(
                         StrobeAnimation(
                             self.segments[2], self.segments[4], color=self.YELLOW
                         )
                     )
 
-                case Pattern.MOVE_RIGHT:
+                case Pattern.MOVE_LEFT:
                     self._candle.set_control(
                         StrobeAnimation(
                             self.segments[1], self.segments[2], color=self.YELLOW
@@ -201,7 +214,7 @@ class Leds:
                     )
                     self._candle.set_control(
                         StrobeAnimation(
-                            self.segments[3], self.segments[4], 1, color=self.YELLOW
+                            self.segments[4], self.segments[5], 1, color=self.YELLOW
                         )
                     )
                 case Pattern.DISABLED:
