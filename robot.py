@@ -100,9 +100,17 @@ class MyRobot(magicbot.MagicRobot):
     def _get_start_pose_error(self, selected_auto: AutoBase) -> Transform2d:
         # Check that we are in the right spot to start
         if selected_auto.starting_pose:
-            error = self.drivetrain.pose() - selected_auto.starting_pose
-            # Clean up to add tolerances
-            if abs(error.rotation().radians()) < math.radians(20.0):
+            pose = self.drivetrain.pose()
+            translation_error = (
+                pose.translation() - selected_auto.starting_pose.translation()
+            )
+            rotation_error = pose.rotation() - selected_auto.starting_pose.rotation()
+
+            # make the light codes relative to the robot
+            translation_error.rotateBy(-pose.rotation())
+
+            error = Transform2d(translation_error, rotation_error)
+            if abs(error.rotation().degrees()) < 20.0:
                 # Blank out the rotation if below the threshold
                 error = Transform2d(error.translation(), Rotation2d())
             if abs(error.x) < 0.2:
