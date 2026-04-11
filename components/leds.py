@@ -57,7 +57,7 @@ class Leds:
 
     led_start: int = 0
     led_end: int = 37
-    segments = [0, 7, 14, 21, 29, 35]
+    segments = [0, 7, 14, 21, 30, 36]
     brightness: float = 1.0
 
     def __init__(self) -> None:
@@ -199,14 +199,14 @@ class Leds:
                             self.segments[3], self.segments[5], color=self.YELLOW
                         )
                     )
-                case Pattern.MOVE_LEFT:
+                case Pattern.MOVE_RIGHT:
                     self._candle.set_control(
                         StrobeAnimation(
                             self.segments[2], self.segments[4], color=self.YELLOW
                         )
                     )
 
-                case Pattern.MOVE_RIGHT:
+                case Pattern.MOVE_LEFT:
                     self._candle.set_control(
                         StrobeAnimation(
                             self.segments[1], self.segments[2], color=self.YELLOW
@@ -214,7 +214,7 @@ class Leds:
                     )
                     self._candle.set_control(
                         StrobeAnimation(
-                            self.segments[3], self.segments[4], 1, color=self.YELLOW
+                            self.segments[4], self.segments[5], 1, color=self.YELLOW
                         )
                     )
                 case Pattern.DISABLED:
