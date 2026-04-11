@@ -24,7 +24,7 @@ from components.vision import Vision
 from components.vision_coordinator import VisionCoordinator
 from controllers.shooter import ShooterController
 from utilities import game, positions
-from utilities.scalers import map_exponential
+from utilities.scalers import apply_deadzone, map_exponential
 
 
 ####################
@@ -158,10 +158,16 @@ class MyRobot(magicbot.MagicRobot):
         pass
 
     def teleopPeriodic(self) -> None:
-        vx = -map_exponential(self.gamepad.getLeftY(), 1.5) * self.drivetrain.max_speed
-        vy = -map_exponential(self.gamepad.getLeftX(), 1.5) * self.drivetrain.max_speed
+        vx = (
+            -map_exponential(apply_deadzone(self.gamepad.getLeftY(), 0.1), 1.5)
+            * self.drivetrain.max_speed
+        )
+        vy = (
+            -map_exponential(apply_deadzone(self.gamepad.getLeftX(), 0.1), 1.5)
+            * self.drivetrain.max_speed
+        )
         vz = -(
-            map_exponential(self.gamepad.getRightX(), 2.0)
+            map_exponential(apply_deadzone(self.gamepad.getRightX(), 0.1), 2.0)
             * self.drivetrain.max_angular_rate
         )
         self.drivetrain.drive_field(vx, vy, vz)

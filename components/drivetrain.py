@@ -47,8 +47,10 @@ class Drivetrain:
             tuner_constants.back_right,
         ]
         self._phoenix_swerve = TunerSwerveDrivetrain(
-            tuner_constants.drivetrain_constants, modules
+            tuner_constants.drivetrain_constants,
+            modules,
         )
+        self._phoenix_swerve.set_state_std_devs((0.05, 0.05, math.radians(0.5)))
         self.tuner_constants = tuner_constants
 
         self._field_drive_request = requests.FieldCentric()
@@ -126,6 +128,7 @@ class Drivetrain:
     def pose(self) -> Pose2d:
         return self._phoenix_swerve.get_state().pose
 
+    @feedback
     def velocity_robot(self) -> ChassisSpeeds:
         return self._phoenix_swerve.get_state().speeds
 
