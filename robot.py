@@ -58,11 +58,11 @@ class MyRobot(magicbot.MagicRobot):
     # Offsets are measured from the robot corner in CAD, hence the calcs below
     shooter_vision_transform = Transform3d(
         Translation3d(
-            inchesToMeters(-26.0 / 2 + 0.224),
-            inchesToMeters(-28.0 / 2 + 6.614),
-            inchesToMeters(13.943),
+            inchesToMeters(-26.0 / 2 + 0.25),
+            inchesToMeters(28.0 / 2 - 6.5),
+            inchesToMeters(12.875),
         ),
-        Rotation3d(0, math.radians(-25), math.radians(180)),
+        Rotation3d(0, math.radians(-30), math.radians(180)),
     )
     red_vision: Vision
     red_vision_camera_name = "red"
@@ -70,7 +70,7 @@ class MyRobot(magicbot.MagicRobot):
         Translation3d(
             inchesToMeters(-26.0 / 2 + 5.123),
             inchesToMeters(28.0 / 2 - 1.039),
-            inchesToMeters(6.932),
+            inchesToMeters(7.125),
         ),
         Rotation3d(0, math.radians(-30), math.radians(90)),
     )
@@ -80,7 +80,7 @@ class MyRobot(magicbot.MagicRobot):
         Translation3d(
             inchesToMeters(-26.0 / 2 + 5.123),
             -inchesToMeters(28.0 / 2 - 1.039),
-            inchesToMeters(6.932),
+            inchesToMeters(7.125),
         ),
         Rotation3d(0, math.radians(-30), math.radians(-90)),
     )
