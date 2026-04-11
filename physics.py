@@ -1,3 +1,5 @@
+import math
+
 import phoenix6
 from phoenix6.swerve.sim_swerve_drivetrain import SimSwerveDrivetrain
 from photonlibpy.simulation import PhotonCameraSim, SimCameraProperties, VisionSystemSim
@@ -56,8 +58,8 @@ class PhysicsEngine:
         self.shooter_camera.setMaxSightRange(5.0)
         self.red_camera = PhotonCameraSim(robot.red_vision.camera, properties)  # type: ignore
         self.red_camera.setMaxSightRange(5.0)
-        self.green_camera = PhotonCameraSim(robot.white_vision.camera, properties)  # type: ignore
-        self.green_camera.setMaxSightRange(5.0)
+        self.white_camera = PhotonCameraSim(robot.white_vision.camera, properties)  # type: ignore
+        self.white_camera.setMaxSightRange(5.0)
         self.vision_sim.addCamera(
             self.shooter_camera,
             self.robot.shooter_vision_transform,
@@ -67,7 +69,7 @@ class PhysicsEngine:
             self.robot.red_vision_transform,
         )
         self.vision_sim.addCamera(
-            self.green_camera,
+            self.white_camera,
             self.robot.white_vision_transform,
         )
 
@@ -79,6 +81,8 @@ class PhysicsEngine:
         )
         # Keep a reference to the motor sim state so we can update it
         self.shooter_talon_sim = self.robot.shooter._shooter_motor.sim_state
+
+        self.pigeon = self.robot.drivetrain.pigeon2.sim_state
 
     def update_sim(self, now: float, tm_diff: float) -> None:
         if isinstance(self.robot, SysIdRobot):
@@ -96,6 +100,7 @@ class PhysicsEngine:
         assert len(states) == 4
         assert isinstance(self.robot.drivetrain.kinematics, SwerveDrive4Kinematics)
         speeds = self.robot.drivetrain.kinematics.toChassisSpeeds(states)
+        self.pigeon.add_yaw(math.degrees(speeds.omega * tm_diff))
         self.physics_controller.drive(speeds, tm_diff)
 
         self.vision_sim.update(self.physics_controller.get_pose())
