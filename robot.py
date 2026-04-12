@@ -208,10 +208,10 @@ class MyRobot(magicbot.MagicRobot):
             self.intake.backdrive()
         if self.gamepad.getXButton():
             home_pose = Pose2d(
-                182.11 * 25.4 / 1000 - 1.25, 158.84 * 25.4 / 1000, Rotation2d()
-            )
+                12.972, 3.915, Rotation2d()
+            )  # measured from robotigers' practice field
             home_pose = (
-                positions.field_flip_pose2d(home_pose) if game.is_red() else home_pose
+                positions.field_flip_pose2d(home_pose) if game.is_blue() else home_pose
             )
             self.drivetrain.set_pose(home_pose)
 
