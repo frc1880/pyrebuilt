@@ -64,6 +64,7 @@ class Ballistics:
         self._solution = Solution(flywheel_speed=0.0, hood_angle=0.0, bearing=0.0)
         self._in_range = False
         self._center_to_shooter_distance = 0.15  # metres measured from CAD
+        self._range = 0.0
 
     def _tof(self, distance: float) -> float:
         return numpy.interp(distance, self.ranges, self.time_of_flight)
@@ -81,6 +82,10 @@ class Ballistics:
     @feedback
     def solution(self) -> Solution:
         return self._solution
+
+    @feedback
+    def range(self) -> float:
+        return self._range
 
     @feedback
     def is_within_range(self) -> bool:
@@ -150,3 +155,4 @@ class Ballistics:
             self.min_score_range < distance_shooter_to_hub < self.max_score_range
             and is_in_alliance_zone(robot_pose)
         )
+        self._range = distance_shooter_to_hub
