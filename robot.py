@@ -107,7 +107,7 @@ class MyRobot(magicbot.MagicRobot):
             rotation_error = pose.rotation() - selected_auto.starting_pose.rotation()
 
             # make the light codes relative to the robot
-            translation_error.rotateBy(-pose.rotation())
+            translation_error = translation_error.rotateBy(-pose.rotation())
 
             error = Transform2d(translation_error, rotation_error)
             if abs(error.rotation().degrees()) < 20.0:
