@@ -73,14 +73,13 @@ class Shooter:
         cc_cfg.magnet_sensor.sensor_direction = (
             signals.SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = -0.204346
+        cc_cfg.magnet_sensor.magnet_offset = -0.313721
         self._cancoder.configurator.apply(cc_cfg)
 
         # Example of closed loop mode once we have run sysid
         flywheel_gains_cfg = (
             configs.Slot0Configs()
-            .with_k_p(0.253475)
-            # .with_k_p(0.53475)
+            .with_k_p(0.53475)
             .with_k_i(0)
             .with_k_d(0)
             .with_k_s(0.29794)
@@ -117,6 +116,7 @@ class Shooter:
     def hood_cancoder_position(self) -> float:
         return self._cancoder.get_position().value
 
+    @feedback
     def hood_cancoder_absolute_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
