@@ -100,9 +100,17 @@ class MyRobot(magicbot.MagicRobot):
     def _get_start_pose_error(self, selected_auto: AutoBase) -> Transform2d:
         # Check that we are in the right spot to start
         if selected_auto.starting_pose:
-            error = self.drivetrain.pose() - selected_auto.starting_pose
-            # Clean up to add tolerances
-            if abs(error.rotation().radians()) < math.radians(20.0):
+            pose = self.drivetrain.pose()
+            translation_error = (
+                pose.translation() - selected_auto.starting_pose.translation()
+            )
+            rotation_error = pose.rotation() - selected_auto.starting_pose.rotation()
+
+            # make the light codes relative to the robot
+            translation_error.rotateBy(-pose.rotation())
+
+            error = Transform2d(translation_error, rotation_error)
+            if abs(error.rotation().degrees()) < 20.0:
                 # Blank out the rotation if below the threshold
                 error = Transform2d(error.translation(), Rotation2d())
             if abs(error.x) < 0.2:
@@ -129,6 +137,13 @@ class MyRobot(magicbot.MagicRobot):
             or self.white_vision.alive()
         )
 
+    def is_vision_initialized(self) -> bool:
+        return (
+            self.shooter_vision.is_initialized()
+            or self.red_vision.is_initialized()
+            or self.white_vision.is_initialized()
+        )
+
     def disabledInit(self) -> None:
         self.gamepad.setRumble(self.gamepad.RumbleType.kLeftRumble, 0.0)
         self.gamepad.setRumble(self.gamepad.RumbleType.kRightRumble, 0.0)
@@ -139,20 +154,23 @@ class MyRobot(magicbot.MagicRobot):
         self.leds.execute()
 
         # First check that one of our cameras has seen multitag in the last 2 seconds
-        if not self.is_vision_alive():
-            self.leds.missing_vision()
-        else:
-            # Indicate that we don't have an auto mode selected
-            selected_auto = self._automodes.chooser.getSelected()
-            if not isinstance(selected_auto, AutoBase):
-                # No auto so set the lights
-                self.leds.missing_auto()
+        if self.is_vision_initialized() or wpilib.DriverStation.isFMSAttached():
+            if not self.is_vision_alive():
+                self.leds.missing_vision()
             else:
-                error = self._get_start_pose_error(selected_auto)
-                if error != Transform2d():
-                    self.leds.wrong_start(error)
+                # Indicate that we don't have an auto mode selected
+                selected_auto = self._automodes.chooser.getSelected()
+                if not isinstance(selected_auto, AutoBase):
+                    # No auto so set the lights
+                    self.leds.missing_auto()
                 else:
-                    self.leds.disabled()
+                    error = self._get_start_pose_error(selected_auto)
+                    if error != Transform2d():
+                        self.leds.wrong_start(error)
+                    else:
+                        self.leds.disabled()
+        else:
+            self.leds.off()
 
     def teleopInit(self) -> None:
         pass
@@ -227,6 +245,11 @@ class MyRobot(magicbot.MagicRobot):
                 self.leds.wrong_start(Transform2d(0, 1, Rotation2d()))
             if self.gamepad.getPOV() == 270:
                 self.leds.wrong_start(Transform2d(0, -1, Rotation2d()))
+            if self.gamepad.getLeftStickButton():
+                self.leds.wrong_start(Transform2d(0, -1, Rotation2d.fromDegrees(-30)))
+            if self.gamepad.getRightStickButton():
+                self.leds.wrong_start(Transform2d(0, -1, Rotation2d.fromDegrees(30)))
+
             if self.gamepad.getAButton():
                 self.leds.in_range()
             if self.gamepad.getBButton():
