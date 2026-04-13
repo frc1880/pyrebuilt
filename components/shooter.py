@@ -153,7 +153,7 @@ class Shooter:
                 if self._should_shoot
                 else self.HOOD_MAX_ANGLE - 1.0
             )
-            desired_speed = solution.flywheel_speed if in_alliance else 85.0
+            desired_speed = solution.flywheel_speed if in_alliance else 95.0
             self.speed = desired_speed
             self.desired_hood_angle = desired_hood_angle
             should_spin = self._should_shoot or in_alliance
