@@ -51,7 +51,7 @@ class AutoBase(AutonomousStateMachine):
         )
         self._controller = PPHolonomicDriveController(
             translation_constants=PIDConstants(kP=3.0),
-            rotation_constants=PIDConstants(kP=5.0),
+            rotation_constants=PIDConstants(kP=8.0, kD=0.25),
         )
 
     @property
