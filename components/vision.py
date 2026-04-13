@@ -65,7 +65,7 @@ class Vision:
         if pose:
             # Multitag successful
             self._field_obj.setPose(pose.estimatedPose.toPose2d())
-            if not self._has_seen_multitag or self._is_innovation_ok(
+            if wpilib.DriverStation.isDisabled() or self._is_innovation_ok(
                 pose.estimatedPose.toPose2d()
             ):
                 self.drivetrain.add_vision_measurement(
