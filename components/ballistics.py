@@ -35,15 +35,15 @@ class Ballistics:
     latency = tunable(0.15)
     should_compensate = tunable(False)
 
-    # Ranges measured from hub corner (so starting at 54inch) and to front bumper (add 18inch)
+    # Ranges measured from hub corner (so starting at 54inch) and to centre of shooter
     samples = [
-        Sample(inchesToMeters(54 + 18), 70.0, 53.0, 1.0),
-        Sample(inchesToMeters(74 + 18), 70.0, 56.0, 1.0),
-        Sample(inchesToMeters(94 + 18), 65.0, 58.0, 1.0),
-        Sample(inchesToMeters(114 + 18), 65.0, 61.0, 1.0),
-        Sample(inchesToMeters(134 + 18), 65.0, 67.0, 1.0),
-        Sample(inchesToMeters(154 + 18), 62.5, 75.0, 1.0),
-        Sample(inchesToMeters(174 + 18), 57.0, 86.0, 1.0),
+        Sample(inchesToMeters(54), 70.0, 53.0, 1.0),
+        Sample(inchesToMeters(74), 70.0, 56.0, 1.0),
+        Sample(inchesToMeters(94), 65.0, 58.0, 1.0),
+        Sample(inchesToMeters(114), 65.0, 61.0, 1.0),
+        Sample(inchesToMeters(134), 65.0, 69.0, 1.0),
+        Sample(inchesToMeters(154), 62.5, 75.0, 1.0),
+        Sample(inchesToMeters(174), 60.0, 85.0, 1.0),
     ]
 
     # Split the samples out to make interpolating easier
