@@ -79,7 +79,7 @@ class Shooter:
         # Example of closed loop mode once we have run sysid
         flywheel_gains_cfg = (
             configs.Slot0Configs()
-            .with_k_p(0.53475)
+            .with_k_p(0.25)
             .with_k_i(0)
             .with_k_d(0)
             .with_k_s(0.29794)
@@ -124,6 +124,7 @@ class Shooter:
     def setpoint(self) -> float:
         return self.desired_hood_angle
 
+    @feedback
     def current_speed(self) -> float:
         return self._shooter_motor.get_velocity().value
 
@@ -152,7 +153,7 @@ class Shooter:
                 if self._should_shoot
                 else self.HOOD_MAX_ANGLE - 1.0
             )
-            desired_speed = solution.flywheel_speed if in_alliance else 85.0
+            desired_speed = solution.flywheel_speed if in_alliance else 95.0
             self.speed = desired_speed
             self.desired_hood_angle = desired_hood_angle
             should_spin = self._should_shoot or in_alliance
