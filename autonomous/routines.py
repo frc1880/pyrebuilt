@@ -2,16 +2,10 @@ import math
 
 import wpilib
 from magicbot import AutonomousStateMachine, state, timed_state
-from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
-from pathplannerlib.path import (
-    GoalEndState,
-    PathConstraints,
-    PathPlannerPath,
-    RotationTarget,
-)
+from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
-from wpimath.kinematics import ChassisSpeeds
 
+from bline import bline
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
@@ -19,7 +13,6 @@ from controllers.shooter import ShooterController
 from utilities.game import (
     field_flip_pose2d,
     field_mirror_pose2d,
-    field_mirror_translation2d,
     is_blue,
     is_red,
 )
@@ -43,15 +36,20 @@ class AutoBase(AutonomousStateMachine):
 
     def setup(self) -> None:
         # All the things that are the same in each routine...
-        self._constraints = PathConstraints(
-            maxVelocityMps=3.5,
-            maxAccelerationMpsSq=6.0,
-            maxAngularVelocityRps=2.0 * math.pi,
-            maxAngularAccelerationRpsSq=4.0 * math.pi,
+        constraints = bline.MotionParameters(
+            translation_tolerance=0.1,
+            rotation_tolerance=math.radians(5),
+            max_linear_speed=3.5,
+            max_linear_acceleration=6.0 * 0.0,
+            max_angular_speed=2.0 * math.pi,
+            max_angular_acceleration=4.0 * math.pi * 0.0,
         )
-        self._controller = PPHolonomicDriveController(
-            translation_constants=PIDConstants(kP=3.0),
-            rotation_constants=PIDConstants(kP=8.0, kD=0.25),
+        self._controller = bline.BLine(
+            translation_controller=PIDController(Kp=3.0, Ki=0.0, Kd=0.0),
+            rotation_controller=PIDController(Kp=2.0, Ki=0.0, Kd=0.0),
+            # rotation_controller=PIDController(Kp=8.0, Ki=0.0, Kd=0.25),
+            cross_track_controller=PIDController(Kp=3.0, Ki=0.0, Kd=0.0),
+            motion_parameters=constraints,
         )
 
     @property
@@ -76,51 +74,28 @@ class AutoBase(AutonomousStateMachine):
 
     def set_trajectory(
         self,
-        waypoints: list[Pose2d],
-        goal_rotation: Rotation2d,
-        holonomic_rotations: list[RotationTarget] | None = None,
+        waypoints: list[bline.Waypoint],
         field_flip: bool = False,
         mirror: bool = False,
-    ) -> bool:
-        pp_waypoints = PathPlannerPath.waypointsFromPoses(waypoints)
-        if holonomic_rotations is None:
-            # done this way because Ruff doesn't want mutables as default arguments
-            holonomic_rotations = []
-        pp_path = PathPlannerPath(
-            waypoints=pp_waypoints,
-            constraints=self._constraints,
-            ideal_starting_state=None,
-            goal_end_state=GoalEndState(
-                velocity=0.0,
-                rotation=goal_rotation,
-            ),
-            holonomic_rotations=holonomic_rotations,
+    ) -> None:
+        self._controller.set_path(
+            self.drivetrain.pose(),
+            waypoints=waypoints,
+            should_flip=field_flip,
+            should_mirror=mirror,
         )
-        if field_flip:
-            pp_path = pp_path.flipPath()
-        if mirror:
-            pp_path = pp_path.mirrorPath()
-        self._trajectory = pp_path.generateTrajectory(
-            starting_speeds=ChassisSpeeds(),
-            starting_rotation=self.drivetrain.pose().rotation(),
-            config=self.drivetrain.pp_robot_config,
-        )
+
         auto_path = self.field.getObject("auto")
-        auto_path.setPoses([s.pose for s in self._trajectory.getStates()])
+        auto_path.setPoses(self._controller.waypoints())
 
-        return self._trajectory is not None
-
-    def follow_trajectory(self, state_tm: float) -> None:
-        target_state = self._trajectory.sample(state_tm)
-        target_speeds = self._controller.calculateRobotRelativeSpeeds(
-            self.drivetrain.pose(), target_state
-        )
+    def follow_trajectory(self) -> None:
+        target_speeds = self._controller.calculate(self.drivetrain.pose())
         self.drivetrain.drive_robot(
             target_speeds.vx, target_speeds.vy, target_speeds.omega
         )
 
-    def is_trajectory_expired(self, state_tm: float) -> bool:
-        return state_tm > self._trajectory.getTotalTimeSeconds()
+    def is_trajectory_expired(self) -> bool:
+        return self._controller.is_at_goal()
 
 
 class Shoot(AutoBase):
@@ -143,15 +118,17 @@ class Shoot(AutoBase):
             )
             shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
             shooting_pose = Pose2d(shooting_position, path_heading)
+            shooting_rotation = shooter_to_hub(shooting_pose)
 
             self.set_trajectory(
-                [robot_pose, shooting_pose],
-                shooter_to_hub(shooting_pose),
+                [
+                    bline.Waypoint(shooting_position, shooting_rotation),
+                ]
             )
 
         # Follow the trajectory until we are in shooting position
-        self.follow_trajectory(state_tm)
-        if self.is_trajectory_expired(state_tm):
+        self.follow_trajectory()
+        if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("shooting")
 
@@ -164,7 +141,7 @@ class Shoot(AutoBase):
 class ShootGobblerRight(AutoBase):
     MODE_NAME = "Shoot + Gobbler - Right"
 
-    blue_starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(90.0))
+    blue_starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(-90.0))
 
     def on_enable(self) -> None:
         self._cycle_count = 0
@@ -190,51 +167,43 @@ class ShootGobblerRight(AutoBase):
         assert self.blue_starting_pose
         if initial_call:
             # Create a trajectory to the shooting position
-            # All trajectories assume blue alliance, so flip current pose if required
-            current_blue_pose = (
-                self.drivetrain.pose()
-                if is_blue()
-                else field_flip_pose2d(self.drivetrain.pose())
-            )
-            translation = (
-                current_blue_pose.translation()
-                if not self.mirror
-                else field_mirror_translation2d(current_blue_pose.translation())
-            )
-            initial_pose = Pose2d(translation, Rotation2d.fromDegrees(0.0))
-            p1 = Pose2d(
-                self.blue_starting_pose.x + 2.5,
-                self.blue_starting_pose.y,
+            p1 = bline.Waypoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 2.5, self.blue_starting_pose.y
+                ),
                 Rotation2d.fromDegrees(0.0),
             )
-            p2 = Pose2d(
-                self.blue_starting_pose.x + 4.1 - 1,
-                self.blue_starting_pose.y,
-                Rotation2d.fromDegrees(0.0),
+            p2 = bline.Waypoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1 - 1, self.blue_starting_pose.y
+                ),
+                None,
             )
-            p3 = Pose2d(
-                self.blue_starting_pose.x + 4.1,
-                self.blue_starting_pose.y + 1,
+            p3 = bline.Waypoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1, self.blue_starting_pose.y + 1
+                ),
                 Rotation2d.fromDegrees(90.0),
             )
 
-            p4 = Pose2d(
-                self.blue_starting_pose.x + 4.1,
-                self.blue_starting_pose.y + 2 + 0.5 * self._cycle_count,
+            p4 = bline.Waypoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1,
+                    self.blue_starting_pose.y + 2 + 0.5 * self._cycle_count,
+                ),
                 Rotation2d.fromDegrees(90.0),
             )
 
-            waypoints = [initial_pose, p1, p2, p3, p4]
+            waypoints = [p1, p2, p3, p4]
 
             self.set_trajectory(
                 waypoints,
-                Rotation2d.fromDegrees(90),
                 field_flip=is_red(),
                 mirror=self.mirror,
             )
 
         # Follow the trajectory until we are in shooting position
-        self.follow_trajectory(state_tm)
+        self.follow_trajectory()
 
         assert self.starting_pose
         in_zone = (self.drivetrain.pose().x < 11) and (self.drivetrain.pose().x > 5.5)
@@ -242,7 +211,7 @@ class ShootGobblerRight(AutoBase):
             self.intake.intake()
         else:
             self.intake.carry()
-        if self.is_trajectory_expired(state_tm):
+        if self.is_trajectory_expired():
             self.drivetrain.stop()
             self._cycle_count += 1
             self.next_state("returning")
@@ -252,38 +221,39 @@ class ShootGobblerRight(AutoBase):
         if initial_call:
             # Create a trajectory to the shooting position
             assert self.blue_starting_pose
-            sp = Pose2d(
-                self.blue_starting_pose.x + 4.1,
-                self.blue_starting_pose.y + 2 + 0.5 * self._cycle_count - 0.5,
+            p5 = bline.Waypoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1, self.blue_starting_pose.y + 1
+                ),
                 Rotation2d.fromDegrees(90.0),
             )
-            p5 = Pose2d(
-                self.blue_starting_pose.x + 4.1,
-                self.blue_starting_pose.y + 1,
-                Rotation2d.fromDegrees(-90.0),
+            p6 = bline.Waypoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1 - 1, self.blue_starting_pose.y
+                ),
+                None,
             )
-            p6 = Pose2d(
-                self.blue_starting_pose.x + 4.1 - 1,
-                self.blue_starting_pose.y,
-                Rotation2d.fromDegrees(180.0),
+            p7 = bline.Waypoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 2.5, self.blue_starting_pose.y
+                ),
+                Rotation2d.fromDegrees(0.0),
             )
-            p7 = Pose2d(
-                self.blue_starting_pose.x,
-                self.blue_starting_pose.y,
-                Rotation2d.fromDegrees(180.0),
+            p8 = bline.Waypoint(
+                Translation2d(self.blue_starting_pose.x, self.blue_starting_pose.y),
+                Rotation2d.fromDegrees(0.0),
             )
-            waypoints = [sp, p5, p6, p7]
+            waypoints = [p5, p6, p7, p8]
 
             self.set_trajectory(
                 waypoints,
-                Rotation2d.fromDegrees(0.0),
                 field_flip=is_red(),
                 mirror=self.mirror,
             )
         self.intake.carry()
         # Follow the trajectory until we are in shooting position
-        self.follow_trajectory(state_tm)
-        if self.is_trajectory_expired(state_tm):
+        self.follow_trajectory()
+        if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("spraying")
 
