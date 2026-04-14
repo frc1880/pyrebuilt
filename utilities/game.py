@@ -95,7 +95,7 @@ def field_flip_pose2d(p: Pose2d) -> Pose2d:
 
 
 def field_flip_rotation2d(r: Rotation2d) -> Rotation2d:
-    return Rotation2d(-r.cos(), r.sin())
+    return Rotation2d(-r.cos(), -r.sin())
 
 
 def field_flip_translation2d(t: Translation2d) -> Translation2d:
@@ -109,7 +109,7 @@ def field_mirror_translation2d(t: Translation2d) -> Translation2d:
 
 
 def field_mirror_rotation2d(r: Rotation2d) -> Rotation2d:
-    return Rotation2d(r.cos(), r.sin())
+    return Rotation2d(r.cos(), -r.sin())
 
 
 def field_mirror_pose2d(p: Pose2d) -> Pose2d:
