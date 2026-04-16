@@ -7,7 +7,7 @@ import ids
 
 
 class Intake:
-    intake_speed = tunable(1.0)
+    intake_speed = tunable(0.8)
 
     # All positions are in mechanism rotations
     deployed_position = 0.0
@@ -23,6 +23,9 @@ class Intake:
         self._roller_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.INTAKE_ROLLER_MOTOR, ids.CanbusId.INTAKE
         )
+        self._roller_follower_motor = phoenix6.hardware.TalonFX(
+            ids.TalonId.INTAKE_ROLLER_FOLLOWER_MOTOR, ids.CanbusId.INTAKE
+        )
         self._deploy_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.INTAKE_DEPLOY_MOTOR, ids.CanbusId.INTAKE
         )
@@ -36,12 +39,12 @@ class Intake:
         # TODO tune these values
         slot0_configs.k_g = 0.2
         slot0_configs.k_v = (
-            8.0  # A velocity target of 1 rps results in this voltage output
+            5.0  # A velocity target of 1 rps results in this voltage output
         )
         slot0_configs.k_a = (
             0.0  # An acceleration of 1 rps/s requires this voltage output
         )
-        slot0_configs.k_p = 3.0  # 1 rev error will output this voltage
+        slot0_configs.k_p = 30.0  # 1 rev error will output this voltage
         slot0_configs.k_i = 0.0  # Integrated error
         slot0_configs.k_d = (
             0.0  # A velocity error of 1 rps results in this voltage output
@@ -56,12 +59,12 @@ class Intake:
 
         talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.COAST
         # Chain sprockets are 24:12 after a (3*9):1 maxplanetary gearbox reduction
-        # talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 / 1.0
-        # talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0
-        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0 * 27.0
-        ## talon_fx_configs.feedback.feedback_sensor_source = (
-        #    signals.FeedbackSensorSourceValue.FUSED_CANCODER
-        # )
+        talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 / 2.0
+        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 1.0
+        # talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0 * 27.0
+        talon_fx_configs.feedback.feedback_sensor_source = (
+            signals.FeedbackSensorSourceValue.REMOTE_CANCODER
+        )
         talon_fx_configs.feedback.feedback_remote_sensor_id = ids.CancoderId.INTAKE
         talon_fx_configs.software_limit_switch.forward_soft_limit_threshold = 0.34
         talon_fx_configs.software_limit_switch.forward_soft_limit_enable = True
@@ -73,14 +76,14 @@ class Intake:
         cc_cfg.magnet_sensor.sensor_direction = (
             signals.SensorDirectionValue.CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = -0.439697
+        cc_cfg.magnet_sensor.magnet_offset = -0.441
         self._cancoder = phoenix6.hardware.CANcoder(
             ids.CancoderId.INTAKE, ids.CanbusId.INTAKE
         )
         self._cancoder.configurator.apply(cc_cfg)
-        initial_position = self._cancoder.get_position().value
-        if initial_position < -0.1:
-            self._cancoder.set_position(initial_position + 1.0)
+        # initial_position = self._cancoder.get_position().value
+        # if initial_position < -0.1:
+        #    self._cancoder.set_position(initial_position + 1.0)
 
         reverse_cfg = configs.MotorOutputConfigs()
         reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
@@ -93,7 +96,7 @@ class Intake:
 
     def setup(self) -> None:
         self._desired_intake_position = self.carry_position
-        self._deploy_motor.set_position(0.33)
+        # self._deploy_motor.set_position(0.33)
 
     @feedback
     def position(self) -> float:
@@ -147,8 +150,14 @@ class Intake:
             # Spin the intake motor
             self._roller_motor.set(self.intake_speed)
         elif self._should_feed:
-            self._roller_motor.set(0.3)
+            self._roller_motor.set(0.5)
         elif self._should_backdrive:
             self._roller_motor.set(-1.0)
         else:
             self._roller_motor.stopMotor()
+
+        self._roller_follower_motor.set_control(
+            controls.Follower(
+                ids.TalonId.INTAKE_ROLLER_MOTOR, signals.MotorAlignmentValue.OPPOSED
+            )
+        )
