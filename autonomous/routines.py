@@ -207,7 +207,7 @@ class ShootGobblerRight(AutoBase):
 
         p4 = Pose2d(
             self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 1.8,
+            self.blue_starting_pose.y + 2.5,
             Rotation2d.fromDegrees(90.0),
         )
 
@@ -230,7 +230,7 @@ class ShootGobblerRight(AutoBase):
         assert self.blue_starting_pose
         sp = Pose2d(
             self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 1.8,
+            self.blue_starting_pose.y + 2.5,
             Rotation2d.fromDegrees(-90.0),
         )
         p5 = Pose2d(
@@ -393,9 +393,14 @@ class ShootGobblerRight(AutoBase):
         p7 = Pose2d(
             self.blue_starting_pose.x,
             self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(180.0),
+            Rotation2d.fromDegrees(135.0),
         )
-        waypoints = [sp, p5, p6, p7]
+        p8 = Pose2d(
+            self.blue_starting_pose.x - 1.0,
+            self.blue_starting_pose.y + 1.0,
+            Rotation2d.fromDegrees(135.0),
+        )
+        waypoints = [sp, p5, p6, p7, p8]
 
         for flip in [True, False]:
             for mirror in [True, False]:
@@ -510,13 +515,13 @@ class ShootGobblerRight(AutoBase):
             self.drivetrain.stop()
             self.next_state("spraying")
 
-    @timed_state(duration=3.5, next_state="aligning")
+    @state
     def spraying(self, initial_call: bool, state_tm: float) -> None:
         if initial_call:
             self._cycle_count += 1
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty() and state_tm > 2.5 and self._cycle_count == 1:
+        if state_tm > 2.5 and self._cycle_count == 1:
             self.next_state("aligning")
 
 
