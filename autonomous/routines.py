@@ -48,8 +48,8 @@ class AutoBase(AutonomousStateMachine):
         self._constraints = PathConstraints(
             maxVelocityMps=3.5,
             maxAccelerationMpsSq=6.0,
-            maxAngularVelocityRps=4.0 * math.pi,
-            maxAngularAccelerationRpsSq=80.0 * math.pi,
+            maxAngularVelocityRps=20.0 * math.pi,
+            maxAngularAccelerationRpsSq=40.0 * math.pi,
         )
         self._controller = PPHolonomicDriveController(
             translation_constants=PIDConstants(kP=3.0),
@@ -285,23 +285,23 @@ class ShootGobblerRight(AutoBase):
         )
         p4 = Pose2d(
             self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 1.8,
+            self.blue_starting_pose.y + 2.2,
             Rotation2d.fromDegrees(90.0),
         )
         p5 = Pose2d(
-            self.blue_starting_pose.x + 3.6,
+            self.blue_starting_pose.x + 3.3,
             self.blue_starting_pose.y + 3.0,
             Rotation2d.fromDegrees(180.0),
         )
         p6 = Pose2d(
-            self.blue_starting_pose.x + 3.1,
-            self.blue_starting_pose.y + 1.8,
+            self.blue_starting_pose.x + 2.5,
+            self.blue_starting_pose.y + 2.2,
             Rotation2d.fromDegrees(-90.0),
         )
         p7 = Pose2d(
             self.blue_starting_pose.x + 2.5,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(180.0),
+            self.blue_starting_pose.y + 0.1,
+            Rotation2d.fromDegrees(-170.0),
         )
         p8 = Pose2d(
             self.blue_starting_pose.x,
