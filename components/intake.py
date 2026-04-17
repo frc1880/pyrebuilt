@@ -59,11 +59,10 @@ class Intake:
 
         talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.COAST
         # Chain sprockets are 24:12 after a (3*9):1 maxplanetary gearbox reduction
-        talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 / 2.0
+        talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 * 2.0
         talon_fx_configs.feedback.sensor_to_mechanism_ratio = 1.0
-        # talon_fx_configs.feedback.sensor_to_mechanism_ratio = 2.0 * 27.0
         talon_fx_configs.feedback.feedback_sensor_source = (
-            signals.FeedbackSensorSourceValue.REMOTE_CANCODER
+            signals.FeedbackSensorSourceValue.FUSED_CANCODER
         )
         talon_fx_configs.feedback.feedback_remote_sensor_id = ids.CancoderId.INTAKE
         talon_fx_configs.software_limit_switch.forward_soft_limit_threshold = 0.34
@@ -81,22 +80,31 @@ class Intake:
             ids.CancoderId.INTAKE, ids.CanbusId.INTAKE
         )
         self._cancoder.configurator.apply(cc_cfg)
-        # initial_position = self._cancoder.get_position().value
-        # if initial_position < -0.1:
-        #    self._cancoder.set_position(initial_position + 1.0)
 
         reverse_cfg = configs.MotorOutputConfigs()
         reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
         reverse_cfg.neutral_mode = signals.NeutralModeValue.COAST
+        current_cfg = configs.CurrentLimitsConfigs()
+        current_cfg.stator_current_limit = 30.0
+        current_cfg.stator_current_limit_enable = True
+        current_cfg.supply_current_limit = 20.0
+        current_cfg.supply_current_limit_enable = True
+        current_cfg.supply_current_lower_limit = 5.0
+        current_cfg.supply_current_lower_time = 1.0
+
         self._roller_motor.configurator.apply(
-            configs.TalonFXConfiguration().with_motor_output(reverse_cfg)
+            configs.TalonFXConfiguration()
+            .with_motor_output(reverse_cfg)
+            .with_current_limits(current_cfg)
+        )
+        self._roller_follower_motor.configurator.apply(
+            configs.TalonFXConfiguration().with_current_limits(current_cfg)
         )
         self._timer = Timer()
         self._timer.start()
 
     def setup(self) -> None:
         self._desired_intake_position = self.carry_position
-        # self._deploy_motor.set_position(0.33)
 
     @feedback
     def position(self) -> float:
