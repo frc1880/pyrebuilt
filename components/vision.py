@@ -34,7 +34,7 @@ class Vision:
     def setup(self) -> None:
         self._field_obj = self.field.getObject(self.camera.getName() + "_vision")
 
-    @feedback
+    # @feedback
     def targets(self) -> list[int]:
         ids = [target.fiducialId for target in self._targets]
         ids.sort()

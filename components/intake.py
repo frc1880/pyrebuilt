@@ -1,5 +1,5 @@
 import phoenix6
-from magicbot import feedback, tunable, will_reset_to
+from magicbot import tunable, will_reset_to
 from phoenix6 import configs, controls, signals
 from wpilib import Timer
 
@@ -11,7 +11,7 @@ class Intake:
 
     # All positions are in mechanism rotations
     deployed_position = 0.0
-    carry_position = tunable(0.20)
+    carry_position = 0.20
     retracted_position = 0.3
     timeSinceDeployed = 0.0
     deployed = False
@@ -85,9 +85,9 @@ class Intake:
         reverse_cfg.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
         reverse_cfg.neutral_mode = signals.NeutralModeValue.COAST
         current_cfg = configs.CurrentLimitsConfigs()
-        current_cfg.stator_current_limit = 30.0
+        current_cfg.stator_current_limit = 80.0
         current_cfg.stator_current_limit_enable = True
-        current_cfg.supply_current_limit = 20.0
+        current_cfg.supply_current_limit = 40.0
         current_cfg.supply_current_limit_enable = True
         current_cfg.supply_current_lower_limit = 5.0
         current_cfg.supply_current_lower_time = 1.0
@@ -106,15 +106,15 @@ class Intake:
     def setup(self) -> None:
         self._desired_intake_position = self.carry_position
 
-    @feedback
+    # @feedback
     def position(self) -> float:
         return self._deploy_motor.get_position().value
 
-    @feedback
+    # @feedback
     def cancoder_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
-    @feedback
+    # @feedback
     def setpoint(self) -> float:
         return self._desired_intake_position
 

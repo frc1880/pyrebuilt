@@ -7,7 +7,7 @@ import ids
 
 
 class Indexer:
-    indexer_speed_rotation = tunable(1.0)
+    indexer_speed_rotation = tunable(0.5)
     backdrive_speed = tunable(-0.5)
     _should_feed = will_reset_to(False)
     _should_backdrive = will_reset_to(False)
