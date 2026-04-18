@@ -1,5 +1,5 @@
 import phoenix6
-from magicbot import tunable, will_reset_to
+from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
 from wpilib import Timer
 
@@ -102,11 +102,13 @@ class Intake:
         )
         self._timer = Timer()
         self._timer.start()
+        self._chortle_timer = Timer()
+        self._chortle_timer.start()
 
     def setup(self) -> None:
         self._desired_intake_position = self.carry_position
 
-    # @feedback
+    @feedback
     def position(self) -> float:
         return self._deploy_motor.get_position().value
 
@@ -138,7 +140,6 @@ class Intake:
         self._should_spin = True
 
     def feed(self) -> None:
-        self._desired_intake_position = self.carry_position
         self._should_feed = True
 
     def execute(self) -> None:
@@ -159,6 +160,14 @@ class Intake:
             self._roller_motor.set(self.intake_speed)
         elif self._should_feed:
             self._roller_motor.set(0.5)
+            if self._chortle_timer.get() > 1.0:
+                self._chortle_timer.reset()
+            if self._chortle_timer.get() > 0.5:
+                self.retract()
+            else:
+                self.carry()
+            if self._chortle_timer.get() > 1.0:
+                self._chortle_timer.reset()
         elif self._should_backdrive:
             self._roller_motor.set(-1.0)
         else:

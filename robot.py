@@ -1,6 +1,7 @@
 import math
 
 import magicbot
+import phoenix6
 import wpilib
 from wpimath.geometry import (
     Pose2d,
@@ -96,6 +97,8 @@ class MyRobot(magicbot.MagicRobot):
 
         # Variables used in test mode
         self._test_shooter_on = False
+
+        phoenix6.SignalLogger.enable_auto_logging(False)
 
     def _get_start_pose_error(self, selected_auto: AutoBase) -> Transform2d:
         # Check that we are in the right spot to start
@@ -223,6 +226,7 @@ class MyRobot(magicbot.MagicRobot):
             self._test_shooter_on = not self._test_shooter_on
         if self.gamepad.getRightTriggerAxis() > 0.5 and self._test_shooter_on:
             self.indexer.feed()
+            self.intake.feed()
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
         if self.gamepad.getLeftBumper():
