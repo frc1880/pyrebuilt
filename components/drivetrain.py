@@ -128,7 +128,7 @@ class Drivetrain:
     def pose(self) -> Pose2d:
         return self._phoenix_swerve.get_state().pose
 
-    @feedback
+    # @feedback
     def velocity_robot(self) -> ChassisSpeeds:
         return self._phoenix_swerve.get_state().speeds
 

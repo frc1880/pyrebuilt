@@ -7,7 +7,7 @@ import ids
 
 
 class Indexer:
-    indexer_speed_rotation = tunable(1.0)
+    indexer_speed_rotation = tunable(0.5)
     backdrive_speed = tunable(-0.5)
     _should_feed = will_reset_to(False)
     _should_backdrive = will_reset_to(False)
@@ -19,8 +19,16 @@ class Indexer:
         invert_cfg = configs.MotorOutputConfigs().with_inverted(
             signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
         )
+        current_cfg = configs.CurrentLimitsConfigs()
+        current_cfg.supply_current_limit = 20.0
+        current_cfg.supply_current_limit_enable = True
+        current_cfg.supply_current_lower_limit = 5.0
+        current_cfg.supply_current_lower_time = 1.0
+
         self._indexer_rotation_motor.configurator.apply(
-            configs.TalonFXConfiguration().with_motor_output(invert_cfg)
+            configs.TalonFXConfiguration()
+            .with_motor_output(invert_cfg)
+            .with_current_limits(current_cfg)
         )
         self._injector_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.INDEXER_INJECTOR_MOTOR, ids.CanbusId.INDEXER

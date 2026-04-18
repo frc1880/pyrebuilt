@@ -48,8 +48,8 @@ class AutoBase(AutonomousStateMachine):
         self._constraints = PathConstraints(
             maxVelocityMps=3.5,
             maxAccelerationMpsSq=6.0,
-            maxAngularVelocityRps=4.0 * math.pi,
-            maxAngularAccelerationRpsSq=80.0 * math.pi,
+            maxAngularVelocityRps=20.0 * math.pi,
+            maxAngularAccelerationRpsSq=40.0 * math.pi,
         )
         self._controller = PPHolonomicDriveController(
             translation_constants=PIDConstants(kP=3.0),
@@ -207,7 +207,7 @@ class ShootGobblerRight(AutoBase):
 
         p4 = Pose2d(
             self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 1.8,
+            self.blue_starting_pose.y + 2.5,
             Rotation2d.fromDegrees(90.0),
         )
 
@@ -230,7 +230,7 @@ class ShootGobblerRight(AutoBase):
         assert self.blue_starting_pose
         sp = Pose2d(
             self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 1.8,
+            self.blue_starting_pose.y + 2.5,
             Rotation2d.fromDegrees(-90.0),
         )
         p5 = Pose2d(
@@ -285,23 +285,23 @@ class ShootGobblerRight(AutoBase):
         )
         p4 = Pose2d(
             self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 1.8,
+            self.blue_starting_pose.y + 2.2,
             Rotation2d.fromDegrees(90.0),
         )
         p5 = Pose2d(
-            self.blue_starting_pose.x + 3.6,
+            self.blue_starting_pose.x + 3.3,
             self.blue_starting_pose.y + 3.0,
             Rotation2d.fromDegrees(180.0),
         )
         p6 = Pose2d(
-            self.blue_starting_pose.x + 3.1,
-            self.blue_starting_pose.y + 1.8,
+            self.blue_starting_pose.x + 2.5,
+            self.blue_starting_pose.y + 2.2,
             Rotation2d.fromDegrees(-90.0),
         )
         p7 = Pose2d(
             self.blue_starting_pose.x + 2.5,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(180.0),
+            self.blue_starting_pose.y + 0.1,
+            Rotation2d.fromDegrees(-170.0),
         )
         p8 = Pose2d(
             self.blue_starting_pose.x,
@@ -330,6 +330,90 @@ class ShootGobblerRight(AutoBase):
                     )
                 )
 
+        # Hub out-n-back
+        sp = Pose2d(
+            self.blue_starting_pose.x,
+            self.blue_starting_pose.y,
+            Rotation2d.fromDegrees(0.0),
+        )
+        p1 = Pose2d(
+            self.blue_starting_pose.x + 2.2,
+            self.blue_starting_pose.y,
+            Rotation2d.fromDegrees(0.0),
+        )
+        p2 = Pose2d(
+            self.blue_starting_pose.x + 3.2 - 0.8,
+            self.blue_starting_pose.y,
+            Rotation2d.fromDegrees(0.0),
+        )
+        p3 = Pose2d(
+            self.blue_starting_pose.x + 3.2,
+            self.blue_starting_pose.y + 0.8,
+            Rotation2d.fromDegrees(90.0),
+        )
+
+        p4 = Pose2d(
+            self.blue_starting_pose.x + 3.2,
+            self.blue_starting_pose.y + 3.0,
+            Rotation2d.fromDegrees(90.0),
+        )
+
+        waypoints = [sp, p1, p2, p3, p4]
+
+        for flip in [True, False]:
+            for mirror in [True, False]:
+                self._trajectories[("hub_collect", flip, mirror)] = (
+                    self.generate_trajectory(
+                        waypoints,
+                        self.blue_starting_pose.rotation(),
+                        Rotation2d.fromDegrees(90),
+                        field_flip=flip,
+                        mirror=mirror,
+                    )
+                )
+
+        # Returning
+        # Create a trajectory to the shooting position
+        assert self.blue_starting_pose
+        sp = Pose2d(
+            self.blue_starting_pose.x + 3.2,
+            self.blue_starting_pose.y + 3.0,
+            Rotation2d.fromDegrees(-90.0),
+        )
+        p5 = Pose2d(
+            self.blue_starting_pose.x + 3.2,
+            self.blue_starting_pose.y + 0.8,
+            Rotation2d.fromDegrees(-90.0),
+        )
+        p6 = Pose2d(
+            self.blue_starting_pose.x + 3.2 - 0.8,
+            self.blue_starting_pose.y,
+            Rotation2d.fromDegrees(180.0),
+        )
+        p7 = Pose2d(
+            self.blue_starting_pose.x,
+            self.blue_starting_pose.y,
+            Rotation2d.fromDegrees(135.0),
+        )
+        p8 = Pose2d(
+            self.blue_starting_pose.x - 1.0,
+            self.blue_starting_pose.y + 1.0,
+            Rotation2d.fromDegrees(135.0),
+        )
+        waypoints = [sp, p5, p6, p7, p8]
+
+        for flip in [True, False]:
+            for mirror in [True, False]:
+                self._trajectories[("hub_returning", flip, mirror)] = (
+                    self.generate_trajectory(
+                        waypoints,
+                        Rotation2d.fromDegrees(90.0),
+                        Rotation2d.fromDegrees(0.0),
+                        field_flip=flip,
+                        mirror=mirror,
+                    )
+                )
+
     def on_enable(self) -> None:
         self._cycle_count = 0
         super().on_enable()
@@ -350,7 +434,7 @@ class ShootGobblerRight(AutoBase):
             if self._cycle_count != 1:
                 self.next_state("collect")
             else:
-                self.next_state("circuit")
+                self.next_state("hub_collect")
 
     @state
     def collect(self, initial_call: bool, state_tm: float) -> None:
@@ -370,6 +454,25 @@ class ShootGobblerRight(AutoBase):
         if self.is_trajectory_expired(state_tm):
             self.drivetrain.stop()
             self.next_state("returning")
+
+    @state
+    def hub_collect(self, initial_call: bool, state_tm: float) -> None:
+        assert self.blue_starting_pose
+        if initial_call:
+            self.set_state_trajectory()
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory(state_tm)
+
+        assert self.starting_pose
+        in_zone = (self.drivetrain.pose().x < 11) and (self.drivetrain.pose().x > 5.5)
+        if in_zone:
+            self.intake.intake()
+        else:
+            self.intake.carry()
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            self.next_state("hub_returning")
 
     @state
     def circuit(self, initial_call: bool, state_tm: float) -> None:
@@ -401,13 +504,24 @@ class ShootGobblerRight(AutoBase):
             self.drivetrain.stop()
             self.next_state("spraying")
 
-    @timed_state(duration=6, next_state="aligning")
+    @state
+    def hub_returning(self, initial_call: bool, state_tm: float) -> None:
+        if initial_call:
+            self.set_state_trajectory()
+        self.intake.carry()
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory(state_tm)
+        if self.is_trajectory_expired(state_tm):
+            self.drivetrain.stop()
+            self.next_state("spraying")
+
+    @state
     def spraying(self, initial_call: bool, state_tm: float) -> None:
         if initial_call:
             self._cycle_count += 1
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty() and state_tm > 2.5 and self._cycle_count == 1:
+        if state_tm > 2.5 and self._cycle_count == 1:
             self.next_state("aligning")
 
 

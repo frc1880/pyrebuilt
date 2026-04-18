@@ -1,6 +1,6 @@
 import numpy
 import phoenix6
-from magicbot import feedback, tunable, will_reset_to
+from magicbot import tunable, will_reset_to
 from phoenix6 import configs, controls, signals
 from wpilib import DriverStation
 
@@ -109,22 +109,22 @@ class Shooter:
     def shoot(self) -> None:
         self._should_shoot = True
 
-    @feedback
+    # @feedback
     def hood_angle(self) -> float:
         return self._hood_motor.get_position().value + 70.0
 
     def hood_cancoder_position(self) -> float:
         return self._cancoder.get_position().value
 
-    @feedback
+    # @feedback
     def hood_cancoder_absolute_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
-    @feedback
+    # @feedback
     def setpoint(self) -> float:
         return self.desired_hood_angle
 
-    @feedback
+    # @feedback
     def current_speed(self) -> float:
         return self._shooter_motor.get_velocity().value
 

@@ -34,7 +34,7 @@ class Vision:
     def setup(self) -> None:
         self._field_obj = self.field.getObject(self.camera.getName() + "_vision")
 
-    @feedback
+    # @feedback
     def targets(self) -> list[int]:
         ids = [target.fiducialId for target in self._targets]
         ids.sort()
@@ -48,8 +48,9 @@ class Vision:
         return self._has_seen_multitag
 
     def _is_innovation_ok(self, pose: Pose2d) -> bool:
-        innovation = pose.translation().distance(self.drivetrain.pose().translation())
-        return innovation < 0.5
+        return True
+        # innovation = pose.translation().distance(self.drivetrain.pose().translation())
+        # return innovation < 0.5
 
     def execute(self) -> None:
         if abs(self.drivetrain.velocity_robot().omega) > 0.5:
