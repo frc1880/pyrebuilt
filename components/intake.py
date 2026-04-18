@@ -160,10 +160,12 @@ class Intake:
             self._roller_motor.set(self.intake_speed)
         elif self._should_feed:
             self._roller_motor.set(0.5)
+            if self._chortle_timer.get() > 1.0:
+                self._chortle_timer.reset()
             if self._chortle_timer.get() > 0.5:
-                self.carry()
-            else:
                 self.retract()
+            else:
+                self.carry()
             if self._chortle_timer.get() > 1.0:
                 self._chortle_timer.reset()
         elif self._should_backdrive:
