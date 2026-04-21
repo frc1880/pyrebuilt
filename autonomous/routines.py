@@ -2,26 +2,17 @@ import math
 
 import wpilib
 from magicbot import AutonomousStateMachine, state, timed_state
-from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
-from pathplannerlib.path import (
-    GoalEndState,
-    PathConstraints,
-    PathPlannerPath,
-    PathPlannerTrajectory,
-    RotationTarget,
-)
+from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
-from wpimath.kinematics import ChassisSpeeds
 
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
 from controllers.shooter import ShooterController
+from motion import vector_pursuit
 from utilities.game import (
     field_flip_pose2d,
-    field_flip_rotation2d,
     field_mirror_pose2d,
-    field_mirror_rotation2d,
     is_blue,
     is_red,
 )
@@ -45,18 +36,18 @@ class AutoBase(AutonomousStateMachine):
 
     def setup(self) -> None:
         # All the things that are the same in each routine...
-        self._constraints = PathConstraints(
-            maxVelocityMps=3.5,
-            maxAccelerationMpsSq=6.0,
-            maxAngularVelocityRps=20.0 * math.pi,
-            maxAngularAccelerationRpsSq=40.0 * math.pi,
+        constraints = vector_pursuit.MotionParameters(
+            translation_tolerance=0.1,
+            rotation_tolerance=math.radians(5),
+            max_linear_speed=3.5,
+            max_linear_acceleration=2.0,  # None,
+            max_angular_speed=2.0 * math.pi,
         )
-        self._controller = PPHolonomicDriveController(
-            translation_constants=PIDConstants(kP=3.0),
-            rotation_constants=PIDConstants(kP=8.0, kD=0.25),
+        self._controller = vector_pursuit.VectorPursuitController(
+            rotation_controller=PIDController(Kp=4.0, Ki=0.0, Kd=0.25),
+            cross_track_controller=PIDController(Kp=3.0, Ki=0.0, Kd=0.0),
+            motion_parameters=constraints,
         )
-        self._trajectories: dict[tuple[str, bool, bool], PathPlannerTrajectory] = {}
-        self.precalc_trajectories()
 
     @property
     def starting_pose(self) -> Pose2d | None:
@@ -78,62 +69,30 @@ class AutoBase(AutonomousStateMachine):
 
         super().on_enable()
 
-    def generate_trajectory(
+    def set_trajectory(
         self,
-        waypoints: list[Pose2d],
-        starting_rotation: Rotation2d,
-        goal_rotation: Rotation2d,
-        holonomic_rotations: list[RotationTarget] | None = None,
-        field_flip: bool = False,
-        mirror: bool = False,
-    ) -> PathPlannerTrajectory:
-        pp_waypoints = PathPlannerPath.waypointsFromPoses(waypoints)
-        if holonomic_rotations is None:
-            # done this way because Ruff doesn't want mutables as default arguments
-            holonomic_rotations = []
-        pp_path = PathPlannerPath(
-            waypoints=pp_waypoints,
-            constraints=self._constraints,
-            ideal_starting_state=None,
-            goal_end_state=GoalEndState(
-                velocity=0.0,
-                rotation=goal_rotation,
-            ),
-            holonomic_rotations=holonomic_rotations,
-        )
-        if field_flip:
-            pp_path = pp_path.flipPath()
-            starting_rotation = field_flip_rotation2d(starting_rotation)
-        if mirror:
-            pp_path = pp_path.mirrorPath()
-            starting_rotation = field_mirror_rotation2d(starting_rotation)
-        return pp_path.generateTrajectory(
-            starting_speeds=ChassisSpeeds(),
-            starting_rotation=starting_rotation,
-            config=self.drivetrain.pp_robot_config,
+        path_points: list[vector_pursuit.PathPoint],
+        field_flip: bool,
+        mirror: bool,
+    ) -> None:
+        self._controller.set_path(
+            self.drivetrain.pose(),
+            path_points=path_points,
+            should_flip=field_flip,
+            should_mirror=mirror,
         )
 
-    def set_state_trajectory(self) -> None:
-        self._trajectory = self._trajectories[
-            (self.current_state, is_red(), self.mirror)
-        ]
         auto_path = self.field.getObject("auto")
-        auto_path.setPoses([s.pose for s in self._trajectory.getStates()])
+        auto_path.setPoses(self._controller.waypoints())
 
-    def precalc_trajectories(self) -> None:
-        pass
-
-    def follow_trajectory(self, state_tm: float) -> None:
-        target_state = self._trajectory.sample(state_tm)
-        target_speeds = self._controller.calculateRobotRelativeSpeeds(
-            self.drivetrain.pose(), target_state
-        )
+    def follow_trajectory(self) -> None:
+        target_speeds = self._controller.calculate(self.drivetrain.pose())
         self.drivetrain.drive_robot(
             target_speeds.vx, target_speeds.vy, target_speeds.omega
         )
 
-    def is_trajectory_expired(self, state_tm: float) -> bool:
-        return state_tm > self._trajectory.getTotalTimeSeconds()
+    def is_trajectory_expired(self) -> bool:
+        return self._controller.is_at_goal()
 
 
 class Shoot(AutoBase):
@@ -149,23 +108,22 @@ class Shoot(AutoBase):
             # Create a trajectory to the shooting position
             robot_pose = self.drivetrain.pose()
             delta_x = -0.5 if is_blue() else 0.5
-            path_heading = (
-                Rotation2d.fromDegrees(180.0)
-                if is_blue()
-                else Rotation2d.fromDegrees(0.0)
-            )
             shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
-            shooting_pose = Pose2d(shooting_position, path_heading)
 
-            self._trajectory = self.generate_trajectory(
-                [robot_pose, shooting_pose],
-                self.drivetrain.pose().rotation(),
-                shooter_to_hub(shooting_pose),
+            self.set_trajectory(
+                [
+                    vector_pursuit.PathPoint(
+                        shooting_position,
+                        shooter_to_hub(Pose2d(shooting_position, Rotation2d())),
+                    )
+                ],
+                field_flip=False,
+                mirror=False,
             )
 
         # Follow the trajectory until we are in shooting position
-        self.follow_trajectory(state_tm)
-        if self.is_trajectory_expired(state_tm):
+        self.follow_trajectory()
+        if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("shooting")
 
@@ -179,240 +137,6 @@ class ShootGobblerRight(AutoBase):
     MODE_NAME = "Shoot + Gobbler - Right"
 
     blue_starting_pose = Pose2d(3.6, 0.75, Rotation2d.fromDegrees(90.0))
-
-    def precalc_trajectories(self) -> None:
-        assert self.blue_starting_pose
-        # Collect
-        # All trajectories assume blue alliance, so flip current pose if required
-        sp = Pose2d(
-            self.blue_starting_pose.x,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(0.0),
-        )
-        p1 = Pose2d(
-            self.blue_starting_pose.x + 2.5,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(0.0),
-        )
-        p2 = Pose2d(
-            self.blue_starting_pose.x + 4.1 - 1.0,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(0.0),
-        )
-        p3 = Pose2d(
-            self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 1.0,
-            Rotation2d.fromDegrees(90.0),
-        )
-
-        p4 = Pose2d(
-            self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 2.5,
-            Rotation2d.fromDegrees(90.0),
-        )
-
-        waypoints = [sp, p1, p2, p3, p4]
-
-        for flip in [True, False]:
-            for mirror in [True, False]:
-                self._trajectories[("collect", flip, mirror)] = (
-                    self.generate_trajectory(
-                        waypoints,
-                        self.blue_starting_pose.rotation(),
-                        Rotation2d.fromDegrees(90),
-                        field_flip=flip,
-                        mirror=mirror,
-                    )
-                )
-
-        # Returning
-        # Create a trajectory to the shooting position
-        assert self.blue_starting_pose
-        sp = Pose2d(
-            self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 2.5,
-            Rotation2d.fromDegrees(-90.0),
-        )
-        p5 = Pose2d(
-            self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 1.0,
-            Rotation2d.fromDegrees(-90.0),
-        )
-        p6 = Pose2d(
-            self.blue_starting_pose.x + 4.1 - 1.0,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(180.0),
-        )
-        p7 = Pose2d(
-            self.blue_starting_pose.x,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(180.0),
-        )
-        waypoints = [sp, p5, p6, p7]
-
-        for flip in [True, False]:
-            for mirror in [True, False]:
-                self._trajectories[("returning", flip, mirror)] = (
-                    self.generate_trajectory(
-                        waypoints,
-                        Rotation2d.fromDegrees(90.0),
-                        Rotation2d.fromDegrees(0.0),
-                        field_flip=flip,
-                        mirror=mirror,
-                    )
-                )
-
-        # Circuit
-        sp = Pose2d(
-            self.blue_starting_pose.x,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(0.0),
-        )
-        p1 = Pose2d(
-            self.blue_starting_pose.x + 2.5,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(0.0),
-        )
-        p2 = Pose2d(
-            self.blue_starting_pose.x + 4.1 - 1.0,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(0.0),
-        )
-        p3 = Pose2d(
-            self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 1.0,
-            Rotation2d.fromDegrees(90.0),
-        )
-        p4 = Pose2d(
-            self.blue_starting_pose.x + 4.1,
-            self.blue_starting_pose.y + 2.2,
-            Rotation2d.fromDegrees(90.0),
-        )
-        p5 = Pose2d(
-            self.blue_starting_pose.x + 3.3,
-            self.blue_starting_pose.y + 3.0,
-            Rotation2d.fromDegrees(180.0),
-        )
-        p6 = Pose2d(
-            self.blue_starting_pose.x + 2.5,
-            self.blue_starting_pose.y + 2.2,
-            Rotation2d.fromDegrees(-90.0),
-        )
-        p7 = Pose2d(
-            self.blue_starting_pose.x + 2.5,
-            self.blue_starting_pose.y + 0.1,
-            Rotation2d.fromDegrees(-170.0),
-        )
-        p8 = Pose2d(
-            self.blue_starting_pose.x,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(180.0),
-        )
-
-        waypoints = [sp, p1, p2, p3, p4, p5, p6, p7, p8]
-        rotations = [
-            RotationTarget(2.0, Rotation2d.fromDegrees(90.0)),
-            RotationTarget(5.0, Rotation2d.fromDegrees(180.0)),
-            RotationTarget(6.0, Rotation2d.fromDegrees(-90.0)),
-            RotationTarget(7.0, Rotation2d.fromDegrees(180.0)),
-        ]
-
-        for flip in [True, False]:
-            for mirror in [True, False]:
-                self._trajectories[("circuit", flip, mirror)] = (
-                    self.generate_trajectory(
-                        waypoints,
-                        self.blue_starting_pose.rotation(),
-                        Rotation2d.fromDegrees(180),
-                        rotations,
-                        field_flip=flip,
-                        mirror=mirror,
-                    )
-                )
-
-        # Hub out-n-back
-        sp = Pose2d(
-            self.blue_starting_pose.x,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(0.0),
-        )
-        p1 = Pose2d(
-            self.blue_starting_pose.x + 2.2,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(0.0),
-        )
-        p2 = Pose2d(
-            self.blue_starting_pose.x + 3.2 - 0.8,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(0.0),
-        )
-        p3 = Pose2d(
-            self.blue_starting_pose.x + 3.2,
-            self.blue_starting_pose.y + 0.8,
-            Rotation2d.fromDegrees(90.0),
-        )
-
-        p4 = Pose2d(
-            self.blue_starting_pose.x + 3.2,
-            self.blue_starting_pose.y + 3.0,
-            Rotation2d.fromDegrees(90.0),
-        )
-
-        waypoints = [sp, p1, p2, p3, p4]
-
-        for flip in [True, False]:
-            for mirror in [True, False]:
-                self._trajectories[("hub_collect", flip, mirror)] = (
-                    self.generate_trajectory(
-                        waypoints,
-                        self.blue_starting_pose.rotation(),
-                        Rotation2d.fromDegrees(90),
-                        field_flip=flip,
-                        mirror=mirror,
-                    )
-                )
-
-        # Returning
-        # Create a trajectory to the shooting position
-        assert self.blue_starting_pose
-        sp = Pose2d(
-            self.blue_starting_pose.x + 3.2,
-            self.blue_starting_pose.y + 3.0,
-            Rotation2d.fromDegrees(-90.0),
-        )
-        p5 = Pose2d(
-            self.blue_starting_pose.x + 3.2,
-            self.blue_starting_pose.y + 0.8,
-            Rotation2d.fromDegrees(-90.0),
-        )
-        p6 = Pose2d(
-            self.blue_starting_pose.x + 3.2 - 0.8,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(180.0),
-        )
-        p7 = Pose2d(
-            self.blue_starting_pose.x,
-            self.blue_starting_pose.y,
-            Rotation2d.fromDegrees(135.0),
-        )
-        p8 = Pose2d(
-            self.blue_starting_pose.x - 1.0,
-            self.blue_starting_pose.y + 1.0,
-            Rotation2d.fromDegrees(135.0),
-        )
-        waypoints = [sp, p5, p6, p7, p8]
-
-        for flip in [True, False]:
-            for mirror in [True, False]:
-                self._trajectories[("hub_returning", flip, mirror)] = (
-                    self.generate_trajectory(
-                        waypoints,
-                        Rotation2d.fromDegrees(90.0),
-                        Rotation2d.fromDegrees(0.0),
-                        field_flip=flip,
-                        mirror=mirror,
-                    )
-                )
 
     def on_enable(self) -> None:
         self._cycle_count = 0
@@ -437,69 +161,163 @@ class ShootGobblerRight(AutoBase):
                 self.next_state("hub_collect")
 
     @state
-    def collect(self, initial_call: bool, state_tm: float) -> None:
+    def collect(self, initial_call: bool) -> None:
         if initial_call:
-            self.set_state_trajectory()
+            assert self.blue_starting_pose
+            # Collect
+            # All trajectories assume blue alliance, so flip current pose if required
+            p1 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 2.5,
+                    self.blue_starting_pose.y,
+                ),
+                Rotation2d.fromDegrees(0.0),
+            )
+            p2 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1 - 1.0,
+                    self.blue_starting_pose.y,
+                ),
+                Rotation2d.fromDegrees(90.0),
+            )
+            p3 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1,
+                    self.blue_starting_pose.y + 1.0,
+                )
+            )
+
+            p4 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1,
+                    self.blue_starting_pose.y + 2.5,
+                )
+            )
+
+            path_points = [p1, p2, p3, p4]
+            self.set_trajectory(path_points, field_flip=is_red(), mirror=self.mirror)
 
         # Follow the trajectory until we are in shooting position
-        self.follow_trajectory(state_tm)
+        self.follow_trajectory()
 
         self.intake.intake()
-        if self.is_trajectory_expired(state_tm):
+        if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("returning")
 
     @state
-    def hub_collect(self, initial_call: bool, state_tm: float) -> None:
+    def hub_collect(self, initial_call: bool) -> None:
         if initial_call:
-            self.set_state_trajectory()
+            assert self.blue_starting_pose
+            p1 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 2.2,
+                    self.blue_starting_pose.y,
+                ),
+                Rotation2d.fromDegrees(0.0),
+            )
+            p2 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 3.2 - 0.8,
+                    self.blue_starting_pose.y,
+                ),
+            )
+            p3 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 3.2,
+                    self.blue_starting_pose.y + 0.8,
+                ),
+                Rotation2d.fromDegrees(90.0),
+            )
+
+            p4 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 3.2,
+                    self.blue_starting_pose.y + 3.0,
+                ),
+            )
+
+            waypoints = [p1, p2, p3, p4]
+            self.set_trajectory(waypoints, field_flip=is_red(), mirror=self.mirror)
 
         # Follow the trajectory until we are in shooting position
-        self.follow_trajectory(state_tm)
+        self.follow_trajectory()
 
         self.intake.intake()
-        if self.is_trajectory_expired(state_tm):
+        if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("hub_returning")
 
     @state
-    def circuit(self, initial_call: bool, state_tm: float) -> None:
-        assert self.blue_starting_pose
+    def returning(self, initial_call: bool) -> None:
         if initial_call:
-            self.set_state_trajectory()
+            assert self.blue_starting_pose
+            p5 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1,
+                    self.blue_starting_pose.y + 1.0,
+                ),
+            )
+            p6 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 4.1 - 1.0,
+                    self.blue_starting_pose.y,
+                ),
+                Rotation2d.fromDegrees(0.0),
+            )
+            p7 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x,
+                    self.blue_starting_pose.y,
+                ),
+            )
+            waypoints = [p5, p6, p7]
+            self.set_trajectory(waypoints, field_flip=is_red(), mirror=self.mirror)
 
+        self.intake.carry()
         # Follow the trajectory until we are in shooting position
-        self.follow_trajectory(state_tm)
-
-        assert self.starting_pose
-        in_zone = (self.drivetrain.pose().x < 11) and (self.drivetrain.pose().x > 5.5)
-        if in_zone:
-            self.intake.intake()
-        else:
-            self.intake.carry()
-        if self.is_trajectory_expired(state_tm):
+        self.follow_trajectory()
+        if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("spraying")
 
     @state
-    def returning(self, initial_call: bool, state_tm: float) -> None:
+    def hub_returning(self, initial_call: bool) -> None:
         if initial_call:
-            self.set_state_trajectory()
-        self.intake.carry()
-        # Follow the trajectory until we are in shooting position
-        self.follow_trajectory(state_tm)
-        if self.is_trajectory_expired(state_tm):
-            self.drivetrain.stop()
-            self.next_state("spraying")
+            assert self.blue_starting_pose
+            p5 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 3.2,
+                    self.blue_starting_pose.y + 0.8,
+                ),
+            )
+            p6 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x + 3.2 - 0.8,
+                    self.blue_starting_pose.y,
+                ),
+            )
+            p7 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x,
+                    self.blue_starting_pose.y,
+                ),
+                Rotation2d.fromDegrees(0.0),
+            )
+            p8 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x - 1.0,
+                    self.blue_starting_pose.y + 1.0,
+                ),
+                Rotation2d.fromDegrees(-135.0),
+            )
+            waypoints = [p5, p6, p7, p8]
+            self.set_trajectory(waypoints, field_flip=is_red(), mirror=self.mirror)
 
-    @state
-    def hub_returning(self, initial_call: bool, state_tm: float) -> None:
-        if initial_call:
-            self.set_state_trajectory()
         self.intake.carry()
         # Follow the trajectory until we are in shooting position
-        self.follow_trajectory(state_tm)
-        if self.is_trajectory_expired(state_tm):
+        self.follow_trajectory()
+        if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("spraying")
 
