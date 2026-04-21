@@ -40,7 +40,7 @@ class AutoBase(AutonomousStateMachine):
             translation_tolerance=0.1,
             rotation_tolerance=math.radians(5),
             max_linear_speed=3.5,
-            max_linear_acceleration=2.0,  # None,
+            max_linear_acceleration=4.0,
             max_angular_speed=2.0 * math.pi,
         )
         self._controller = vector_pursuit.VectorPursuitController(
@@ -209,6 +209,13 @@ class ShootGobblerRight(AutoBase):
     def hub_collect(self, initial_call: bool) -> None:
         if initial_call:
             assert self.blue_starting_pose
+            sp = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x - 0.5,
+                    self.blue_starting_pose.y,
+                ),
+                Rotation2d.fromDegrees(0.0),
+            )
             p1 = vector_pursuit.PathPoint(
                 Translation2d(
                     self.blue_starting_pose.x + 2.2,
@@ -237,7 +244,7 @@ class ShootGobblerRight(AutoBase):
                 ),
             )
 
-            waypoints = [p1, p2, p3, p4]
+            waypoints = [sp, p1, p2, p3, p4]
             self.set_trajectory(waypoints, field_flip=is_red(), mirror=self.mirror)
 
         # Follow the trajectory until we are in shooting position
@@ -270,8 +277,16 @@ class ShootGobblerRight(AutoBase):
                     self.blue_starting_pose.x,
                     self.blue_starting_pose.y,
                 ),
+                Rotation2d.fromDegrees(0.0),
             )
-            waypoints = [p5, p6, p7]
+            p8 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x - 1.0,
+                    self.blue_starting_pose.y + 1.0,
+                ),
+                Rotation2d.fromDegrees(-135.0),
+            )
+            waypoints = [p5, p6, p7, p8]
             self.set_trajectory(waypoints, field_flip=is_red(), mirror=self.mirror)
 
         self.intake.carry()
