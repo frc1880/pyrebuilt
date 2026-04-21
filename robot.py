@@ -3,6 +3,7 @@ import math
 import magicbot
 import phoenix6
 import wpilib
+from wpilib import DataLogManager
 from wpimath.geometry import (
     Pose2d,
     Rotation2d,
@@ -219,6 +220,7 @@ class MyRobot(magicbot.MagicRobot):
             self.drivetrain.set_pose(home_pose)
 
     def testInit(self) -> None:
+        DataLogManager.start()
         self._test_shooter_on = False
 
     def testPeriodic(self) -> None:
