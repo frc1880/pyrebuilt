@@ -1,6 +1,5 @@
 import math
 
-import ntcore
 import wpilib
 from magicbot import feedback, tunable, will_reset_to
 from pathplannerlib.config import ModuleConfig, RobotConfig
@@ -95,12 +94,6 @@ class Drivetrain:
                     self.tuner_constants.back_right,
                 ]
             ],
-        )
-
-        self.publisher = (
-            ntcore.NetworkTableInstance.getDefault()
-            .getStructTopic("MyPose", Pose2d)
-            .publish()
         )
 
     def setup(self) -> None:
@@ -205,7 +198,6 @@ class Drivetrain:
         return self._aligned
 
     def execute(self) -> None:
-        self.publisher.set(self.pose())
         if self._should_track_hub:
             if not isinstance(self._request, requests.FieldCentric) and not isinstance(
                 self._request, requests.RobotCentric
