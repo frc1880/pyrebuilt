@@ -177,7 +177,8 @@ class MyRobot(magicbot.MagicRobot):
             self.leds.off()
 
     def teleopInit(self) -> None:
-        pass
+        DataLogManager.start()
+        DataLogManager.logNetworkTables(True)
 
     def teleopPeriodic(self) -> None:
         vx = (
@@ -221,6 +222,7 @@ class MyRobot(magicbot.MagicRobot):
 
     def testInit(self) -> None:
         DataLogManager.start()
+        DataLogManager.logNetworkTables(True)
         self._test_shooter_on = False
 
     def testPeriodic(self) -> None:
