@@ -312,7 +312,7 @@ class VectorPursuitController:
 
         # Compute rotation command
         t = np.clip(
-            1.0 - parametric_distance(pose.translation(), segment),
+            parametric_distance(pose.translation(), segment),
             0.0001,
             1.0,
         )
