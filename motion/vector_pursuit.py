@@ -179,7 +179,7 @@ class VectorPursuitController:
         # Interpolate all the rotations to make life easier
         # Forward pass to make sure we have a final rotation
         r = current_pose.rotation()
-        waypoints_with_rotations = []
+        waypoints_with_rotations: list[int] = []
         for idx, wp in enumerate(flipped_waypoints):
             if wp.rotation:
                 r = wp.rotation
@@ -214,9 +214,11 @@ class VectorPursuitController:
             self._segment_points.append(
                 SegmentPoint(
                     Pose2d(wp.translation, wp.rotation),
-                    wp.speed
-                    if wp.speed > 0.0
-                    else self._motion_parameters.max_linear_speed,
+                    (
+                        wp.speed
+                        if wp.speed > 0.0
+                        else self._motion_parameters.max_linear_speed
+                    ),
                     self._motion_parameters.translation_tolerance,
                 )
             )
@@ -248,7 +250,7 @@ class VectorPursuitController:
         )
         return d
 
-    def calculate(self, pose: Pose2d, dt=0.02) -> ChassisSpeeds:
+    def calculate(self, pose: Pose2d, dt: float = 0.02) -> ChassisSpeeds:
         if len(self._segment_points) == 0:
             self._last_command = ChassisSpeeds()
             return ChassisSpeeds()
