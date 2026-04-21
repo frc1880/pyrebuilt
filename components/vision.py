@@ -56,8 +56,6 @@ class Vision:
         return innovation < 1.0
 
     def execute(self) -> None:
-        if abs(self.drivetrain.velocity_robot().omega) > 0.5:
-            return
         # Get any observations from photonvision and add them to the drivetrain
         if self._has_seen_multitag:
             self.estimator.addHeadingData(
