@@ -3,9 +3,9 @@ import math
 import wpilib
 from magicbot import feedback, tunable
 from phoenix6.utils import fpga_to_current_time
-from photonlibpy import PhotonCamera, PhotonPoseEstimator
+from photonlibpy import EstimatedRobotPose, PhotonCamera, PhotonPoseEstimator
 from photonlibpy.targeting.photonTrackedTarget import PhotonTrackedTarget
-from wpimath.geometry import Pose2d, Transform3d
+from wpimath.geometry import Transform3d
 
 from components.drivetrain import Drivetrain
 from utilities.game import apriltag_layout
@@ -47,14 +47,15 @@ class Vision:
     def is_initialized(self) -> bool:
         return self._has_seen_multitag
 
-    def _is_innovation_ok(self, pose: Pose2d) -> bool:
-        return True
-        # innovation = pose.translation().distance(self.drivetrain.pose().translation())
-        # return innovation < 0.5
+    def _is_innovation_ok(self, pose: EstimatedRobotPose) -> bool:
+        innovation = (
+            pose.estimatedPose.toPose2d()
+            .translation()
+            .distance(self.drivetrain.pose().translation())
+        )
+        return innovation < 1.0
 
     def execute(self) -> None:
-        if abs(self.drivetrain.velocity_robot().omega) > 0.5:
-            return
         # Get any observations from photonvision and add them to the drivetrain
         if self._has_seen_multitag:
             self.estimator.addHeadingData(
@@ -66,9 +67,7 @@ class Vision:
         if pose:
             # Multitag successful
             self._field_obj.setPose(pose.estimatedPose.toPose2d())
-            if wpilib.DriverStation.isDisabled() or self._is_innovation_ok(
-                pose.estimatedPose.toPose2d()
-            ):
+            if wpilib.DriverStation.isDisabled() or self._is_innovation_ok(pose):
                 self.drivetrain.add_vision_measurement(
                     pose.estimatedPose.toPose2d(),
                     fpga_to_current_time(pose.timestampSeconds),
@@ -81,7 +80,7 @@ class Vision:
             # Don't fuse single tags until multitag has given us a proper heading
             # We don't have multitag result, so try single tag
             pose = self.estimator.estimatePnpDistanceTrigSolvePose(result)
-            if pose and self._is_innovation_ok(pose.estimatedPose.toPose2d()):
+            if pose and self._is_innovation_ok(pose):
                 # Check for innovation and gate
                 self.drivetrain.add_vision_measurement(
                     pose.estimatedPose.toPose2d(),
