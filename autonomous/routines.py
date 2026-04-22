@@ -39,8 +39,8 @@ class AutoBase(AutonomousStateMachine):
         constraints = vector_pursuit.MotionParameters(
             translation_tolerance=0.1,
             rotation_tolerance=math.radians(5),
-            max_linear_speed=3.5,
-            max_linear_acceleration=4.0,
+            max_linear_speed=2.5,
+            max_linear_acceleration=2.0,
             max_angular_speed=2.0 * math.pi,
         )
         self._controller = vector_pursuit.VectorPursuitController(
@@ -366,3 +366,30 @@ class GobblerLeft(GobblerRight):
     MODE_NAME = "Gobbler only - Left"
 
     mirror = True
+
+
+class TestDriving(AutoBase):
+    MODE_NAME = "Driving test"
+
+    @timed_state(first=True, duration=2.0, next_state="drive")
+    def pause(self):
+        pass
+
+    @state
+    def drive(self, initial_call: bool):
+        if initial_call:
+            self.drivetrain.set_pose(Pose2d())
+            pp = vector_pursuit.PathPoint(
+                Translation2d(2.0, 0.0), Rotation2d(), speed=1.0
+            )
+            self.set_trajectory(
+                [
+                    pp,
+                ],
+                False,
+                False,
+            )
+        self.follow_trajectory()
+        if self.is_trajectory_expired():
+            self.drivetrain.stop()
+            self.done()
