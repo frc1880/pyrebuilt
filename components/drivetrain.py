@@ -128,6 +128,10 @@ class Drivetrain:
     def pose(self) -> Pose2d:
         return self._phoenix_swerve.get_state().pose
 
+    @feedback
+    def distance_from_origin(self) -> float:
+        return self.pose().translation().norm()
+
     # @feedback
     def velocity_robot(self) -> ChassisSpeeds:
         return self._phoenix_swerve.get_state().speeds
