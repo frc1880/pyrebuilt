@@ -7,7 +7,7 @@ class VisionCoordinator:
     shooter_vision: Vision
 
     def execute(self) -> None:
-        if self.onField:
+        if self.onField():
             # One camera is initialised, so turn on multi tag flag for all
             self.red_vision._has_seen_multitag = True
             self.white_vision._has_seen_multitag = True
