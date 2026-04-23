@@ -16,6 +16,7 @@ from wpimath.kinematics import ChassisSpeeds
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
 from components.intake import Intake
+from components.vision_coordinator import VisionCoordinator
 from controllers.shooter import ShooterController
 from utilities.game import (
     field_flip_pose2d,
@@ -38,6 +39,7 @@ class AutoBase(AutonomousStateMachine):
     drivetrain: Drivetrain
     intake: Intake
     indexer: Indexer
+    vision_coordinator: VisionCoordinator
     shooter_controller: ShooterController
 
     blue_starting_pose: Pose2d | None = None
@@ -73,7 +75,9 @@ class AutoBase(AutonomousStateMachine):
         # configure defaults for pose in sim
 
         # Setup starting position in the simulator
-        if wpilib.RobotBase.isSimulation() and self.starting_pose is not None:
+        if (
+            wpilib.RobotBase.isSimulation() or not self.vision_coordinator.onField()
+        ) and self.starting_pose is not None:
             self.drivetrain.set_pose(self.starting_pose)
 
         super().on_enable()
