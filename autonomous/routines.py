@@ -2,8 +2,8 @@ import math
 
 import wpilib
 from magicbot import AutonomousStateMachine, state, timed_state
-from wpimath.controller import PIDController
 from wpilib import DataLogManager
+from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 
 from components.drivetrain import Drivetrain
