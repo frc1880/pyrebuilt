@@ -33,9 +33,9 @@ class Intake:
             ids.TalonId.INTAKE_DEPLOY_FOLLOWER_MOTOR, ids.CanbusId.INTAKE
         )
 
-        talon_fx_configs = configs.TalonFXConfiguration()
+        self._talon_fx_configs = configs.TalonFXConfiguration()
 
-        slot0_configs = talon_fx_configs.slot0
+        slot0_configs = self._talon_fx_configs.slot0
         # TODO tune these values
         slot0_configs.k_g = 0.2
         slot0_configs.k_v = (
@@ -52,24 +52,28 @@ class Intake:
         slot0_configs.gravity_type = signals.GravityTypeValue.ARM_COSINE
         slot0_configs.gravity_arm_position_offset = 0.0
 
-        motion_magic_configs = talon_fx_configs.motion_magic
+        motion_magic_configs = self._talon_fx_configs.motion_magic
         motion_magic_configs.motion_magic_cruise_velocity = 0.0
-        motion_magic_configs.motion_magic_expo_k_a = 5.0
-        motion_magic_configs.motion_magic_expo_k_v = 1.0
+        motion_magic_configs.motion_magic_expo_k_a = 1.0
+        motion_magic_configs.motion_magic_expo_k_v = 0.25
 
-        talon_fx_configs.motor_output.neutral_mode = signals.NeutralModeValue.COAST
+        self._talon_fx_configs.motor_output.neutral_mode = (
+            signals.NeutralModeValue.COAST
+        )
         # Chain sprockets are 24:12 after a (3*9):1 maxplanetary gearbox reduction
-        talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 * 2.0
-        talon_fx_configs.feedback.sensor_to_mechanism_ratio = 1.0
-        talon_fx_configs.feedback.feedback_sensor_source = (
+        self._talon_fx_configs.feedback.rotor_to_sensor_ratio = 27.0 * 2.0
+        self._talon_fx_configs.feedback.sensor_to_mechanism_ratio = 1.0
+        self._talon_fx_configs.feedback.feedback_sensor_source = (
             signals.FeedbackSensorSourceValue.FUSED_CANCODER
         )
-        talon_fx_configs.feedback.feedback_remote_sensor_id = ids.CancoderId.INTAKE
-        talon_fx_configs.software_limit_switch.forward_soft_limit_threshold = 0.34
-        talon_fx_configs.software_limit_switch.forward_soft_limit_enable = True
-        talon_fx_configs.software_limit_switch.reverse_soft_limit_threshold = 0.0
-        talon_fx_configs.software_limit_switch.reverse_soft_limit_enable = True
-        self._deploy_motor.configurator.apply(talon_fx_configs)
+        self._talon_fx_configs.feedback.feedback_remote_sensor_id = (
+            ids.CancoderId.INTAKE
+        )
+        self._talon_fx_configs.software_limit_switch.forward_soft_limit_threshold = 0.34
+        self._talon_fx_configs.software_limit_switch.forward_soft_limit_enable = True
+        self._talon_fx_configs.software_limit_switch.reverse_soft_limit_threshold = 0.0
+        self._talon_fx_configs.software_limit_switch.reverse_soft_limit_enable = True
+        self._deploy_motor.configurator.apply(self._talon_fx_configs)
 
         cc_cfg = configs.CANcoderConfiguration()
         cc_cfg.magnet_sensor.sensor_direction = (
@@ -143,14 +147,6 @@ class Intake:
         self._should_feed = True
 
     def execute(self) -> None:
-        self._deploy_motor.set_control(
-            controls.MotionMagicExpoVoltage(self._desired_intake_position)
-        )
-        self._deploy_follower_motor.set_control(
-            controls.Follower(
-                ids.TalonId.INTAKE_DEPLOY_MOTOR, signals.MotorAlignmentValue.OPPOSED
-            )
-        )
         self.timeSinceDeployed = self._timer.get()
         if not self.deployed:
             self._timer.reset()
@@ -159,6 +155,8 @@ class Intake:
             # Spin the intake motor
             self._roller_motor.set(self.intake_speed)
         elif self._should_feed:
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 5.0
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 1.0
             self._roller_motor.set(0.5)
             if self._chortle_timer.get() > 1.0:
                 self._chortle_timer.reset()
@@ -171,10 +169,24 @@ class Intake:
         elif self._should_backdrive:
             self._roller_motor.set(-1.0)
         else:
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 1.0
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 0.25
+
             self._roller_motor.stopMotor()
+
+        self._deploy_motor.configurator.apply(self._talon_fx_configs)
 
         self._roller_follower_motor.set_control(
             controls.Follower(
                 ids.TalonId.INTAKE_ROLLER_MOTOR, signals.MotorAlignmentValue.OPPOSED
+            )
+        )
+
+        self._deploy_motor.set_control(
+            controls.MotionMagicExpoVoltage(self._desired_intake_position)
+        )
+        self._deploy_follower_motor.set_control(
+            controls.Follower(
+                ids.TalonId.INTAKE_DEPLOY_MOTOR, signals.MotorAlignmentValue.OPPOSED
             )
         )
