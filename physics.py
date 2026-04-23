@@ -73,7 +73,6 @@ class PhysicsEngine:
             self.robot.white_vision_transform,
         )
 
-        self.canrange_sim = self.robot.indexer.canrange.sim_state
         gearbox = DCMotor.krakenX60(2)
         self.shooter_motor_sim = DCMotorSim(
             LinearSystemId.DCMotorSystem(gearbox, 0.005, 1.0),
@@ -104,11 +103,6 @@ class PhysicsEngine:
         self.physics_controller.drive(speeds, tm_diff)
 
         self.vision_sim.update(self.physics_controller.get_pose())
-
-        if now % 10.0 < 5.0:
-            self.canrange_sim.set_distance(0.3)
-        else:
-            self.canrange_sim.set_distance(4.0)
 
         self.shooter_talon_sim.set_supply_voltage(RobotController.getBatteryVoltage())
         self.shooter_motor_sim.setInputVoltage(self.shooter_talon_sim.motor_voltage)
