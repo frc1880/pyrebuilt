@@ -76,7 +76,7 @@ class AutoBase(AutonomousStateMachine):
 
         # Setup starting position in the simulator
         if (
-            wpilib.RobotBase.isSimulation() or not self.vision_coordinator.onField()
+            wpilib.RobotBase.isSimulation() or not self.vision_coordinator.on_field()
         ) and self.starting_pose is not None:
             self.drivetrain.set_pose(self.starting_pose)
 
