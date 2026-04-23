@@ -7,7 +7,7 @@ import ids
 
 
 class Intake:
-    intake_speed = tunable(0.8)
+    intake_speed = tunable(1.0)
 
     # All positions are in mechanism rotations
     deployed_position = 0.0
