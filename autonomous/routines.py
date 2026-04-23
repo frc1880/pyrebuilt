@@ -2,6 +2,7 @@ import math
 
 import wpilib
 from magicbot import AutonomousStateMachine, state, timed_state
+from wpilib import DataLogManager
 from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 
@@ -48,6 +49,9 @@ class AutoBase(AutonomousStateMachine):
             cross_track_controller=PIDController(Kp=3.0, Ki=0.0, Kd=0.0),
             motion_parameters=constraints,
         )
+
+        DataLogManager.start()
+        DataLogManager.logNetworkTables(True)
 
     @property
     def starting_pose(self) -> Pose2d | None:

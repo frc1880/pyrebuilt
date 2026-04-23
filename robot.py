@@ -3,6 +3,7 @@ import math
 import magicbot
 import phoenix6
 import wpilib
+from wpilib import DataLogManager
 from wpimath.geometry import (
     Pose2d,
     Rotation2d,
@@ -176,7 +177,8 @@ class MyRobot(magicbot.MagicRobot):
             self.leds.off()
 
     def teleopInit(self) -> None:
-        pass
+        DataLogManager.start()
+        DataLogManager.logNetworkTables(True)
 
     def teleopPeriodic(self) -> None:
         vx = (
@@ -219,6 +221,8 @@ class MyRobot(magicbot.MagicRobot):
             self.drivetrain.set_pose(home_pose)
 
     def testInit(self) -> None:
+        DataLogManager.start()
+        DataLogManager.logNetworkTables(True)
         self._test_shooter_on = False
 
     def testPeriodic(self) -> None:
