@@ -1,6 +1,6 @@
 import phoenix6
 from magicbot import feedback, tunable, will_reset_to
-from phoenix6 import configs, hardware, signals
+from phoenix6 import configs, signals
 from wpilib import Timer
 
 import ids
@@ -33,14 +33,6 @@ class Indexer:
         self._injector_motor = phoenix6.hardware.TalonFX(
             ids.TalonId.INDEXER_INJECTOR_MOTOR, ids.CanbusId.INDEXER
         )
-        self.canrange = hardware.CANrange(ids.CanRangeId.INDEXER, ids.CanbusId.INDEXER)
-
-        cfg = configs.CANrangeConfiguration()
-        cfg.proximity_params.min_signal_strength_for_valid_measurement = 4800
-        cfg.proximity_params.proximity_threshold = 0.55
-        cfg.to_f_params.update_mode = signals.UpdateModeValue.SHORT_RANGE100_HZ
-
-        self.canrange.configurator.apply(cfg)
 
         self._timer = Timer()
         self._timer.start()
@@ -56,8 +48,10 @@ class Indexer:
         return self._timer.hasElapsed(0.5)
 
     def execute(self) -> None:
-
-        if self.canrange.get_is_detected().value or not self._should_feed:
+        if (
+            self._injector_motor.get_supply_current().value > 20.0
+            or not self._should_feed
+        ):
             self._timer.reset()
 
         if self._should_feed:
