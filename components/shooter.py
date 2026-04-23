@@ -40,7 +40,7 @@ class Shooter:
         hood_pid_cfg = talon_fx_configs.slot0
         # TODO tune these values
         hood_pid_cfg.k_p = 0.5  # Voltage per 1 deg error
-        hood_pid_cfg.k_i = 0.005
+        hood_pid_cfg.k_i = 0.01
         hood_pid_cfg.k_d = 0.01
 
         current_cfg = talon_fx_configs.current_limits
