@@ -117,6 +117,7 @@ class Intake:
     def on_disable(self) -> None:
         self._first_intake = False
         self._full_speed = False
+        self._desired_intake_position = self.carry_position
 
     @feedback
     def position(self) -> float:
