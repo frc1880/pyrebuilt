@@ -20,6 +20,7 @@ class Vision:
     drivetrain: Drivetrain
     field: wpilib.Field2d
     use_single_tag = tunable(False)
+    gate_innovation = tunable(False)
 
     def __init__(self, camera_name: str, transform: Transform3d) -> None:
         # Instantiate the camera/photonvision
@@ -48,12 +49,15 @@ class Vision:
         return self._has_seen_multitag
 
     def _is_innovation_ok(self, pose: EstimatedRobotPose) -> bool:
-        innovation = (
-            pose.estimatedPose.toPose2d()
-            .translation()
-            .distance(self.drivetrain.pose().translation())
-        )
-        return innovation < 1.0
+        if self.gate_innovation:
+            innovation = (
+                pose.estimatedPose.toPose2d()
+                .translation()
+                .distance(self.drivetrain.pose().translation())
+            )
+            return innovation < 1.0
+        else:
+            return True
 
     def execute(self) -> None:
         # Get any observations from photonvision and add them to the drivetrain
