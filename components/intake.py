@@ -108,8 +108,15 @@ class Intake:
         self._timer.start()
         self._chortle_timer = Timer()
         self._chortle_timer.start()
+        self._first_intake = False
+        self._full_speed = False
 
     def setup(self) -> None:
+        self._desired_intake_position = self.carry_position
+
+    def on_disable(self) -> None:
+        self._first_intake = False
+        self._full_speed = False
         self._desired_intake_position = self.carry_position
 
     @feedback
@@ -128,10 +135,13 @@ class Intake:
         self.deployed = True
         self._desired_intake_position = self.deployed_position
         self._should_spin = True
+        self._first_intake = True
 
     def carry(self) -> None:
         self._desired_intake_position = self.carry_position
         self.deployed = False
+        if self._first_intake:
+            self._full_speed = True
 
     def retract(self) -> None:
         self._desired_intake_position = self.retracted_position
@@ -155,8 +165,6 @@ class Intake:
             # Spin the intake motor
             self._roller_motor.set(self.intake_speed)
         elif self._should_feed:
-            self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 5.0
-            self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 1.0
             self._roller_motor.set(0.5)
             if self._chortle_timer.get() > 1.0:
                 self._chortle_timer.reset()
@@ -169,10 +177,14 @@ class Intake:
         elif self._should_backdrive:
             self._roller_motor.set(-1.0)
         else:
+            self._roller_motor.stopMotor()
+
+        if self._should_feed or not self._full_speed:
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 5.0
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 1.0
+        else:
             self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 1.0
             self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 0.25
-
-            self._roller_motor.stopMotor()
 
         self._deploy_motor.configurator.apply(self._talon_fx_configs)
 
