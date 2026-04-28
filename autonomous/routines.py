@@ -207,8 +207,11 @@ class ShootGobblerRight(AutoBase):
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
-
-        self.intake.intake()
+        in_zone = (self.drivetrain.pose().x < 11) and (self.drivetrain.pose().x > 4.6)
+        if in_zone:
+            self.intake.intake()
+        else:
+            self.intake.carry()
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("returning")
@@ -257,8 +260,11 @@ class ShootGobblerRight(AutoBase):
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
-
-        self.intake.intake()
+        in_zone = (self.drivetrain.pose().x < 11) and (self.drivetrain.pose().x > 4.6)
+        if in_zone:
+            self.intake.intake()
+        else:
+            self.intake.carry()
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("hub_returning")
