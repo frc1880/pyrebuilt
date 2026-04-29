@@ -18,7 +18,7 @@ from utilities.game import (
     is_blue,
     is_red,
 )
-from utilities.positions import shooter_to_hub
+from utilities.positions import is_in_alliance_zone, shooter_to_hub
 
 
 class AutoBase(AutonomousStateMachine):
@@ -208,7 +208,12 @@ class ShootGobblerRight(AutoBase):
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
 
-        self.intake.intake()
+        # Handle Intake
+        if is_in_alliance_zone(self.drivetrain.pose()):
+            self.intake.carry()
+        else:
+            self.intake.intake()
+
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("returning")
@@ -258,7 +263,12 @@ class ShootGobblerRight(AutoBase):
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
 
-        self.intake.intake()
+        # Handle Intake
+        if is_in_alliance_zone(self.drivetrain.pose()):
+            self.intake.carry()
+        else:
+            self.intake.intake()
+
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("hub_returning")
@@ -350,7 +360,7 @@ class ShootGobblerRight(AutoBase):
             self._cycle_count += 1
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if state_tm > 2.5 and self._cycle_count == 1:
+        if self.indexer.is_hopper_empty() and self._cycle_count == 1:
             self.next_state("aligning")
 
 
