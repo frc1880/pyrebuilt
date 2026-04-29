@@ -360,7 +360,7 @@ class ShootGobblerRight(AutoBase):
             self._cycle_count += 1
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if state_tm > 2.5 and self._cycle_count == 1:
+        if self.indexer.is_hopper_empty() and self._cycle_count == 1:
             self.next_state("aligning")
 
 
