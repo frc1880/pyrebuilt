@@ -18,7 +18,7 @@ from utilities.game import (
     is_blue,
     is_red,
 )
-from utilities.positions import shooter_to_hub
+from utilities.positions import is_in_alliance_zone, shooter_to_hub
 
 
 class AutoBase(AutonomousStateMachine):
@@ -207,11 +207,13 @@ class ShootGobblerRight(AutoBase):
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
-        in_zone = (self.drivetrain.pose().x < 11) and (self.drivetrain.pose().x > 4.6)
-        if in_zone:
-            self.intake.intake()
-        else:
+
+        # Handle Intake
+        if is_in_alliance_zone(self.drivetrain.pose()):
             self.intake.carry()
+        else:
+            self.intake.intake()
+
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("returning")
@@ -260,11 +262,13 @@ class ShootGobblerRight(AutoBase):
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
-        in_zone = (self.drivetrain.pose().x < 11) and (self.drivetrain.pose().x > 4.6)
-        if in_zone:
-            self.intake.intake()
-        else:
+
+        # Handle Intake
+        if is_in_alliance_zone(self.drivetrain.pose()):
             self.intake.carry()
+        else:
+            self.intake.intake()
+
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("hub_returning")
