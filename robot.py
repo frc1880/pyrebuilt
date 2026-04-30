@@ -204,6 +204,11 @@ class MyRobot(magicbot.MagicRobot):
 
         if self.gamepad.getLeftTriggerAxis() > 0.5:
             self.intake.intake()
+        if self.gamepad.getBButtonPressed():
+            if not self.shooter.is_spinning():
+                self.shooter.spin_outside()
+            else:
+                self.shooter.stop()
         if self.gamepad.getLeftBumper():
             self.intake.carry()
         if self.gamepad.getRightTriggerAxis() > 0.5:

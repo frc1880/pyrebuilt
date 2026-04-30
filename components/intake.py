@@ -12,7 +12,7 @@ class Intake:
     # All positions are in mechanism rotations
     deployed_position = 0.0
     carry_position = 0.20
-    retracted_position = 0.3
+    retracted_position = 0.25
     timeSinceDeployed = 0.0
     deployed = False
     _should_spin = will_reset_to(False)
@@ -53,7 +53,7 @@ class Intake:
         slot0_configs.gravity_arm_position_offset = 0.0
 
         motion_magic_configs = self._talon_fx_configs.motion_magic
-        motion_magic_configs.motion_magic_cruise_velocity = 0.0
+        motion_magic_configs.motion_magic_cruise_velocity = 0
         motion_magic_configs.motion_magic_expo_k_a = 1.0
         motion_magic_configs.motion_magic_expo_k_v = 0.25
 
@@ -91,10 +91,10 @@ class Intake:
         current_cfg = configs.CurrentLimitsConfigs()
         current_cfg.stator_current_limit = 80.0
         current_cfg.stator_current_limit_enable = True
-        current_cfg.supply_current_limit = 20.0
+        current_cfg.supply_current_limit = 30.0
         current_cfg.supply_current_limit_enable = True
-        current_cfg.supply_current_lower_limit = 5.0
-        current_cfg.supply_current_lower_time = 1.0
+        current_cfg.supply_current_lower_limit = 20.0
+        current_cfg.supply_current_lower_time = 3.0
 
         self._roller_motor.configurator.apply(
             configs.TalonFXConfiguration()
@@ -166,13 +166,13 @@ class Intake:
             self._roller_motor.set(self.intake_speed)
         elif self._should_feed:
             self._roller_motor.set(0.5)
-            if self._chortle_timer.get() > 1.0:
+            if self._chortle_timer.get() > 1.2:
                 self._chortle_timer.reset()
-            if self._chortle_timer.get() > 0.5:
+            if self._chortle_timer.get() > 0.7:
                 self.retract()
             else:
                 self.carry()
-            if self._chortle_timer.get() > 1.0:
+            if self._chortle_timer.get() > 1.2:
                 self._chortle_timer.reset()
         elif self._should_backdrive:
             self._roller_motor.set(-1.0)
@@ -180,8 +180,8 @@ class Intake:
             self._roller_motor.stopMotor()
 
         if self._should_feed or not self._full_speed:
-            self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 5.0
-            self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 1.0
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 10.0
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 4.0
         else:
             self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 1.0
             self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 0.25

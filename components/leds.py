@@ -12,6 +12,7 @@ from wpilib import DriverStation
 from wpimath.geometry import Transform2d
 
 from components.ballistics import Ballistics
+from components.shooter import Shooter
 from ids import CanbusId, CandleId
 from utilities.game import is_auto_winner, is_hub_active, shift_info
 
@@ -35,6 +36,7 @@ class Pattern(Enum):
     NOT_IN_RANGE_FAST_FLASH = auto()
     NOT_IN_RANGE_PULSE = auto()
     OFF = auto()
+    SHOOTER_SPINNING = auto()
 
 
 class Leds:
@@ -59,6 +61,7 @@ class Leds:
     led_end: int = 37
     segments = [0, 7, 14, 21, 30, 36]
     brightness: float = 1.0
+    shooter: Shooter
 
     def __init__(self) -> None:
         self._candle = CANdle(device_id=CandleId.LED, canbus=CanbusId.LEDS)
@@ -157,6 +160,8 @@ class Leds:
                         )
                     )
             else:
+                if self.shooter.is_spinning():
+                    self._pattern = Pattern.SHOOTER_SPINNING
                 self._pattern = Pattern.OFF
 
         if self._pattern != self._previous_pattern:
@@ -271,6 +276,12 @@ class Leds:
                     self._candle.set_control(
                         SingleFadeAnimation(
                             self.segments[0], self.segments[-1], color=self.RED
+                        )
+                    )
+                case Pattern.SHOOTER_SPINNING:
+                    self._candle.set_control(
+                        StrobeAnimation(
+                            self.segments[0], self.segments[-1], color=self.ORANGE
                         )
                     )
                 case Pattern.OFF:

@@ -1,6 +1,6 @@
 import numpy
 import phoenix6
-from magicbot import tunable, will_reset_to
+from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
 from wpilib import DriverStation
 
@@ -17,6 +17,7 @@ class Shooter:
     speed = tunable(25.0)
     desired_hood_angle = tunable(60.0)
     _should_shoot = will_reset_to(False)
+    _should_spin_outside = False
 
     # TODO check these values
     HOOD_MIN_ANGLE = 48.0  # degrees from horizontal
@@ -73,7 +74,8 @@ class Shooter:
         cc_cfg.magnet_sensor.sensor_direction = (
             signals.SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = -0.313721
+
+        cc_cfg.magnet_sensor.magnet_offset = -0.439209
         self._cancoder.configurator.apply(cc_cfg)
 
         # Example of closed loop mode once we have run sysid
@@ -109,14 +111,20 @@ class Shooter:
     def shoot(self) -> None:
         self._should_shoot = True
 
-    # @feedback
+    def spin_outside(self):
+        self._should_spin_outside = True
+
+    @feedback
     def hood_angle(self) -> float:
         return self._hood_motor.get_position().value + 70.0
 
     def hood_cancoder_position(self) -> float:
         return self._cancoder.get_position().value
 
-    # @feedback
+    def stop(self):
+        self._should_spin_outside = False
+
+    @feedback
     def hood_cancoder_absolute_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
@@ -130,6 +138,9 @@ class Shooter:
 
     def shooter_motor_current(self) -> float:
         return self._shooter_motor.get_supply_current().value
+
+    def is_spinning(self):
+        return self._should_spin_outside
 
     def at_speed(self) -> bool:
         return abs(self._shooter_motor.get_velocity().value - self.speed) < 5
@@ -149,14 +160,12 @@ class Shooter:
             desired_hood_angle = (
                 solution.hood_angle
                 if in_alliance
-                else 40.0
-                if self._should_shoot
-                else self.HOOD_MAX_ANGLE - 1.0
+                else 40.0 if self._should_shoot else self.HOOD_MAX_ANGLE - 1.0
             )
             desired_speed = solution.flywheel_speed if in_alliance else 95.0
             self.speed = desired_speed
             self.desired_hood_angle = desired_hood_angle
-            should_spin = self._should_shoot or in_alliance
+            should_spin = self._should_shoot or in_alliance or self._should_spin_outside
 
         # Update hood setpoint even if not shooting
         mechanism_hood_angle = (

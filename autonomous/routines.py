@@ -5,6 +5,7 @@ from magicbot import AutonomousStateMachine, state, timed_state
 from wpilib import DataLogManager
 from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
+from wpiutil.log import BooleanLogEntry, DoubleLogEntry
 
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
@@ -41,19 +42,44 @@ class AutoBase(AutonomousStateMachine):
         # All the things that are the same in each routine...
         constraints = vector_pursuit.MotionParameters(
             translation_tolerance=0.1,
-            rotation_tolerance=math.radians(5),
+            rotation_tolerance=math.radians(15),
             max_linear_speed=2.5,
-            max_linear_acceleration=2.0,
-            max_angular_speed=2.0 * math.pi,
+            max_linear_acceleration=5.0,
+            max_angular_speed=3.0 * math.pi,
         )
         self._controller = vector_pursuit.VectorPursuitController(
-            rotation_controller=PIDController(Kp=4.0, Ki=0.0, Kd=0.25),
+            rotation_controller=PIDController(Kp=8.5, Ki=0.0, Kd=0.25),
             cross_track_controller=PIDController(Kp=3.0, Ki=0.0, Kd=0.0),
             motion_parameters=constraints,
         )
 
         DataLogManager.start()
         DataLogManager.logNetworkTables(True)
+        log = DataLogManager.getLog()
+        self._angular_error = DoubleLogEntry(log, "/auto/angular_error")
+        self._translational_error = DoubleLogEntry(log, "/auto/translational_error")
+        self._cross_track_error = DoubleLogEntry(log, "/auto/translational_error")
+        self._angular_goal = BooleanLogEntry(log, "/auto/angular_goal")
+        self._translational_goal = BooleanLogEntry(log, "/auto/translational_goal")
+        self._cross_track_goal = BooleanLogEntry(log, "/auto/cross_track_goal")
+
+    def log_errors(self):
+        self._angular_error.append(
+            self._controller._rotation_controller.getPositionError()
+        )
+        self._translational_error.append(
+            self._controller._translation_controller.getPositionError()
+        )
+        self._cross_track_error.append(
+            self._controller._cross_track_controller.getPositionError()
+        )
+        self._angular_goal.append(self._controller._rotation_controller.atSetpoint())
+        self._translational_goal.append(
+            self._controller._translation_controller.atSetpoint()
+        )
+        self._cross_track_goal.append(
+            self._controller._cross_track_controller.atSetpoint()
+        )
 
     @property
     def starting_pose(self) -> Pose2d | None:
@@ -109,13 +135,18 @@ class Shoot(AutoBase):
     """
 
     MODE_NAME = "Shoot"
+    blue_starting_pose = field_flip_pose2d(
+        Pose2d(12.972, 3.915, Rotation2d())
+    )  # measured from robotigers' practice field
 
     @state(first=True)
     def driving_to_shoot(self, initial_call: bool, state_tm: float) -> None:
+
         if initial_call:
             # Create a trajectory to the shooting position
-            robot_pose = self.drivetrain.pose()
-            delta_x = -0.5 if is_blue() else 0.5
+            assert self.starting_pose
+            robot_pose = self.starting_pose
+            delta_x = -1 if is_blue() else 1
             shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
 
             self.set_trajectory(
@@ -446,6 +477,9 @@ class ShootGobblerRight(AutoBase):
         self.intake.carry()
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
+
+        # log Errors
+        self.log_errors()
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("spraying")
@@ -486,6 +520,8 @@ class ShootGobblerRight(AutoBase):
         self.intake.carry()
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
+        # log Errors
+        self.log_errors()
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("spraying")
