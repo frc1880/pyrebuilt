@@ -1,6 +1,6 @@
 import numpy
 import phoenix6
-from magicbot import tunable, will_reset_to
+from magicbot import feedback, tunable, will_reset_to
 from phoenix6 import configs, controls, signals
 from wpilib import DriverStation
 
@@ -74,7 +74,8 @@ class Shooter:
         cc_cfg.magnet_sensor.sensor_direction = (
             signals.SensorDirectionValue.COUNTER_CLOCKWISE_POSITIVE
         )
-        cc_cfg.magnet_sensor.magnet_offset = -0.313721
+
+        cc_cfg.magnet_sensor.magnet_offset = -0.439209
         self._cancoder.configurator.apply(cc_cfg)
 
         # Example of closed loop mode once we have run sysid
@@ -113,7 +114,7 @@ class Shooter:
     def spin_outside(self):
         self._should_spin_outside = True
 
-    # @feedback
+    @feedback
     def hood_angle(self) -> float:
         return self._hood_motor.get_position().value + 70.0
 
@@ -123,7 +124,7 @@ class Shooter:
     def stop(self):
         self._should_spin_outside = False
 
-    # @feedback
+    @feedback
     def hood_cancoder_absolute_position(self) -> float:
         return self._cancoder.get_absolute_position().value
 
@@ -159,9 +160,7 @@ class Shooter:
             desired_hood_angle = (
                 solution.hood_angle
                 if in_alliance
-                else 40.0
-                if self._should_shoot
-                else self.HOOD_MAX_ANGLE - 1.0
+                else 40.0 if self._should_shoot else self.HOOD_MAX_ANGLE - 1.0
             )
             desired_speed = solution.flywheel_speed if in_alliance else 95.0
             self.speed = desired_speed
