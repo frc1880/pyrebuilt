@@ -12,7 +12,7 @@ class Intake:
     # All positions are in mechanism rotations
     deployed_position = 0.0
     carry_position = 0.20
-    retracted_position = 0.3
+    retracted_position = 0.25
     timeSinceDeployed = 0.0
     deployed = False
     _should_spin = will_reset_to(False)
