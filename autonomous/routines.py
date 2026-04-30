@@ -141,9 +141,11 @@ class Shoot(AutoBase):
 
     @state(first=True)
     def driving_to_shoot(self, initial_call: bool, state_tm: float) -> None:
+
         if initial_call:
             # Create a trajectory to the shooting position
-            robot_pose = self.drivetrain.pose()
+            assert self.starting_pose
+            robot_pose = self.starting_pose
             delta_x = -0.5 if is_blue() else 0.5
             shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
 
