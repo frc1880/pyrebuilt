@@ -53,7 +53,7 @@ class Intake:
         slot0_configs.gravity_arm_position_offset = 0.0
 
         motion_magic_configs = self._talon_fx_configs.motion_magic
-        motion_magic_configs.motion_magic_cruise_velocity = 54
+        motion_magic_configs.motion_magic_cruise_velocity = 0
         motion_magic_configs.motion_magic_expo_k_a = 1.0
         motion_magic_configs.motion_magic_expo_k_v = 0.25
 
@@ -180,8 +180,8 @@ class Intake:
             self._roller_motor.stopMotor()
 
         if self._should_feed or not self._full_speed:
-            self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 5.0
-            self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 1.0
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 10.0
+            self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 4.0
         else:
             self._talon_fx_configs.motion_magic.motion_magic_expo_k_a = 1.0
             self._talon_fx_configs.motion_magic.motion_magic_expo_k_v = 0.25
