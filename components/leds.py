@@ -280,7 +280,7 @@ class Leds:
                     )
                 case Pattern.SHOOTER_SPINNING:
                     self._candle.set_control(
-                        SolidColor(
+                        StrobeAnimation(
                             self.segments[0], self.segments[-1], color=self.ORANGE
                         )
                     )
