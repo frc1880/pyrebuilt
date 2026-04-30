@@ -53,7 +53,7 @@ class Intake:
         slot0_configs.gravity_arm_position_offset = 0.0
 
         motion_magic_configs = self._talon_fx_configs.motion_magic
-        motion_magic_configs.motion_magic_cruise_velocity = 0.0
+        motion_magic_configs.motion_magic_cruise_velocity = 54
         motion_magic_configs.motion_magic_expo_k_a = 1.0
         motion_magic_configs.motion_magic_expo_k_v = 0.25
 
@@ -166,13 +166,13 @@ class Intake:
             self._roller_motor.set(self.intake_speed)
         elif self._should_feed:
             self._roller_motor.set(0.5)
-            if self._chortle_timer.get() > 1.0:
+            if self._chortle_timer.get() > 1.2:
                 self._chortle_timer.reset()
-            if self._chortle_timer.get() > 0.5:
+            if self._chortle_timer.get() > 0.7:
                 self.retract()
             else:
                 self.carry()
-            if self._chortle_timer.get() > 1.0:
+            if self._chortle_timer.get() > 1.2:
                 self._chortle_timer.reset()
         elif self._should_backdrive:
             self._roller_motor.set(-1.0)
