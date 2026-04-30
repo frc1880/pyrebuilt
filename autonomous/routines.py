@@ -44,11 +44,11 @@ class AutoBase(AutonomousStateMachine):
             translation_tolerance=0.1,
             rotation_tolerance=math.radians(15),
             max_linear_speed=2.5,
-            max_linear_acceleration=4.0,
+            max_linear_acceleration=5.0,
             max_angular_speed=3.0 * math.pi,
         )
         self._controller = vector_pursuit.VectorPursuitController(
-            rotation_controller=PIDController(Kp=8.0, Ki=0.0, Kd=0.25),
+            rotation_controller=PIDController(Kp=8.5, Ki=0.0, Kd=0.25),
             cross_track_controller=PIDController(Kp=3.0, Ki=0.0, Kd=0.0),
             motion_parameters=constraints,
         )
