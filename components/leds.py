@@ -280,7 +280,9 @@ class Leds:
                     )
                 case Pattern.SHOOTER_SPINNING:
                     self._candle.set_control(
-                        SolidColor(self.segments[0], self.segments[-1], color=self.RED)
+                        SolidColor(
+                            self.segments[0], self.segments[-1], color=self.ORANGE
+                        )
                     )
                 case Pattern.OFF:
                     pass
