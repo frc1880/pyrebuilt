@@ -141,6 +141,74 @@ class Shoot(AutoBase):
         self.shooter_controller.engage()
 
 
+class ShootDepot(AutoBase):
+    """
+    Basic functionality to drive back by 1 metre, then shoot.
+    """
+
+    MODE_NAME = "Shoot + Depot"
+    blue_starting_pose = field_flip_pose2d(
+        Pose2d(12.972, 3.915, Rotation2d())
+    )  # measured from robotigers' practice field
+
+    def on_enable(self) -> None:
+        self._cycle_count = 0
+        super().on_enable()
+
+    @state(first=True)
+    def driving_to_shoot(self, initial_call: bool, state_tm: float) -> None:
+
+        if initial_call:
+            # Create a trajectory to the shooting position
+            assert self.blue_starting_pose
+            robot_pose = self.blue_starting_pose
+            delta_x = 1 if is_blue() else -1
+            shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
+            p1 = vector_pursuit.PathPoint(
+                shooting_position,
+                shooter_to_hub(Pose2d(shooting_position, Rotation2d())),
+            )
+            p2 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x - 3,
+                    self.blue_starting_pose.y - 3,
+                ),
+            )
+            p3 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x - 3,
+                    self.blue_starting_pose.y - 1,
+                ),
+                Rotation2d.fromDegrees(90),
+            )
+            p4 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.blue_starting_pose.x - 1,
+                    self.blue_starting_pose.y - 1,
+                ),
+            )
+            waypoints = [p1] if (self._cycle_count == 0) else [p2, p3, p4]
+            self.set_trajectory(
+                waypoints,
+                field_flip=True,
+                mirror=True,
+            )
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory()
+        if self.is_trajectory_expired():
+            self.drivetrain.stop()
+            self._cycle_count += 1
+            self.next_state("shooting")
+
+    @timed_state(duration=3.0)
+    def shooting(self) -> None:
+        # Shoot for a fixed period of time
+        self.shooter_controller.engage()
+        if self.indexer.is_hopper_empty() and self._cycle_count == 1:
+            self.next_state("driving_to_shoot")
+
+
 class ShootGobblerRight(AutoBase):
     MODE_NAME = "Shoot + Gobbler - Right"
 
