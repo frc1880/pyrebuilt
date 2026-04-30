@@ -135,6 +135,9 @@ class Shoot(AutoBase):
     """
 
     MODE_NAME = "Shoot"
+    blue_starting_pose = field_flip_pose2d(
+        Pose2d(12.972, 3.915, Rotation2d())
+    )  # measured from robotigers' practice field
 
     @state(first=True)
     def driving_to_shoot(self, initial_call: bool, state_tm: float) -> None:
