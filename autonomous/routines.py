@@ -146,7 +146,7 @@ class Shoot(AutoBase):
             # Create a trajectory to the shooting position
             assert self.starting_pose
             robot_pose = self.starting_pose
-            delta_x = -0.5 if is_blue() else 0.5
+            delta_x = -1 if is_blue() else 1
             shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
 
             self.set_trajectory(
