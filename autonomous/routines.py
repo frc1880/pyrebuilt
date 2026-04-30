@@ -201,24 +201,29 @@ class ShootDepot(AutoBase):
             )
             p2 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.blue_starting_pose.x - 3,
-                    self.blue_starting_pose.y - 3,
+                    shooting_position.x,
+                    self.blue_starting_pose.y - 2,
                 ),
             )
             p3 = vector_pursuit.PathPoint(
                 Translation2d(
                     self.blue_starting_pose.x - 3,
-                    self.blue_starting_pose.y - 1,
+                    self.blue_starting_pose.y - 2,
                 ),
-                Rotation2d.fromDegrees(90),
             )
             p4 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.blue_starting_pose.x - 1,
-                    self.blue_starting_pose.y - 1,
+                    self.blue_starting_pose.x - 2,
+                    self.blue_starting_pose.y - 2,
                 ),
             )
-            waypoints = [p1] if (self._cycle_count == 0) else [p2, p3, p4]
+            match self._cycle_count:
+                case 1:
+                    waypoints = [p2, p3]
+                case 2:
+                    waypoints = [p4]
+                case _:
+                    waypoints = [p1]
             self.set_trajectory(
                 waypoints,
                 field_flip=True,
@@ -230,7 +235,10 @@ class ShootDepot(AutoBase):
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self._cycle_count += 1
-            self.next_state("shooting")
+            if self._cycle_count == 2:
+                self.next_state("driving_to_shoot")
+            else:
+                self.next_state("shooting")
 
     @timed_state(duration=3.0)
     def shooting(self) -> None:
@@ -255,7 +263,7 @@ class ShootHuman(AutoBase):
         super().on_enable()
 
     @state(first=True)
-    def driving_to_shoot(self, initial_call: bool, state_tm: float) -> None:
+    def drive_handler(self, initial_call: bool, state_tm: float) -> None:
 
         if initial_call:
             # Create a trajectory to the shooting position
@@ -269,24 +277,30 @@ class ShootHuman(AutoBase):
             )
             p2 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.blue_starting_pose.x - 3,
+                    shooting_position.x,
                     self.blue_starting_pose.y + 3,
                 ),
             )
             p3 = vector_pursuit.PathPoint(
                 Translation2d(
                     self.blue_starting_pose.x - 3,
-                    self.blue_starting_pose.y + 1,
+                    self.blue_starting_pose.y + 3,
                 ),
-                Rotation2d.fromDegrees(90),
             )
             p4 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.blue_starting_pose.x - 1,
-                    self.blue_starting_pose.y + 1,
+                    self.blue_starting_pose.x - 2.5,
+                    self.blue_starting_pose.y + 2.5,
                 ),
             )
-            waypoints = [p1] if (self._cycle_count == 0) else [p2, p3, p4]
+            match self._cycle_count:
+                case 1:
+                    waypoints = [p2, p3]
+                case 2:
+                    waypoints = [p4]
+                case _:
+                    waypoints = [p1]
+
             self.set_trajectory(
                 waypoints,
                 field_flip=True,
@@ -298,14 +312,21 @@ class ShootHuman(AutoBase):
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self._cycle_count += 1
-            self.next_state("shooting")
+            if self._cycle_count == 2:
+                self.next_state("wait_human_player")
+            else:
+                self.next_state("shooting")
+
+    @timed_state(duration=3.0, next_state="drive_handler")
+    def wait_human_player(self):
+        self.intake.intake()
 
     @timed_state(duration=3.0)
     def shooting(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
         if self.indexer.is_hopper_empty() and self._cycle_count == 1:
-            self.next_state("driving_to_shoot")
+            self.next_state("drive_handler")
 
 
 class ShootGobblerRight(AutoBase):
