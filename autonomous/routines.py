@@ -5,6 +5,7 @@ from magicbot import AutonomousStateMachine, state, timed_state
 from wpilib import DataLogManager
 from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
+from wpiutil.log import BooleanLogEntry, DoubleLogEntry
 
 from components.drivetrain import Drivetrain
 from components.indexer import Indexer
@@ -54,6 +55,31 @@ class AutoBase(AutonomousStateMachine):
 
         DataLogManager.start()
         DataLogManager.logNetworkTables(True)
+        log = DataLogManager.getLog()
+        self._angular_error = DoubleLogEntry(log, "/auto/angular_error")
+        self._translational_error = DoubleLogEntry(log, "/auto/translational_error")
+        self._cross_track_error = DoubleLogEntry(log, "/auto/translational_error")
+        self._angular_goal = BooleanLogEntry(log, "/auto/angular_goal")
+        self._translational_goal = BooleanLogEntry(log, "/auto/translational_goal")
+        self._cross_track_goal = BooleanLogEntry(log, "/auto/cross_track_goal")
+
+    def log_errors(self):
+        self._angular_error.append(
+            self._controller._rotation_controller.getPositionError()
+        )
+        self._translational_error.append(
+            self._controller._translation_controller.getPositionError()
+        )
+        self._cross_track_error.append(
+            self._controller._cross_track_controller.getPositionError()
+        )
+        self._angular_goal.append(self._controller._rotation_controller.atSetpoint())
+        self._translational_goal.append(
+            self._controller._translation_controller.atSetpoint()
+        )
+        self._cross_track_goal.append(
+            self._controller._cross_track_controller.atSetpoint()
+        )
 
     @property
     def starting_pose(self) -> Pose2d | None:
@@ -310,6 +336,9 @@ class ShootGobblerRight(AutoBase):
         self.intake.carry()
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
+
+        # log Errors
+        self.log_errors()
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("spraying")
@@ -350,6 +379,8 @@ class ShootGobblerRight(AutoBase):
         self.intake.carry()
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
+        # log Errors
+        self.log_errors()
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("spraying")
