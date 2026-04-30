@@ -116,6 +116,9 @@ class Shooter:
     def hood_cancoder_position(self) -> float:
         return self._cancoder.get_position().value
 
+    def stop(self):
+        self._should_shoot = False
+
     # @feedback
     def hood_cancoder_absolute_position(self) -> float:
         return self._cancoder.get_absolute_position().value
@@ -130,6 +133,9 @@ class Shooter:
 
     def shooter_motor_current(self) -> float:
         return self._shooter_motor.get_supply_current().value
+
+    def is_spinning(self):
+        return self._should_shoot
 
     def at_speed(self) -> bool:
         return abs(self._shooter_motor.get_velocity().value - self.speed) < 5
