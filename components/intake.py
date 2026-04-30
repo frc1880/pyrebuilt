@@ -91,10 +91,10 @@ class Intake:
         current_cfg = configs.CurrentLimitsConfigs()
         current_cfg.stator_current_limit = 80.0
         current_cfg.stator_current_limit_enable = True
-        current_cfg.supply_current_limit = 20.0
+        current_cfg.supply_current_limit = 30.0
         current_cfg.supply_current_limit_enable = True
-        current_cfg.supply_current_lower_limit = 5.0
-        current_cfg.supply_current_lower_time = 1.0
+        current_cfg.supply_current_lower_limit = 20.0
+        current_cfg.supply_current_lower_time = 3.0
 
         self._roller_motor.configurator.apply(
             configs.TalonFXConfiguration()
