@@ -179,7 +179,7 @@ class ShootHuman(AutoBase):
 
     MODE_NAME = "Shoot + Human Player"
     blue_starting_pose = field_flip_pose2d(
-        Pose2d(12.972, 3.915, Rotation2d())
+        Pose2d(12.972, 5.915, Rotation2d())
     )  # measured from robotigers' practice field
 
     def on_enable(self) -> None:
@@ -202,25 +202,26 @@ class ShootHuman(AutoBase):
             p2 = vector_pursuit.PathPoint(
                 Translation2d(
                     shooting_position.x,
-                    self.starting_pose.y - (3.3 / 2 if is_blue() else -3 / 2),
+                    self.starting_pose.y - (1.3 / 2 if is_blue() else -1.3 / 2),
                 ),
             )
             p3 = vector_pursuit.PathPoint(
                 Translation2d(
                     self.starting_pose.x - (2.5 if is_blue() else -2.5),
-                    self.starting_pose.y - (3.3 if is_blue() else -3.3),
+                    self.starting_pose.y - (1.3 if is_blue() else -1.3),
                 ),
             )
             p4 = vector_pursuit.PathPoint(
                 Translation2d(
                     self.starting_pose.x - (3 if is_blue() else -3),
-                    self.starting_pose.y - (3.3 if is_blue() else -3.3),
+                    self.starting_pose.y - (1.3 if is_blue() else -1.3),
                 ),
+                Rotation2d.fromDegrees(180 if is_blue() else 0),
             )
             p5 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.starting_pose.x - (2.5 if is_blue() else -2.5),
-                    self.starting_pose.y - (2.5 if is_blue() else -2.5),
+                    self.starting_pose.x - (2 if is_blue() else -2),
+                    self.starting_pose.y,
                 ),
             )
             match self._cycle_count:
