@@ -202,19 +202,19 @@ class ShootHuman(AutoBase):
             p2 = vector_pursuit.PathPoint(
                 Translation2d(
                     shooting_position.x,
-                    self.blue_starting_pose.y - 3.3,
+                    self.starting_pose.y - (3.3 if is_blue() else -3.3),
                 ),
             )
             p3 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.blue_starting_pose.x - 3,
-                    self.blue_starting_pose.y - 3.3,
+                    self.starting_pose.x - (3 if is_blue() else -3),
+                    self.starting_pose.y - (3.3 if is_blue() else -3.3),
                 ),
             )
             p4 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.blue_starting_pose.x - 2.5,
-                    self.blue_starting_pose.y - 2.5,
+                    self.starting_pose.x - (2.5 if is_blue() else -2.5),
+                    self.starting_pose.y - (2.5 if is_blue() else -2.5),
                 ),
             )
             match self._cycle_count:
@@ -227,7 +227,7 @@ class ShootHuman(AutoBase):
 
             self.set_trajectory(
                 waypoints,
-                field_flip=True,
+                field_flip=False,
                 mirror=False,
             )
 
