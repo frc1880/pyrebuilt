@@ -191,9 +191,9 @@ class ShootDepot(AutoBase):
 
         if initial_call:
             # Create a trajectory to the shooting position
-            assert self.blue_starting_pose
-            robot_pose = self.blue_starting_pose
-            delta_x = 1 if is_blue() else -1
+            assert self.starting_pose
+            robot_pose = self.starting_pose
+            delta_x = -1 if is_blue() else 1
             shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
             p1 = vector_pursuit.PathPoint(
                 shooting_position,
@@ -202,19 +202,19 @@ class ShootDepot(AutoBase):
             p2 = vector_pursuit.PathPoint(
                 Translation2d(
                     shooting_position.x,
-                    self.blue_starting_pose.y - 2,
+                    self.starting_pose.y + (2 if is_blue() else -2),
                 ),
             )
             p3 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.blue_starting_pose.x - 3,
-                    self.blue_starting_pose.y - 2,
+                    self.starting_pose.x - (3 if is_blue() else -3),
+                    self.starting_pose.y + (2 if is_blue() else -2),
                 ),
             )
             p4 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.blue_starting_pose.x - 2,
-                    self.blue_starting_pose.y - 2,
+                    self.starting_pose.x - (2 if is_blue() else -2),
+                    self.starting_pose.y + (2 if is_blue() else -2),
                 ),
             )
             match self._cycle_count:
@@ -224,11 +224,7 @@ class ShootDepot(AutoBase):
                     waypoints = [p4]
                 case _:
                     waypoints = [p1]
-            self.set_trajectory(
-                waypoints,
-                field_flip=True,
-                mirror=True,
-            )
+            self.set_trajectory(waypoints, field_flip=False, mirror=False)
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
@@ -278,19 +274,19 @@ class ShootHuman(AutoBase):
             p2 = vector_pursuit.PathPoint(
                 Translation2d(
                     shooting_position.x,
-                    self.starting_pose.y + 3,
+                    self.starting_pose.y - (3.3 if is_blue() else -3.3),
                 ),
             )
             p3 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.starting_pose.x - 3,
-                    self.starting_pose.y + 3,
+                    self.starting_pose.x - (3 if is_blue() else -3),
+                    self.starting_pose.y - (3.3 if is_blue() else -3.3),
                 ),
             )
             p4 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.starting_pose.x - 2.5,
-                    self.starting_pose.y + 2.5,
+                    self.starting_pose.x - (2.5 if is_blue() else -2.5),
+                    self.starting_pose.y - (2.5 if is_blue() else -2.5),
                 ),
             )
             match self._cycle_count:
@@ -304,7 +300,7 @@ class ShootHuman(AutoBase):
             self.set_trajectory(
                 waypoints,
                 field_flip=False,
-                mirror=True,
+                mirror=False,
             )
 
         # Follow the trajectory until we are in shooting position
