@@ -220,8 +220,8 @@ class ShootHuman(AutoBase):
             )
             p5 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.starting_pose.x - (2 if is_blue() else -2),
-                    self.starting_pose.y,
+                    self.starting_pose.x - (1.5 if is_blue() else -1.5),
+                    self.starting_pose.y + (1.3 if is_blue() else -1.3),
                 ),
             )
             match self._cycle_count:
@@ -235,6 +235,7 @@ class ShootHuman(AutoBase):
                 field_flip=False,
                 mirror=False,
             )
+        self.intake.intake()
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
