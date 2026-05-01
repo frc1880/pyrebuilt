@@ -201,34 +201,28 @@ class ShootHuman(AutoBase):
             )
             p2 = vector_pursuit.PathPoint(
                 Translation2d(
-                    shooting_position.x,
-                    self.starting_pose.y - (1.3 / 2 if is_blue() else -1.3 / 2),
-                ),
-            )
-            p3 = vector_pursuit.PathPoint(
-                Translation2d(
                     self.starting_pose.x - (2.5 if is_blue() else -2.5),
                     self.starting_pose.y - (1.3 if is_blue() else -1.3),
                 ),
             )
-            p4 = vector_pursuit.PathPoint(
+            p3 = vector_pursuit.PathPoint(
                 Translation2d(
                     self.starting_pose.x - (3 if is_blue() else -3),
                     self.starting_pose.y - (1.3 if is_blue() else -1.3),
                 ),
                 Rotation2d.fromDegrees(180 if is_blue() else 0),
             )
-            p5 = vector_pursuit.PathPoint(
+            p4 = vector_pursuit.PathPoint(
                 Translation2d(
                     self.starting_pose.x - (1.5 if is_blue() else -1.5),
                     self.starting_pose.y + (1.3 if is_blue() else -1.3),
                 ),
             )
             match self._cycle_count:
-                case 1:
-                    waypoints = [p5]
+                case 0:
+                    waypoints = [p1, p2, p3]
                 case _:
-                    waypoints = [p1, p2, p3, p4]
+                    waypoints = [p4]
 
             self.set_trajectory(
                 waypoints,
@@ -247,6 +241,113 @@ class ShootHuman(AutoBase):
             else:
                 self.next_state("shooting")
 
+    @timed_state(duration=1.5, next_state="drive_handler")
+    def wait_human_player(self):
+        self.intake.intake()
+
+    @timed_state(duration=3.0)
+    def shooting(self) -> None:
+        # Shoot for a fixed period of time
+        self.shooter_controller.engage()
+        if self.indexer.is_hopper_empty():
+            self.next_state("drive_handler")
+
+
+class ShootHumanDepot(AutoBase):
+    """
+    Basic functionality to drive back by 1 metre, then shoot.
+    """
+
+    MODE_NAME = "Shoot + Human Player + Depot"
+    blue_starting_pose = field_flip_pose2d(
+        Pose2d(12.972, 5.915, Rotation2d())
+    )  # measured from robotigers' practice field
+
+    def on_enable(self) -> None:
+        self._cycle_count = 0
+        super().on_enable()
+
+    @state(first=True)
+    def drive_handler(self, initial_call: bool, state_tm: float) -> None:
+
+        if initial_call:
+            # Create a trajectory to the shooting position
+            assert self.starting_pose
+            robot_pose = self.starting_pose
+            delta_x = -1 if is_blue() else 1
+            shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
+            p1 = vector_pursuit.PathPoint(
+                shooting_position,
+                shooter_to_hub(Pose2d(shooting_position, Rotation2d())),
+            )
+            p2 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.starting_pose.x - (2.5 if is_blue() else -2.5),
+                    self.starting_pose.y - (1.3 if is_blue() else -1.3),
+                ),
+            )
+            p3 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.starting_pose.x - (3 if is_blue() else -3),
+                    self.starting_pose.y - (1.3 if is_blue() else -1.3),
+                ),
+                Rotation2d.fromDegrees(180 if is_blue() else 0),
+            )
+            p4 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.starting_pose.x - (1.5 if is_blue() else -1.5),
+                    self.starting_pose.y + (1.3 if is_blue() else -1.3),
+                ),
+            )
+            p5 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.starting_pose.x - (2.5 if is_blue() else -2.5),
+                    self.starting_pose.y + (3.8 if is_blue() else -3.8),
+                ),
+                Rotation2d.fromDegrees(180 if is_blue() else 0),
+            )
+            # p5 = vector_pursuit.PathPoint(
+            #     Translation2d(
+            #         self.starting_pose.x - (3 if is_blue() else -3),
+            #         self.starting_pose.y + (3.8 if is_blue() else -3.8),
+            #     ),
+            # )
+            match self._cycle_count:
+                case 4:
+                    self.intake.carry()
+                    waypoints = [p4]
+                case 3:
+                    self.intake.intake()
+                    waypoints = [p5]
+                case 1:
+                    waypoints = [p4]
+                case 0:
+                    waypoints = [p1, p2, p3]
+                case _:
+                    waypoints = [p4]
+
+            self.set_trajectory(
+                waypoints,
+                field_flip=False,
+                mirror=False,
+            )
+        self.intake.intake()
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory()
+        if self.is_trajectory_expired():
+            self.drivetrain.stop()
+            self._cycle_count += 1
+            match self._cycle_count:
+                case 1:
+                    self.next_state("wait_human_player")
+                case 3:
+                    self.next_state("wait_human_player")
+                case 4:
+                    self.next_state("wait_human_player")
+                case _:
+                    self.next_state("shooting")
+
     @timed_state(duration=3.0, next_state="drive_handler")
     def wait_human_player(self):
         self.intake.intake()
@@ -255,7 +356,7 @@ class ShootHuman(AutoBase):
     def shooting(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty() and self._cycle_count == 1:
+        if self.indexer.is_hopper_empty():
             self.next_state("drive_handler")
 
 
