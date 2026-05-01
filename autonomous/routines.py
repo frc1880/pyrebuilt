@@ -191,9 +191,9 @@ class ShootHuman(AutoBase):
 
         if initial_call:
             # Create a trajectory to the shooting position
-            assert self.blue_starting_pose
-            robot_pose = self.blue_starting_pose
-            delta_x = 1 if is_blue() else -1
+            assert self.starting_pose
+            robot_pose = self.starting_pose
+            delta_x = -1 if is_blue() else 1
             shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
             p1 = vector_pursuit.PathPoint(
                 shooting_position,
@@ -202,16 +202,22 @@ class ShootHuman(AutoBase):
             p2 = vector_pursuit.PathPoint(
                 Translation2d(
                     shooting_position.x,
-                    self.starting_pose.y - (3.3 if is_blue() else -3.3),
+                    self.starting_pose.y - (3.3 / 2 if is_blue() else -3 / 2),
                 ),
             )
             p3 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.starting_pose.x - (2.5 if is_blue() else -2.5),
+                    self.starting_pose.y - (3.3 if is_blue() else -3.3),
+                ),
+            )
+            p4 = vector_pursuit.PathPoint(
                 Translation2d(
                     self.starting_pose.x - (3 if is_blue() else -3),
                     self.starting_pose.y - (3.3 if is_blue() else -3.3),
                 ),
             )
-            p4 = vector_pursuit.PathPoint(
+            p5 = vector_pursuit.PathPoint(
                 Translation2d(
                     self.starting_pose.x - (2.5 if is_blue() else -2.5),
                     self.starting_pose.y - (2.5 if is_blue() else -2.5),
@@ -219,11 +225,9 @@ class ShootHuman(AutoBase):
             )
             match self._cycle_count:
                 case 1:
-                    waypoints = [p2, p3]
-                case 2:
-                    waypoints = [p4]
+                    waypoints = [p5]
                 case _:
-                    waypoints = [p1]
+                    waypoints = [p1, p2, p3, p4]
 
             self.set_trajectory(
                 waypoints,
@@ -236,7 +240,7 @@ class ShootHuman(AutoBase):
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self._cycle_count += 1
-            if self._cycle_count == 2:
+            if self._cycle_count == 1:
                 self.next_state("wait_human_player")
             else:
                 self.next_state("shooting")
