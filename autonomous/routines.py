@@ -301,27 +301,28 @@ class ShootHumanDepot(AutoBase):
             )
             p5 = vector_pursuit.PathPoint(
                 Translation2d(
-                    self.starting_pose.x - (2.5 if is_blue() else -2.5),
-                    self.starting_pose.y + (3.8 if is_blue() else -3.8),
+                    self.starting_pose.x - (2 if is_blue() else -2),
+                    self.starting_pose.y + (3.2 if is_blue() else -3.2),
                 ),
                 Rotation2d.fromDegrees(180 if is_blue() else 0),
             )
-            # p5 = vector_pursuit.PathPoint(
-            #     Translation2d(
-            #         self.starting_pose.x - (3 if is_blue() else -3),
-            #         self.starting_pose.y + (3.8 if is_blue() else -3.8),
-            #     ),
-            # )
+            p6 = vector_pursuit.PathPoint(
+                Translation2d(
+                    self.starting_pose.x - (2.8 if is_blue() else -2.8),
+                    self.starting_pose.y + (3.8 if is_blue() else -3.8),
+                ),
+            )
             match self._cycle_count:
                 case 4:
                     self.intake.carry()
-                    waypoints = [p4]
+                    waypoints = [p6, p4]
                 case 3:
                     self.intake.intake()
-                    waypoints = [p5]
+                    waypoints = [p5, p6]
                 case 1:
                     waypoints = [p4]
                 case 0:
+                    self.intake.intake()
                     waypoints = [p1, p2, p3]
                 case _:
                     waypoints = [p4]
@@ -331,7 +332,6 @@ class ShootHumanDepot(AutoBase):
                 field_flip=False,
                 mirror=False,
             )
-        self.intake.intake()
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
