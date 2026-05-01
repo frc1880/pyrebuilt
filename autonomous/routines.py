@@ -315,7 +315,7 @@ class ShootHumanDepot(AutoBase):
             match self._cycle_count:
                 case 4:
                     self.intake.carry()
-                    waypoints = [p6, p4]
+                    waypoints = [p5, p4]
                 case 3:
                     self.intake.intake()
                     waypoints = [p5, p6]
