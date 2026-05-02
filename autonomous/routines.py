@@ -181,67 +181,83 @@ class ShootHuman(AutoBase):
     blue_starting_pose = field_flip_pose2d(
         Pose2d(12.972, 5.915, Rotation2d())
     )  # measured from robotigers' practice field
+    base_starting_pose = field_flip_pose2d(
+        Pose2d(12.972, 5.915, Rotation2d())
+    )  # measured from robotigers' practice field
+    last_state = "_"  # _ means thats there no last state
+    delta_x = -1
+    shooting_position = Translation2d(
+        base_starting_pose.x + delta_x, base_starting_pose.y
+    )
+    human_waypoints = {
+        "backoff": vector_pursuit.PathPoint(
+            shooting_position,
+            shooter_to_hub(Pose2d(shooting_position, Rotation2d())),
+        ),
+        "move_near_outpost": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 2.5,
+                base_starting_pose.y - 1.3,
+            ),
+        ),
+        "move_outpost": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 3,
+                base_starting_pose.y - 1.3,
+            ),
+            Rotation2d.fromDegrees(180),
+        ),
+        "shooting_position": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 1.5,
+                base_starting_pose.y + 1.3,
+            ),
+        ),
+    }
 
     def on_enable(self) -> None:
         self._cycle_count = 0
         super().on_enable()
 
     @state(first=True)
-    def drive_handler(self, initial_call: bool, state_tm: float) -> None:
-
+    def outpost(self, initial_call: bool, state_tm: float):
         if initial_call:
-            # Create a trajectory to the shooting position
-            assert self.starting_pose
-            robot_pose = self.starting_pose
-            delta_x = -1 if is_blue() else 1
-            shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
-            p1 = vector_pursuit.PathPoint(
-                shooting_position,
-                shooter_to_hub(Pose2d(shooting_position, Rotation2d())),
-            )
-            p2 = vector_pursuit.PathPoint(
-                Translation2d(
-                    self.starting_pose.x - (2.5 if is_blue() else -2.5),
-                    self.starting_pose.y - (1.3 if is_blue() else -1.3),
-                ),
-            )
-            p3 = vector_pursuit.PathPoint(
-                Translation2d(
-                    self.starting_pose.x - (3 if is_blue() else -3),
-                    self.starting_pose.y - (1.3 if is_blue() else -1.3),
-                ),
-                Rotation2d.fromDegrees(180 if is_blue() else 0),
-            )
-            p4 = vector_pursuit.PathPoint(
-                Translation2d(
-                    self.starting_pose.x - (1.5 if is_blue() else -1.5),
-                    self.starting_pose.y + (1.3 if is_blue() else -1.3),
-                ),
-            )
-            match self._cycle_count:
-                case 0:
-                    waypoints = [p1, p2, p3]
-                case _:
-                    waypoints = [p4]
+            waypoints = [
+                self.human_waypoints["backoff"],
+                self.human_waypoints["move_near_outpost"],
+                self.human_waypoints["move_outpost"],
+            ]
 
             self.set_trajectory(
                 waypoints,
-                field_flip=False,
+                field_flip=is_red(),
                 mirror=False,
             )
-        self.intake.intake()
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
         if self.is_trajectory_expired():
             self.drivetrain.stop()
-            self._cycle_count += 1
-            if self._cycle_count == 1:
-                self.next_state("wait_human_player")
-            else:
-                self.next_state("shooting")
+            self.next_state("wait_human_player")
 
-    @timed_state(duration=1.5, next_state="drive_handler")
+    @state()
+    def outpost_to_shoot(self, initial_call: bool):
+        if initial_call:
+            waypoints = [self.human_waypoints["shooting_position"]]
+
+            self.set_trajectory(
+                waypoints,
+                field_flip=is_red(),
+                mirror=False,
+            )
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory()
+        self.intake.carry()
+        if self.is_trajectory_expired():
+            self.drivetrain.stop()
+            self.next_state(self.last_state)
+
+    @timed_state(duration=3.0, next_state="outpost_to_shoot")
     def wait_human_player(self):
         self.intake.intake()
 
@@ -249,115 +265,80 @@ class ShootHuman(AutoBase):
     def shooting(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty():
-            self.next_state("drive_handler")
+        if self.indexer.is_hopper_empty() and self.last_state != "_":
+            self.next_state(self.last_state)
 
 
-class ShootHumanDepot(AutoBase):
+class ShootHumanDepot(ShootHuman):
     """
     Basic functionality to drive back by 1 metre, then shoot.
     """
 
     MODE_NAME = "Shoot + Human Player + Depot"
-    blue_starting_pose = field_flip_pose2d(
-        Pose2d(12.972, 5.915, Rotation2d())
-    )  # measured from robotigers' practice field
+    last_state = "depot"
+    base_starting_pose = field_flip_pose2d(Pose2d(12.972, 5.915, Rotation2d()))
+    depot_waypoints = {
+        "near_depot": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 2,
+                base_starting_pose.y + 3.2,
+            ),
+            Rotation2d.fromDegrees(180),
+        ),
+        "depot": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 2.8,
+                base_starting_pose.y + 3.8,
+            ),
+        ),
+    }
 
     def on_enable(self) -> None:
         self._cycle_count = 0
         super().on_enable()
 
-    @state(first=True)
-    def drive_handler(self, initial_call: bool, state_tm: float) -> None:
-
+    @state()
+    def depot(self, initial_call: bool):
         if initial_call:
-            # Create a trajectory to the shooting position
-            assert self.starting_pose
-            robot_pose = self.starting_pose
-            delta_x = -1 if is_blue() else 1
-            shooting_position = Translation2d(robot_pose.x + delta_x, robot_pose.y)
-            p1 = vector_pursuit.PathPoint(
-                shooting_position,
-                shooter_to_hub(Pose2d(shooting_position, Rotation2d())),
-            )
-            p2 = vector_pursuit.PathPoint(
-                Translation2d(
-                    self.starting_pose.x - (2.5 if is_blue() else -2.5),
-                    self.starting_pose.y - (1.3 if is_blue() else -1.3),
-                ),
-            )
-            p3 = vector_pursuit.PathPoint(
-                Translation2d(
-                    self.starting_pose.x - (3 if is_blue() else -3),
-                    self.starting_pose.y - (1.3 if is_blue() else -1.3),
-                ),
-                Rotation2d.fromDegrees(180 if is_blue() else 0),
-            )
-            p4 = vector_pursuit.PathPoint(
-                Translation2d(
-                    self.starting_pose.x - (1.5 if is_blue() else -1.5),
-                    self.starting_pose.y + (1.3 if is_blue() else -1.3),
-                ),
-            )
-            p5 = vector_pursuit.PathPoint(
-                Translation2d(
-                    self.starting_pose.x - (2 if is_blue() else -2),
-                    self.starting_pose.y + (3.2 if is_blue() else -3.2),
-                ),
-                Rotation2d.fromDegrees(180 if is_blue() else 0),
-            )
-            p6 = vector_pursuit.PathPoint(
-                Translation2d(
-                    self.starting_pose.x - (2.8 if is_blue() else -2.8),
-                    self.starting_pose.y + (3.8 if is_blue() else -3.8),
-                ),
-            )
-            match self._cycle_count:
-                case 4:
-                    self.intake.carry()
-                    waypoints = [p5, p4]
-                case 3:
-                    self.intake.intake()
-                    waypoints = [p5, p6]
-                case 1:
-                    waypoints = [p4]
-                case 0:
-                    self.intake.intake()
-                    waypoints = [p1, p2, p3]
-                case _:
-                    waypoints = [p4]
+            waypoints = [
+                self.depot_waypoints["near_depot"],
+                self.depot_waypoints["depot"],
+            ]
 
             self.set_trajectory(
                 waypoints,
-                field_flip=False,
+                field_flip=is_red(),
                 mirror=False,
             )
 
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
+        self.intake.intake()
         if self.is_trajectory_expired():
             self.drivetrain.stop()
-            self._cycle_count += 1
-            match self._cycle_count:
-                case 1:
-                    self.next_state("wait_human_player")
-                case 3:
-                    self.next_state("wait_human_player")
-                case 4:
-                    self.next_state("wait_human_player")
-                case _:
-                    self.next_state("shooting")
+            self.next_state("depot_to_shoot")
 
-    @timed_state(duration=3.0, next_state="drive_handler")
-    def wait_human_player(self):
-        self.intake.intake()
+    @state()
+    def depot_to_shoot(self, initial_call: bool):
+        if initial_call:
+            waypoints = [
+                self.depot_waypoints["near_depot"],
+                self.human_waypoints["shooting_position"],
+            ]
 
-    @timed_state(duration=3.0)
-    def shooting(self) -> None:
-        # Shoot for a fixed period of time
-        self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty():
-            self.next_state("drive_handler")
+            self.set_trajectory(
+                waypoints,
+                field_flip=is_red(),
+                mirror=False,
+            )
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory()
+        self.intake.carry()
+        self.last_state = "_"
+        if self.is_trajectory_expired():
+            self.drivetrain.stop()
+            self.next_state("shooting")
 
 
 class ShootGobblerRight(AutoBase):
