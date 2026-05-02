@@ -338,7 +338,6 @@ class ShootGobblerRight(AutoBase):
             waypoints = [p5, p6, p7, p8]
             self.set_trajectory(waypoints, field_flip=is_red(), mirror=self.mirror)
 
-        self.intake.carry()
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
 
@@ -381,7 +380,6 @@ class ShootGobblerRight(AutoBase):
             waypoints = [p5, p6, p7, p8]
             self.set_trajectory(waypoints, field_flip=is_red(), mirror=self.mirror)
 
-        self.intake.carry()
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
         # log Errors
