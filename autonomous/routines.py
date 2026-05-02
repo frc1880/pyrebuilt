@@ -172,6 +172,175 @@ class Shoot(AutoBase):
         self.shooter_controller.engage()
 
 
+class ShootHuman(AutoBase):
+    """
+    Basic functionality to drive back by 1 metre, then shoot.
+    """
+
+    MODE_NAME = "Shoot + Human Player"
+    blue_starting_pose = field_flip_pose2d(
+        Pose2d(12.972, 5.915, Rotation2d())
+    )  # measured from robotigers' practice field
+    base_starting_pose = field_flip_pose2d(
+        Pose2d(12.972, 5.915, Rotation2d())
+    )  # measured from robotigers' practice field
+    last_state = "nothing"  # nothing means thats there no last state
+    delta_x = -1
+    shooting_position = Translation2d(
+        base_starting_pose.x + delta_x, base_starting_pose.y
+    )
+    human_waypoints = {
+        "backoff": vector_pursuit.PathPoint(
+            shooting_position,
+            shooter_to_hub(Pose2d(shooting_position, Rotation2d())),
+        ),
+        "near_outpost": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 2.5,
+                base_starting_pose.y - 1.3,
+            ),
+        ),
+        "outpost": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 2.8,
+                base_starting_pose.y - 1.3,
+            ),
+            Rotation2d.fromDegrees(180),
+        ),
+        "shooting_position": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 1.5,
+                base_starting_pose.y + 1.3,
+            ),
+        ),
+    }
+
+    def on_enable(self) -> None:
+        self._cycle_count = 0
+        super().on_enable()
+
+    @state(first=True)
+    def outpost(self, initial_call: bool, state_tm: float):
+        if initial_call:
+            waypoints = [
+                self.human_waypoints["backoff"],
+                self.human_waypoints["near_outpost"],
+                self.human_waypoints["outpost"],
+            ]
+
+            self.set_trajectory(
+                waypoints,
+                field_flip=is_red(),
+                mirror=False,
+            )
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory()
+        if self.is_trajectory_expired():
+            self.drivetrain.stop()
+            self.next_state("wait_human_player")
+
+    @state()
+    def outpost_to_shoot(self, initial_call: bool):
+        if initial_call:
+            waypoints = [self.human_waypoints["shooting_position"]]
+
+            self.set_trajectory(
+                waypoints,
+                field_flip=is_red(),
+                mirror=False,
+            )
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory()
+        self.intake.carry()
+        if self.is_trajectory_expired():
+            self.drivetrain.stop()
+            self.next_state("shooting")
+
+    @timed_state(duration=3.0, next_state="outpost_to_shoot")
+    def wait_human_player(self):
+        self.intake.intake()
+
+    @timed_state(duration=3.0)
+    def shooting(self) -> None:
+        # Shoot for a fixed period of time
+        self.shooter_controller.engage()
+        if self.indexer.is_hopper_empty() and self.last_state != "nothing":
+            self.next_state(self.last_state)
+
+
+class ShootHumanDepot(ShootHuman):
+    """
+    Basic functionality to drive back by 1 metre, then shoot.
+    """
+
+    MODE_NAME = "Shoot + Human Player + Depot"
+    last_state = "depot"
+    base_starting_pose = field_flip_pose2d(Pose2d(12.972, 5.915, Rotation2d()))
+    depot_waypoints = {
+        "near_depot": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 2,
+                base_starting_pose.y + 3.2,
+            ),
+            Rotation2d.fromDegrees(180),
+        ),
+        "depot": vector_pursuit.PathPoint(
+            Translation2d(
+                base_starting_pose.x - 2.8,
+                base_starting_pose.y + 3.8,
+            ),
+        ),
+    }
+
+    def on_enable(self) -> None:
+        self._cycle_count = 0
+        super().on_enable()
+
+    @state()
+    def depot(self, initial_call: bool):
+        if initial_call:
+            waypoints = [
+                self.depot_waypoints["near_depot"],
+                self.depot_waypoints["depot"],
+            ]
+
+            self.set_trajectory(
+                waypoints,
+                field_flip=is_red(),
+                mirror=False,
+            )
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory()
+        self.intake.intake()
+        if self.is_trajectory_expired():
+            self.drivetrain.stop()
+            self.next_state("depot_to_shoot")
+
+    @state()
+    def depot_to_shoot(self, initial_call: bool):
+        if initial_call:
+            waypoints = [
+                self.depot_waypoints["near_depot"],
+                self.human_waypoints["shooting_position"],
+            ]
+
+            self.set_trajectory(
+                waypoints,
+                field_flip=is_red(),
+                mirror=False,
+            )
+
+        # Follow the trajectory until we are in shooting position
+        self.follow_trajectory()
+        self.intake.carry()
+        self.last_state = "nothing"
+        if self.is_trajectory_expired():
+            self.drivetrain.stop()
+            self.next_state("shooting")
+
+
 class ShootGobblerRight(AutoBase):
     MODE_NAME = "Shoot + Gobbler - Right"
 
