@@ -184,7 +184,7 @@ class ShootHuman(AutoBase):
     base_starting_pose = field_flip_pose2d(
         Pose2d(12.972, 5.915, Rotation2d())
     )  # measured from robotigers' practice field
-    last_state = "_"  # _ means thats there no last state
+    last_state = "nothing"  # nothing means thats there no last state
     delta_x = -1
     shooting_position = Translation2d(
         base_starting_pose.x + delta_x, base_starting_pose.y
@@ -255,7 +255,7 @@ class ShootHuman(AutoBase):
         self.intake.carry()
         if self.is_trajectory_expired():
             self.drivetrain.stop()
-            self.next_state(self.last_state)
+            self.next_state("shooting")
 
     @timed_state(duration=3.0, next_state="outpost_to_shoot")
     def wait_human_player(self):
@@ -265,7 +265,7 @@ class ShootHuman(AutoBase):
     def shooting(self) -> None:
         # Shoot for a fixed period of time
         self.shooter_controller.engage()
-        if self.indexer.is_hopper_empty() and self.last_state != "_":
+        if self.indexer.is_hopper_empty() and self.last_state != "nothing":
             self.next_state(self.last_state)
 
 
@@ -335,7 +335,7 @@ class ShootHumanDepot(ShootHuman):
         # Follow the trajectory until we are in shooting position
         self.follow_trajectory()
         self.intake.carry()
-        self.last_state = "_"
+        self.last_state = "nothing"
         if self.is_trajectory_expired():
             self.drivetrain.stop()
             self.next_state("shooting")
