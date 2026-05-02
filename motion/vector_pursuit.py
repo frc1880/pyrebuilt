@@ -169,7 +169,7 @@ class VectorPursuitController:
                     r = game.field_mirror_rotation2d(r)
                 if should_flip:
                     r = game.field_flip_rotation2d(r)
-            flipped_waypoints.append(PathPoint(t, r))
+            flipped_waypoints.append(PathPoint(t, r, speed=wp.speed))
 
         # Treat the current pose as the first waypoint to make things easier
         flipped_waypoints = [
