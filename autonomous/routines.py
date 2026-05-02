@@ -194,13 +194,13 @@ class ShootHuman(AutoBase):
             shooting_position,
             shooter_to_hub(Pose2d(shooting_position, Rotation2d())),
         ),
-        "move_near_outpost": vector_pursuit.PathPoint(
+        "near_outpost": vector_pursuit.PathPoint(
             Translation2d(
                 base_starting_pose.x - 2.5,
                 base_starting_pose.y - 1.3,
             ),
         ),
-        "move_outpost": vector_pursuit.PathPoint(
+        "outpost": vector_pursuit.PathPoint(
             Translation2d(
                 base_starting_pose.x - 3,
                 base_starting_pose.y - 1.3,
@@ -224,8 +224,8 @@ class ShootHuman(AutoBase):
         if initial_call:
             waypoints = [
                 self.human_waypoints["backoff"],
-                self.human_waypoints["move_near_outpost"],
-                self.human_waypoints["move_outpost"],
+                self.human_waypoints["near_outpost"],
+                self.human_waypoints["outpost"],
             ]
 
             self.set_trajectory(
