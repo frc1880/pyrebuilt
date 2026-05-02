@@ -202,7 +202,7 @@ class ShootHuman(AutoBase):
         ),
         "outpost": vector_pursuit.PathPoint(
             Translation2d(
-                base_starting_pose.x - 3,
+                base_starting_pose.x - 2.8,
                 base_starting_pose.y - 1.3,
             ),
             Rotation2d.fromDegrees(180),
